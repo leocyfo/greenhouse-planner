@@ -140,11 +140,13 @@ src/
    - Recherche + filtres : rareté, sol, taille, complété, analysé
 
 3. Encyclopédie
-   - Arbre des recettes par étape (voir « Encyclopédie : arbre par étape ») :
-     chaque mutation reliée à ses ingrédients, tous les liens de gauche à droite
+   - Arbre des recettes, colonnes par rareté (ou par étape) (voir « Encyclopédie : arbre par
+     étape ») : chaque mutation reliée à ses ingrédients, tous les liens de gauche à droite
    - Couleur de l'état : verrouillée / disponible / complétée / spéciale
    - Survol : tout le chemin de la mutation et ce qu'elle permet de faire ;
-     clic = la fiche en fenêtre (la même que depuis l'Inventaire) : conditions,
+     clic = la choisir : l'arbre ne garde que ce qu'il faut pour la faire, en deux
+     vues (« Avant et après », « Tout le chemin ») ; second clic ou bouton « Fiche »
+     = la fiche en fenêtre (la même que depuis l'Inventaire) : conditions,
      sol, taille, growth stages, aperçu de la plantation, effets, drops,
      mécanique spéciale (`notes`), usages, bouton "calculer"
 
@@ -351,17 +353,49 @@ recrée tout »)
   testée (`encyclopedia/graphModel.ts`). React Flow est retiré du projet (chunk de l'onglet : 10 Ko).
 - Une colonne par étape : étape = 1 + niveau de recette (logic/graph, `recipeLevels`), donc chaque
   ingrédient est à gauche de sa recette et tous les liens vont de gauche à droite : 9, 8, 8, 7, 5 et
-  1 mutations, 57 liens. Dans une colonne : rareté puis nom, puis 4 passes du barycentre (moins de
-  croisements) ; points d'attache répartis sur les bords des cartes, dans l'ordre de l'autre bout.
-  Godseed et Jerryflower (conditions spéciales, sans recette) sont à part, sous l'arbre.
+  1 mutations, 57 liens. Godseed et Jerryflower (conditions spéciales, sans recette) sont à part,
+  sous l'arbre.
+- Refait une deuxième fois (demande du joueur, 30/09/2026 : « encore buggé ») : 12 liens sautent une
+  ou plusieurs étapes et passaient sous les cartes des étapes sautées, et 38 px entre les colonnes
+  donnaient un plat de spaghettis. Disposition de Sugiyama simplifiée (`encyclopedia/treeLayout.ts`,
+  logique pure et testée) : un lien qui saute une étape la traverse en ligne droite dans un couloir
+  réservé entre les cartes (les liens d'une même carte partagent leurs couloirs) ; ordre des
+  colonnes par barycentre puis échanges de voisines, en gardant l'ordre qui croise le moins ;
+  hauteurs qui rapprochent chaque carte de ses voisines (liens aussi droits que possible) sans
+  changer l'ordre ni descendre sous l'écart minimal. Un test vérifie qu'aucun lien ne passe sous une
+  carte, dans toutes les vues.
+- L'onglet utilise toute la largeur de la page (comme la Grille) ; l'espace entre les colonnes suit
+  la largeur disponible, de 44 à 140 px (cartes de 176 px). Plus étroit (crops de base, petits
+  écrans, mobile) : l'arbre défile horizontalement.
 - Au repos, liens discrets. Survol ou focus clavier d'une carte : tout son chemin (ingrédients,
   jusqu'au départ) en bleu, les recettes qui l'utilisent en orange, le reste estompé ; les
   ingrédients directs portent leur quantité (×6, « 1 consommé », « 2 catalyseur ») et un résumé
-  écrit (recette, « sert à », longueur du chemin) s'affiche au-dessus, à hauteur fixe pour que
-  l'arbre ne bouge pas. Clic : la fiche en fenêtre, et la mutation reste en avant après fermeture
-  (Échap ou clic dans le vide pour l'enlever). « Trouver une mutation » fait de même.
-- Crops de base en option (colonne à gauche). Les 6 étapes tiennent dans la largeur du site
-  (1 230 px) ; au-delà (crops de base, petits écrans, mobile), l'arbre défile horizontalement.
+  écrit (recette, « sert à », étape, nombre de mutations avant elle) s'affiche au-dessus, à hauteur
+  fixe pour que l'arbre ne bouge pas.
+- Mutation choisie (demande du joueur, 30/09/2026) : un clic sur une carte, ou « Trouver une
+  mutation », ne garde que ce qu'il faut pour la faire, dans leurs étapes (les étapes vides
+  disparaissent), avec deux vues au choix dans la barre du haut :
+  « Avant et après » = ses ingrédients directs et les recettes qui l'utilisent ;
+  « Tout le chemin » = toutes les mutations à faire avant elle, jusqu'au départ (rien après).
+  La carte choisie est entourée de vert ; un clic sur une autre carte la choisit à son tour. Second
+  clic (ou bouton « Fiche ») : sa fiche en fenêtre. « Tout l'arbre » ou Échap : retour à tout
+  l'arbre (fiche ouverte, Échap la ferme d'abord). Les cartes glissent vers leur nouvelle place
+  (240 ms), les liens reviennent en fondu. Godseed et Jerryflower, hors de l'arbre, ouvrent
+  directement leur fiche.
+- Crops de base en option (colonne à gauche) ; dans une vue filtrée, seulement ceux des recettes
+  affichées.
+- Colonnes par rareté (demande du joueur, 30/09/2026 : « pourquoi les Epic, Legendary… ne sont pas
+  au même stade ? »), le rangement par défaut ; « Colonnes : Par rareté / Par étape » pour revenir
+  aux étapes. Common 9, Uncommon 6, Rare 9, Epic 9, Legendary 5, titres à la couleur de la rareté.
+  Les étapes et les raretés ne coïncident pas pour 5 mutations (Soggybud et Do-not-eat-shroom, Rare
+  à l'étape 2 ; Turtlellini, Epic à l'étape 3 ; PlantBoy Advance, Epic à l'étape 5 ; All-in Aloe,
+  Legendary à l'étape 6). Aucune recette ne demande une mutation plus rare qu'elle, donc tous les
+  liens vont encore de gauche à droite ; deux recettes demandent une mutation de la même rareté
+  (Turtlellini → Shellfruit, Thunderling → PlantBoy Advance) : la rareté prend alors une colonne de
+  plus, sous un seul titre (Epic : 7 puis 2). Calculé sur les liens affichés : dans une vue filtrée
+  sans Turtlellini, Shellfruit revient dans la première colonne Epic. Si une recette demandait un
+  jour une mutation plus rare, l'arbre reviendrait aux étapes (testé). L'étape reste écrite dans la
+  barre du haut et dans le nom accessible des cartes.
 - Aperçu de la plantation (repliable) : la mutation au centre (vert) et ses ingrédients autour
   (orange), les mutations 2x2 et 3x3 posées le long de l'emplacement (`logic/plantingPreview.ts`).
   Chaque exemple est vérifié par la logique de la Grille ; un test le vérifie pour toutes les
@@ -375,7 +409,8 @@ recrée tout »)
   tooltip-in).
 - Où : changement d'onglet et passage Sac / Liste (fondu), infobulles, barres d'avancement (500 ms),
   fiche (ouverture, passage à une autre mutation), arbre de l'Encyclopédie (cartes qui s'éclairent
-  au survol, chemin qui s'allume en fondu, quantités qui « pop »), détail d'un objectif, sections repliables, branches de l'arbre du
+  au survol, chemin qui s'allume en fondu, quantités qui « pop », cartes qui glissent vers leur place quand
+  une mutation est choisie), détail d'un objectif, sections repliables, branches de l'arbre du
   calculateur (flèche qui pivote), recommandation du tableau de bord quand elle change, cartes de la
   liste (case qui « pop »), sac (nombre qui rebondit, ✓ qui apparaît, reflet d'enchantement qui balaie
   l'objet au survol comme dans le jeu), grille (crop posé, spawns possibles), palette, messages
@@ -428,7 +463,8 @@ recrée tout »)
 
 ### Interface allégée (demande du joueur, 30/09/2026)
 - Plus d'en-tête visible (titre et phrase) en haut des onglets : chaque onglet garde un titre h2
-  masqué pour les lecteurs d'écran (et, pour l'Encyclopédie, l'indication « Entrée ouvre la fiche »).
+  masqué pour les lecteurs d'écran (et, pour l'Encyclopédie, l'indication « Entrée choisit une mutation, Entrée à nouveau ouvre sa
+  fiche »).
 - Barre du haut à la manière de SkyCrypt : flottante, centrée, de la largeur de son contenu, sur une
   ligne en grand écran (titre, onglets en pastilles, import), en verre dépoli sur le fond ; deux
   lignes sous 1280 px. Les côtés vides laissent passer les clics ; opaque si le système demande
@@ -449,7 +485,8 @@ recrée tout »)
   eau = goutte. Les Lonelily (spawn au hasard) ne sont pas dessinées, leurs conflits oui. Le détail
   reste dans le panneau Case et le nom accessible des cases. Palette en grille de cartes.
 - Mise en page de SkyCrypt (demande du joueur, capture d'un profil) : l'onglet utilise toute la
-  largeur de la page (`FULL_WIDTH_TABS`, les autres onglets restent à 1 280 px). À gauche, à la
+  largeur de la page (`FULL_WIDTH_TABS`, avec l'Encyclopédie ; les autres onglets restent à
+  1 280 px). À gauche, à la
   place du personnage : « Crops et mutations » (outils, recherche, cartes), une colonne sur toute
   la hauteur de l'écran, collante, dont la liste défile seule. À droite, à la place des stats :
   greenhouses, barre des plans (une seule ligne quand la place le permet), grille, et à côté en

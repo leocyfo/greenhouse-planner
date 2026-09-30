@@ -1,11 +1,14 @@
 /**
  * Modèle de l'Encyclopédie (logique pure, testée) : état de chaque mutation et arbre des recettes,
- * une colonne par étape (niveau de recette), liens ingrédient → recette tous de gauche à droite.
+ * colonnes par rareté ou par étape (voir TreeArrangement), liens ingrédient → recette tous de
+ * gauche à droite. Une mutation choisie ne garde que ce qu'il faut pour la faire (TreeSelection).
  */
+import { formatRarity } from '../../components/labels'
 import { recipeInputs, recipeLevels, type InputRelation } from '../../logic/graph'
 import { isManualSpecial, missingInputs } from '../../logic/nextAction'
 import type { Inventory, MutationNeed } from '../../logic/recipes'
 import type { GameData, Mutation } from '../../types/game'
+import { layoutColumns } from './treeLayout'
 
 /**
  * - complete : au moins un exemplaire, et tout ce que demandent les objectifs suivis ;
@@ -28,23 +31,54 @@ export function mutationState(
 }
 
 /** Carte d'une mutation et pastille d'un crop de base, en pixels. */
-export const CARD_WIDTH = 168
+export const CARD_WIDTH = 176
 export const CARD_HEIGHT = 48
 const CARD_GAP = 14
 export const BASE_WIDTH = 128
 export const BASE_HEIGHT = 28
 const BASE_GAP = 8
-/** Place entre deux colonnes, pour les liens ; les 6 étapes tiennent dans la largeur du site. */
-const COLUMN_GAP = 38
+/** Espace entre deux colonnes : la largeur disponible, dans ces bornes (au-delà, l'arbre défile). */
+export const MIN_COLUMN_GAP = 44
+export const MAX_COLUMN_GAP = 140
+/** Largeur supposée quand elle n'est pas donnée (tests). */
+const DEFAULT_WIDTH = 1200
 /** Titres des colonnes, au-dessus des cartes. */
 export const HEADER_HEIGHT = 44
-/** Passes de l'heuristique du barycentre (moins de croisements). */
-const SWEEPS = 4
+
+/**
+ * Mutation choisie : seules restent
+ * - neighbors : ses ingrédients directs et les recettes qui l'utilisent (avant et après) ;
+ * - chain : toutes les mutations à faire avant elle, jusqu'au départ.
+ */
+export type TreeMode = 'neighbors' | 'chain'
+
+/**
+ * Rangement des colonnes :
+ * - rarity : une colonne par rareté, Common → Legendary. Une rareté prend plusieurs colonnes quand
+ *   une de ses recettes demande une mutation de la même rareté (Epic : Turtlellini → Shellfruit) ;
+ * - step : une colonne par étape de fabrication (1 + l'étape de l'ingrédient le plus avancé).
+ */
+export type TreeArrangement = 'rarity' | 'step'
+
+export interface TreeSelection {
+  readonly id: string
+  readonly mode: TreeMode
+}
+
+export interface TreeOptions {
+  readonly arrangement: TreeArrangement
+  readonly showBaseCrops: boolean
+  readonly selection?: TreeSelection | null
+  /** Largeur disponible en pixels : l'espace entre les colonnes s'y adapte. */
+  readonly availableWidth?: number
+}
 
 export interface TreeNode {
   readonly id: string
   readonly kind: 'mutation' | 'base'
   readonly column: number
+  /** Étape de fabrication (1 : que des crops de base) ; 0 pour un crop de base. */
+  readonly step: number
   readonly x: number
   readonly y: number
   readonly width: number
@@ -70,12 +104,24 @@ export interface TreeColumn {
   readonly count: number
 }
 
+/** Titre au-dessus d'une colonne, ou de plusieurs colonnes de la même rareté. */
+export interface TreeHeader {
+  readonly key: string
+  readonly title: string
+  /** Rareté de la colonne (rangement par rareté), pour sa couleur. */
+  readonly rarity: string | null
+  readonly x: number
+  readonly width: number
+  readonly count: number
+}
+
 export interface TreeModel {
   readonly width: number
   readonly height: number
   readonly nodes: readonly TreeNode[]
   readonly edges: readonly TreeEdge[]
   readonly columns: readonly TreeColumn[]
+  readonly headers: readonly TreeHeader[]
   /** Mutations à condition spéciale (Godseed, Jerryflower) : sans recette, hors de l'arbre. */
   readonly specials: readonly string[]
 }
@@ -84,138 +130,189 @@ export function baseNodeId(name: string): string {
   return `base:${name}`
 }
 
-const average = (values: readonly number[]) => values.reduce((sum, value) => sum + value, 0) / values.length
-const round = (value: number) => Math.round(value * 10) / 10
+/** Toutes les mutations à faire avant celle-ci (ingrédients, ingrédients des ingrédients…). */
+export function chainOf(data: GameData, id: string): ReadonlySet<string> {
+  const chain = new Set<string>()
+  const visit = (mutationId: string) => {
+    const mutation = data.mutationsById.get(mutationId)
+    if (!mutation) return
+    for (const input of recipeInputs(data, mutation)) {
+      if (input.crop.kind !== 'mutation' || chain.has(input.crop.id)) continue
+      chain.add(input.crop.id)
+      visit(input.crop.id)
+    }
+  }
+  visit(id)
+  return chain
+}
+
+type RawEdge = Omit<TreeEdge, 'path'>
+
+/** Ce qui reste affiché : tout l'arbre, ou seulement ce qu'il faut pour la mutation choisie. */
+function visiblePart(
+  data: GameData,
+  treeIds: ReadonlySet<string>,
+  edges: readonly RawEdge[],
+  options: TreeOptions,
+): { readonly ids: ReadonlySet<string>; readonly edges: readonly RawEdge[] } {
+  const selection = options.selection
+  if (!selection || !treeIds.has(selection.id)) {
+    const baseIds = options.showBaseCrops ? data.baseCrops.map((crop) => baseNodeId(crop.name)) : []
+    return { ids: new Set([...treeIds, ...baseIds]), edges }
+  }
+  const { id } = selection
+  const chain = chainOf(data, id)
+  const kept =
+    selection.mode === 'neighbors'
+      ? edges.filter((edge) => edge.source === id || edge.target === id)
+      : edges.filter((edge) => edge.target === id || chain.has(edge.target))
+  return { ids: new Set([id, ...kept.flatMap((edge) => [edge.source, edge.target])]), edges: kept }
+}
 
 /**
- * Colonnes Étape 1 → Étape N (précédées des crops de base en option) : l'étape d'une mutation est
- * 1 + son niveau de recette, donc chaque ingrédient est dans une colonne à gauche de sa recette.
- * Dans chaque colonne, rareté puis nom, puis quelques passes du barycentre (position moyenne des
- * voisins) pour limiter les croisements. Les liens partent et arrivent à des points répartis sur
- * les bords des cartes, dans l'ordre vertical de l'autre bout. Résultat déterministe.
+ * Rang de chaque mutation dans sa rareté : 0, ou 1 + celui de son ingrédient affiché de même rareté
+ * le plus avancé. null si une recette demande une mutation plus rare qu'elle : on ne pourrait plus
+ * aller de gauche à droite (jamais le cas dans les données, un test le vérifie).
  */
-export function buildTree(data: GameData, options: { readonly showBaseCrops: boolean }): TreeModel {
+function rarityTiers(shown: readonly Mutation[], edges: readonly RawEdge[]): ReadonlyMap<string, number> | null {
+  const byId = new Map(shown.map((m) => [m.id, m]))
+  const sameRarity = new Map<string, string[]>()
+  for (const edge of edges) {
+    const source = byId.get(edge.source)
+    const target = byId.get(edge.target)
+    if (!source || !target) continue
+    if (source.rarityRank > target.rarityRank) return null
+    if (source.rarityRank === target.rarityRank) sameRarity.set(target.id, [...(sameRarity.get(target.id) ?? []), source.id])
+  }
+  const tiers = new Map<string, number>()
+  const tierOf = (id: string): number => {
+    const known = tiers.get(id)
+    if (known !== undefined) return known
+    const tier = Math.max(-1, ...(sameRarity.get(id) ?? []).map(tierOf)) + 1
+    tiers.set(id, tier)
+    return tier
+  }
+  shown.forEach((m) => tierOf(m.id))
+  return tiers
+}
+
+/**
+ * Colonnes par rareté ou par étape (voir TreeArrangement), précédées des crops de base en option :
+ * chaque ingrédient est toujours dans une colonne à gauche de sa recette. Les colonnes sans mutation
+ * affichée (vue filtrée) disparaissent. Positions et liens : treeLayout.
+ */
+export function buildTree(data: GameData, options: TreeOptions): TreeModel {
   const levels = recipeLevels(data)
   const specials = data.mutations.filter((m) => isManualSpecial(data, m)).map((m) => m.id)
   const inTree = data.mutations.filter((m) => !specials.includes(m.id))
-  const steps = Math.max(...inTree.map((m) => levels.get(m.id) ?? 0)) + 1
   const byRarityThenName = (a: Mutation, b: Mutation) => a.rarityRank - b.rarityRank || a.name.localeCompare(b.name, 'fr')
-  const columns: string[][] = [
-    ...(options.showBaseCrops ? [data.baseCrops.map((crop) => baseNodeId(crop.name))] : []),
-    ...Array.from({ length: steps }, (_, level) =>
-      inTree
-        .filter((m) => (levels.get(m.id) ?? 0) === level)
-        .sort(byRarityThenName)
-        .map((m) => m.id),
-    ),
-  ]
-  const isBaseColumn = (index: number) => options.showBaseCrops && index === 0
-  const sizeOf = (index: number) =>
-    isBaseColumn(index)
-      ? { width: BASE_WIDTH, height: BASE_HEIGHT, gap: BASE_GAP }
-      : { width: CARD_WIDTH, height: CARD_HEIGHT, gap: CARD_GAP }
-  const columnHeight = (index: number) => {
-    const { height, gap } = sizeOf(index)
-    const count = columns[index]?.length ?? 0
-    return count * height + Math.max(0, count - 1) * gap
-  }
-  const tallest = Math.max(...columns.map((_, index) => columnHeight(index)))
-  const columnX: number[] = []
-  columns.forEach((_, index) => columnX.push(index === 0 ? 0 : (columnX[index - 1] ?? 0) + sizeOf(index - 1).width + COLUMN_GAP))
 
-  const edges: Omit<TreeEdge, 'path'>[] = []
-  for (const mutation of inTree) {
-    for (const input of recipeInputs(data, mutation)) {
-      if (input.crop.kind === 'base' && !options.showBaseCrops) continue
+  const allEdges: RawEdge[] = inTree.flatMap((mutation) =>
+    recipeInputs(data, mutation).flatMap((input) => {
+      if (input.crop.kind === 'base' && !options.showBaseCrops) return []
       const source = input.crop.kind === 'mutation' ? input.crop.id : baseNodeId(input.crop.name)
-      edges.push({ id: `${source}->${mutation.id}`, source, target: mutation.id, relation: input.relation, cells: input.cells, units: input.units })
-    }
-  }
-  const ingredientsOf = new Map<string, string[]>()
-  const productsOf = new Map<string, string[]>()
-  for (const edge of edges) {
-    ingredientsOf.set(edge.target, [...(ingredientsOf.get(edge.target) ?? []), edge.source])
-    productsOf.set(edge.source, [...(productsOf.get(edge.source) ?? []), edge.target])
-  }
-
-  // Centre vertical de chaque carte : colonnes centrées sous les titres.
-  const columnOf = new Map<string, number>()
-  columns.forEach((column, index) => column.forEach((id) => columnOf.set(id, index)))
-  const centerY = new Map<string, number>()
-  const place = (index: number) => {
-    const { height, gap } = sizeOf(index)
-    const top = HEADER_HEIGHT + (tallest - columnHeight(index)) / 2
-    columns[index]?.forEach((id, row) => centerY.set(id, top + row * (height + gap) + height / 2))
-  }
-  columns.forEach((_, index) => place(index))
-  const reorder = (index: number, neighborsOf: ReadonlyMap<string, readonly string[]>) => {
-    const column = columns[index] ?? []
-    const keyed = column.map((id, position) => {
-      const others = (neighborsOf.get(id) ?? []).filter((n) => columnOf.get(n) !== index)
-      return { id, position, key: others.length > 0 ? average(others.map((n) => centerY.get(n) ?? 0)) : (centerY.get(id) ?? 0) }
-    })
-    keyed.sort((a, b) => a.key - b.key || a.position - b.position)
-    column.splice(0, column.length, ...keyed.map((entry) => entry.id))
-    place(index)
-  }
-  for (let sweep = 0; sweep < SWEEPS; sweep += 1) {
-    for (let index = 1; index < columns.length; index += 1) reorder(index, ingredientsOf)
-    for (let index = columns.length - 2; index >= 0; index -= 1) reorder(index, productsOf)
-  }
-
-  const nodes: TreeNode[] = columns.flatMap((column, index) =>
-    column.map((id) => {
-      const { width, height } = sizeOf(index)
-      return {
-        id,
-        kind: isBaseColumn(index) ? ('base' as const) : ('mutation' as const),
-        column: index,
-        x: columnX[index] ?? 0,
-        y: (centerY.get(id) ?? 0) - height / 2,
-        width,
-        height,
-      }
+      return [{ id: `${source}->${mutation.id}`, source, target: mutation.id, relation: input.relation, cells: input.cells, units: input.units }]
     }),
   )
-  const nodeById = new Map(nodes.map((node) => [node.id, node]))
+  const visible = visiblePart(data, new Set(inTree.map((m) => m.id)), allEdges, options)
 
-  // Points d'attache : répartis sur le bord, dans l'ordre vertical de l'autre bout du lien.
-  const port = (edgeIds: readonly string[], edgeId: string, node: TreeNode) =>
-    node.y + (node.height * (edgeIds.indexOf(edgeId) + 1)) / (edgeIds.length + 1)
-  const sortedBy = (list: readonly Omit<TreeEdge, 'path'>[], end: (edge: Omit<TreeEdge, 'path'>) => string) =>
-    [...list].sort((a, b) => (centerY.get(end(a)) ?? 0) - (centerY.get(end(b)) ?? 0)).map((edge) => edge.id)
-  const incoming = new Map<string, string[]>()
-  const outgoing = new Map<string, string[]>()
-  for (const node of nodes) {
-    incoming.set(node.id, sortedBy(edges.filter((e) => e.target === node.id), (e) => e.source))
-    outgoing.set(node.id, sortedBy(edges.filter((e) => e.source === node.id), (e) => e.target))
+  const baseIds = data.baseCrops.map((crop) => baseNodeId(crop.name)).filter((id) => visible.ids.has(id))
+  const shown = inTree.filter((m) => visible.ids.has(m.id))
+  const stepOf = (id: string) => (levels.get(id) ?? 0) + 1
+  const tiers = options.arrangement === 'rarity' ? rarityTiers(shown, visible.edges) : null
+  const cards = { kind: 'mutation' as const, width: CARD_WIDTH, height: CARD_HEIGHT, gap: CARD_GAP }
+  const mutationColumns = tiers
+    ? data.rarities.flatMap((rarity) => {
+        const ofRarity = shown.filter((m) => m.rarity === rarity)
+        const tierList = [...new Set(ofRarity.map((m) => tiers.get(m.id) ?? 0))].sort((a, b) => a - b)
+        return tierList.map((tier) => ({
+          ...cards,
+          key: `rarity-${rarity}-${tier}`,
+          group: `rarity-${rarity}`,
+          title: formatRarity(rarity),
+          rarity,
+          ids: ofRarity
+            .filter((m) => (tiers.get(m.id) ?? 0) === tier)
+            .sort((a, b) => stepOf(a.id) - stepOf(b.id) || a.name.localeCompare(b.name, 'fr'))
+            .map((m) => m.id),
+        }))
+      })
+    : [...new Set(shown.map((m) => stepOf(m.id)))]
+        .sort((a, b) => a - b)
+        .map((step) => ({
+          ...cards,
+          key: `step-${step}`,
+          group: `step-${step}`,
+          title: `Étape ${step}`,
+          rarity: null,
+          ids: shown
+            .filter((m) => stepOf(m.id) === step)
+            .sort(byRarityThenName)
+            .map((m) => m.id),
+        }))
+  const baseColumn = {
+    key: 'base',
+    group: 'base',
+    title: 'Crops de base',
+    rarity: null,
+    kind: 'base' as const,
+    ids: baseIds,
+    width: BASE_WIDTH,
+    height: BASE_HEIGHT,
+    gap: BASE_GAP,
   }
-  const withPaths: TreeEdge[] = edges.map((edge) => {
-    const from = nodeById.get(edge.source)
-    const to = nodeById.get(edge.target)
-    if (!from || !to) return { ...edge, path: '' }
-    const sx = from.x + from.width
-    const sy = port(outgoing.get(from.id) ?? [], edge.id, from)
-    const tx = to.x
-    const ty = port(incoming.get(to.id) ?? [], edge.id, to)
-    const bend = (tx - sx) / 2
-    return { ...edge, path: `M${round(sx)} ${round(sy)}C${round(sx + bend)} ${round(sy)} ${round(tx - bend)} ${round(ty)} ${round(tx)} ${round(ty)}` }
-  })
+  const columns = [...(baseIds.length > 0 ? [baseColumn] : []), ...mutationColumns]
+
+  const fixedWidth = columns.reduce((sum, column) => sum + column.width, 0)
+  const free = (options.availableWidth ?? DEFAULT_WIDTH) - fixedWidth
+  const columnGap =
+    columns.length > 1 ? Math.min(MAX_COLUMN_GAP, Math.max(MIN_COLUMN_GAP, Math.floor(free / (columns.length - 1)))) : 0
+  const layout = layoutColumns(columns, visible.edges, { top: HEADER_HEIGHT, columnGap })
 
   return {
-    width: (columnX[columns.length - 1] ?? 0) + sizeOf(columns.length - 1).width,
-    height: HEADER_HEIGHT + tallest,
-    nodes,
-    edges: withPaths,
+    width: layout.width,
+    height: layout.height,
+    nodes: columns.flatMap((column, index) =>
+      column.ids.map((id) => {
+        const position = layout.positions.get(id) ?? { x: 0, y: 0 }
+        const step = column.kind === 'base' ? 0 : stepOf(id)
+        return { id, kind: column.kind, column: index, step, x: position.x, y: position.y, width: column.width, height: column.height }
+      }),
+    ),
+    edges: visible.edges.map((edge) => ({ ...edge, path: layout.paths.get(edge.id) ?? '' })),
     columns: columns.map((column, index) => ({
-      key: isBaseColumn(index) ? 'base' : `step-${index - (options.showBaseCrops ? 1 : 0)}`,
-      title: isBaseColumn(index) ? 'Crops de base' : `Étape ${index + (options.showBaseCrops ? 0 : 1)}`,
-      x: columnX[index] ?? 0,
-      width: sizeOf(index).width,
-      count: column.length,
+      key: column.key,
+      title: column.title,
+      x: layout.columnX[index] ?? 0,
+      width: column.width,
+      count: column.ids.length,
     })),
+    headers: headersOf(columns, layout.columnX),
     specials,
   }
+}
+
+interface HeaderSource {
+  readonly group: string
+  readonly title: string
+  readonly rarity: string | null
+  readonly ids: readonly string[]
+  readonly width: number
+}
+
+/** Un titre par groupe de colonnes voisines : une rareté sur deux colonnes n'a qu'un titre. */
+function headersOf(columns: readonly HeaderSource[], columnX: readonly number[]): TreeHeader[] {
+  const headers: TreeHeader[] = []
+  columns.forEach((column, index) => {
+    const x = columnX[index] ?? 0
+    const last = headers.at(-1)
+    if (last?.key === column.group) {
+      headers[headers.length - 1] = { ...last, width: x + column.width - last.x, count: last.count + column.ids.length }
+    } else {
+      headers.push({ key: column.group, title: column.title, rarity: column.rarity, x, width: column.width, count: column.ids.length })
+    }
+  })
+  return headers
 }
 
 /** Mutation mise en avant : tout son chemin (ingrédients, jusqu'au départ) et ce qu'elle permet de faire. */

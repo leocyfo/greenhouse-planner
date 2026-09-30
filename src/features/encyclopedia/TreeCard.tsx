@@ -27,8 +27,13 @@ interface MutationTreeCardProps {
   /** Étape de la mutation (« Étape 2 »), pour le nom accessible. */
   readonly step?: string
   readonly dimmed?: boolean
+  /** Mise en avant (survol, focus clavier). */
   readonly active?: boolean
+  /** Mutation choisie : l'arbre ne garde que ce qu'il faut pour la faire. */
+  readonly selected?: boolean
   readonly amount?: string | null
+  /** Ce que fait le clic, pour le nom accessible (« Ouvrir la fiche » par défaut). */
+  readonly actionLabel?: string
   readonly style?: CSSProperties
   readonly buttonRef?: (element: HTMLElement | null) => void
   readonly onOpen: () => void
@@ -45,7 +50,9 @@ export function MutationTreeCard({
   step,
   dimmed = false,
   active = false,
+  selected = false,
   amount = null,
+  actionLabel = 'Ouvrir la fiche',
   style,
   buttonRef,
   onOpen,
@@ -69,13 +76,13 @@ export function MutationTreeCard({
       ref={buttonRef}
       id={`arbre-${mutation.id}`}
       type="button"
-      aria-label={`${label}. Ouvrir la fiche.`}
+      aria-label={`${label}. ${actionLabel}.`}
       onClick={onOpen}
       onPointerEnter={onActivate}
       onPointerLeave={onDeactivate}
       onFocus={onActivate}
       onBlur={onDeactivate}
-      className={`flex items-center gap-2 rounded-lg border px-2 text-left shadow-sm shadow-black/30 transition duration-150 hover:brightness-125 motion-safe:active:scale-[0.97] ${dimmed ? 'opacity-25' : ''} ${active ? 'shadow-lg ring-2 ring-ink' : ''}`}
+      className={`flex items-center gap-2 rounded-lg border px-2 text-left shadow-sm shadow-black/30 transition duration-150 hover:brightness-125 motion-safe:active:scale-[0.97] ${dimmed ? 'opacity-25' : ''} ${selected ? 'shadow-lg ring-2 ring-accent' : active ? 'shadow-lg ring-2 ring-ink/70' : ''}`}
       // Bordures côté par côté : le raccourci borderColor écraserait la bande de rareté à chaque
       // changement d'état (React ne réapplique pas borderLeftColor, qui n'a pas changé).
       style={{

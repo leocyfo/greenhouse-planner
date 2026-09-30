@@ -7,11 +7,15 @@ import {
   baseNodeId,
   buildTree,
   CARD_WIDTH,
+  chainOf,
   edgeRole,
   focusOn,
   HEADER_HEIGHT,
   isDimmed,
+  MAX_COLUMN_GAP,
+  MIN_COLUMN_GAP,
   mutationState,
+  type TreeModel,
 } from './graphModel'
 
 const data = projectData()
@@ -43,7 +47,7 @@ describe('graphe : état des mutations', () => {
 })
 
 describe('arbre : disposition par étape', () => {
-  const tree = buildTree(data, { showBaseCrops: false })
+  const tree = buildTree(data, { arrangement: 'step', showBaseCrops: false })
   const node = (id: string) => tree.nodes.find((n) => n.id === id)
 
   it("range chaque mutation dans la colonne de son étape, les conditions spéciales à part", () => {
@@ -94,7 +98,7 @@ describe('arbre : disposition par étape', () => {
   })
 
   it('ajoute une colonne de crops de base en option', () => {
-    const withBase = buildTree(data, { showBaseCrops: true })
+    const withBase = buildTree(data, { arrangement: 'step', showBaseCrops: true })
     expect(withBase.nodes).toHaveLength(55)
     expect(withBase.columns[0]).toMatchObject({ title: 'Crops de base', count: 17 })
     expect(withBase.columns[1]).toMatchObject({ title: 'Étape 1', count: 9 })
@@ -102,12 +106,116 @@ describe('arbre : disposition par étape', () => {
   })
 
   it('donne une disposition identique à chaque calcul', () => {
-    expect(buildTree(data, { showBaseCrops: false })).toEqual(tree)
+    expect(buildTree(data, { arrangement: 'step', showBaseCrops: false })).toEqual(tree)
+  })
+
+  it('ne fait jamais passer un lien sous une carte : il traverse chaque étape sautée entre les cartes', () => {
+    expectNoEdgeUnderCards(tree)
+    expectNoEdgeUnderCards(buildTree(data, { arrangement: 'step', showBaseCrops: true }))
+  })
+
+  it("adapte l'espace entre les colonnes à la largeur disponible, dans des bornes", () => {
+    const gapOf = (model: TreeModel) => (model.columns[1]?.x ?? 0) - CARD_WIDTH
+    const wide = buildTree(data, { arrangement: 'step', showBaseCrops: false, availableWidth: 1850 })
+    expect(gapOf(wide)).toBe(MAX_COLUMN_GAP)
+    expect(gapOf(buildTree(data, { arrangement: 'step', showBaseCrops: false, availableWidth: 1300 }))).toBe(Math.floor((1300 - 6 * CARD_WIDTH) / 5))
+    const narrow = buildTree(data, { arrangement: 'step', showBaseCrops: false, availableWidth: 400 })
+    expect(gapOf(narrow)).toBe(MIN_COLUMN_GAP) // plus large que l'écran : l'arbre défile
+    expect(narrow.width).toBeGreaterThan(400)
+    // Seules les abscisses changent.
+    expect(wide.nodes.map((n) => [n.id, n.y])).toEqual(narrow.nodes.map((n) => [n.id, n.y]))
+  })
+})
+
+/** Chaque lien traverse les colonnes qu'il saute par un segment droit (L), hors de toute carte. */
+function expectNoEdgeUnderCards(model: TreeModel) {
+  const nodeById = new Map(model.nodes.map((n) => [n.id, n]))
+  for (const edge of model.edges) {
+    const from = nodeById.get(edge.source)
+    const to = nodeById.get(edge.target)
+    const points = [...edge.path.matchAll(/([MCL])([^MCL]+)/g)].map(([, command, args]) => {
+      const numbers = (args ?? '').trim().split(/\s+/).map(Number)
+      return { command, x: numbers.at(-2) ?? 0, y: numbers.at(-1) ?? 0 }
+    })
+    const crossings = points.flatMap((point, index) => (point.command === 'L' ? [{ from: points[index - 1], to: point }] : []))
+    expect(crossings, edge.id).toHaveLength((to?.column ?? 0) - (from?.column ?? 0) - 1)
+    for (const crossing of crossings) {
+      expect(crossing.from?.y, edge.id).toBe(crossing.to.y)
+      const cards = model.nodes.filter((n) => n.x === crossing.from?.x)
+      expect(cards.length, edge.id).toBeGreaterThan(0)
+      for (const card of cards) {
+        const outside = crossing.to.y < card.y - 4 || crossing.to.y > card.y + card.height + 4
+        expect(outside, `${edge.id} sous ${card.id}`).toBe(true)
+      }
+    }
+  }
+}
+
+describe('arbre : mutation choisie', () => {
+  const ids = (model: TreeModel) => model.nodes.map((n) => n.id).sort()
+  const columns = (model: TreeModel) => model.columns.map((c) => [c.title, c.count])
+
+  it('liste toutes les mutations à faire avant une mutation', () => {
+    expect([...chainOf(data, 'blastberry')].sort()).toEqual(['ashwreath', 'chocoberry', 'choconut', 'gloomgourd'])
+    expect(chainOf(data, 'dustgrain').size).toBe(0)
+    expect(chainOf(data, 'glasscorn').size).toBe(13)
+  })
+
+  it('« avant et après » : ses ingrédients directs et les recettes qui l’utilisent, dans leurs étapes', () => {
+    const model = buildTree(data, { arrangement: 'step', showBaseCrops: false, selection: { id: 'snoozling', mode: 'neighbors' } })
+    expect(ids(model)).toEqual(
+      ['creambloom', 'dustgrain', 'duskbloom', 'plantboy_advance', 'puffercloud', 'snoozling', 'stoplight_petal', 'thornshade', 'witherbloom'].sort(),
+    )
+    expect(model.edges.every((e) => e.source === 'snoozling' || e.target === 'snoozling')).toBe(true)
+    expect(model.edges).toHaveLength(8)
+    expect(columns(model)).toEqual([
+      ['Étape 1', 2],
+      ['Étape 2', 3],
+      ['Étape 3', 1],
+      ['Étape 4', 2],
+      ['Étape 5', 1],
+    ])
+    expectNoEdgeUnderCards(model)
+  })
+
+  it('« tout le chemin » : toutes les mutations à faire avant elle, et rien après', () => {
+    const model = buildTree(data, { arrangement: 'step', showBaseCrops: false, selection: { id: 'glasscorn', mode: 'chain' } })
+    expect(ids(model)).toEqual(['glasscorn', ...chainOf(data, 'glasscorn')].sort())
+    expect(columns(model)).toEqual([
+      ['Étape 1', 5],
+      ['Étape 2', 4],
+      ['Étape 3', 3],
+      ['Étape 4', 1],
+      ['Étape 5', 1],
+    ])
+    const focus = focusOn(model.edges, 'glasscorn')
+    expect(model.edges.every((e) => edgeRole(e, focus) === 'path')).toBe(true)
+    expectNoEdgeUnderCards(model)
+  })
+
+  it('garde les étapes sans mutation affichée hors de la vue, et les crops de base utilisés seulement', () => {
+    const aloe = buildTree(data, { arrangement: 'step', showBaseCrops: false, selection: { id: 'all_in_aloe', mode: 'neighbors' } })
+    expect(columns(aloe)).toEqual([
+      ['Étape 3', 1],
+      ['Étape 5', 1],
+      ['Étape 6', 1],
+    ])
+    const withBase = buildTree(data, { arrangement: 'step', showBaseCrops: true, selection: { id: 'blastberry', mode: 'chain' } })
+    expect(withBase.columns[0]).toMatchObject({ title: 'Crops de base', count: 5 })
+    expect(ids(withBase).filter((id) => id.startsWith('base:'))).toEqual(
+      ['Cocoa Beans', 'Fire', 'Melon', 'Nether Wart', 'Pumpkin'].map(baseNodeId).sort(),
+    )
+  })
+
+  it('montre tout l’arbre pour une mutation hors de l’arbre ou inconnue', () => {
+    const full = buildTree(data, { arrangement: 'step', showBaseCrops: false })
+    expect(buildTree(data, { arrangement: 'step', showBaseCrops: false, selection: { id: 'godseed', mode: 'chain' } })).toEqual(full)
+    expect(buildTree(data, { arrangement: 'step', showBaseCrops: false, selection: { id: 'inconnue', mode: 'neighbors' } })).toEqual(full)
   })
 })
 
 describe('arbre : mutation mise en avant', () => {
-  const tree = buildTree(data, { showBaseCrops: false })
+  const tree = buildTree(data, { arrangement: 'step', showBaseCrops: false })
   const edge = (source: string, target: string) => tree.edges.find((e) => e.source === source && e.target === target)
 
   it("montre tout son chemin jusqu'au départ, et les recettes qui l'utilisent", () => {
@@ -156,5 +264,67 @@ describe('graphe : recettes qui utilisent une mutation', () => {
   it("s'appuie sur le même plan que le reste de l'app pour l'état", () => {
     const plan = computePlan(data, { targets: [{ mutationId: 'dustgrain', quantity: 3 }], inventory: { dustgrain: 3 }, mode: 'minimum' })
     expect(mutationState(data, mutationById(data, 'dustgrain'), plan.needs.get('dustgrain'), { dustgrain: 3 })).toBe('complete')
+  })
+})
+
+describe('arbre : colonnes par rareté', () => {
+  const tree = buildTree(data, { arrangement: 'rarity', showBaseCrops: false })
+  const headers = (model: TreeModel) => model.headers.map((h) => [h.title, h.count])
+
+  it('range chaque mutation dans la colonne de sa rareté, de Common à Legendary', () => {
+    expect(headers(tree)).toEqual([
+      ['Common', 9],
+      ['Uncommon', 6],
+      ['Rare', 9],
+      ['Epic', 9],
+      ['Legendary', 5],
+    ])
+    for (const node of tree.nodes) {
+      const header = tree.headers.find((h) => node.x >= h.x && node.x < h.x + h.width)
+      expect(header?.rarity, node.id).toBe(mutationById(data, node.id).rarity)
+    }
+  })
+
+  it('coupe une rareté en deux quand une recette demande une mutation de la même rareté', () => {
+    const epic = tree.columns.filter((c) => c.title === 'Epic')
+    expect(epic.map((c) => c.count)).toEqual([7, 2])
+    const second = tree.nodes.filter((n) => n.x === epic[1]?.x).map((n) => n.id)
+    expect(second.sort()).toEqual(['plantboy_advance', 'shellfruit'])
+  })
+
+  it('garde tous les liens de gauche à droite, jamais sous une carte', () => {
+    for (const model of [
+      tree,
+      buildTree(data, { arrangement: 'rarity', showBaseCrops: true }),
+      buildTree(data, { arrangement: 'rarity', showBaseCrops: false, selection: { id: 'all_in_aloe', mode: 'chain' } }),
+    ]) {
+      const column = new Map(model.nodes.map((n) => [n.id, n.column]))
+      for (const edge of model.edges) expect((column.get(edge.source) ?? 0) < (column.get(edge.target) ?? 0), edge.id).toBe(true)
+      expectNoEdgeUnderCards(model)
+    }
+  })
+
+  it("ne coupe pas la rareté quand l'ingrédient de même rareté n'est pas affiché", () => {
+    const model = buildTree(data, { arrangement: 'rarity', showBaseCrops: false, selection: { id: 'blastberry', mode: 'neighbors' } })
+    expect(headers(model)).toEqual([
+      ['Common', 1],
+      ['Uncommon', 1],
+      ['Rare', 1],
+      ['Epic', 2],
+    ])
+    expect(model.columns).toHaveLength(4)
+  })
+
+  it('garde l’étape de fabrication de chaque mutation', () => {
+    const step = (id: string) => tree.nodes.find((n) => n.id === id)?.step
+    expect(step('dustgrain')).toBe(1)
+    expect(step('soggybud')).toBe(2)
+    expect(step('all_in_aloe')).toBe(6)
+  })
+
+  it('revient aux étapes si une recette demandait un jour une mutation plus rare qu’elle', () => {
+    const mutations = data.mutations.map((m) => (m.id === 'chocoberry' ? { ...m, rarity: 'LEGENDARY', rarityRank: 4 } : m))
+    const changed = { ...data, mutations, mutationsById: new Map(mutations.map((m) => [m.id, m])) }
+    expect(buildTree(changed, { arrangement: 'rarity', showBaseCrops: false }).headers[0]?.title).toBe('Étape 1')
   })
 })

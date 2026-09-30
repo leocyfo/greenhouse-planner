@@ -1,19 +1,29 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { formatRarity } from '../../components/labels'
+import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
+import { isManualSpecial } from '../../logic/nextAction'
 import { useAppStore } from '../../store/appStore'
 import { useGoalPlan } from '../../store/useGoalPlan'
 import { useMutationDialog } from '../inventory/useMutationDialog'
 import { FocusBar } from './FocusBar'
-import { buildTree, focusOn, mutationState, type MutationState } from './graphModel'
+import { buildTree, focusOn, mutationState, type MutationState, type TreeArrangement, type TreeMode } from './graphModel'
 import { RecipeTree } from './RecipeTree'
 import { STATE_INFO } from './stateInfo'
 import { MutationTreeCard } from './TreeCard'
 import { TreeLegend } from './TreeLegend'
+import { useContentWidth } from './useContentWidth'
+
+const ARRANGEMENTS = [
+  { value: 'rarity', label: 'Par rareté', description: 'Une colonne par rareté, de Common à Legendary.' },
+  { value: 'step', label: 'Par étape', description: "Dans l'ordre de fabrication : chaque mutation une colonne après son ingrédient le plus avancé." },
+] as const
 
 /**
- * Onglet Encyclopédie : l'arbre des recettes par étape. Survoler une mutation met en avant tout son
- * chemin et ce qu'elle permet de faire ; cliquer ouvre sa fiche et garde la mise en avant.
+ * Onglet Encyclopédie : l'arbre des recettes, colonnes par rareté (ou par étape), sur toute la
+ * largeur de la page. Survoler
+ * une mutation met en avant son chemin ; la choisir (clic) ne garde que ce qu'il faut pour la faire,
+ * avant et après ou tout le chemin ; un second clic ouvre sa fiche.
  */
 export function EncyclopediaTab() {
   const data = getGameData()
@@ -21,11 +31,23 @@ export function EncyclopediaTab() {
   const inventory = useAppStore((s) => s.progress.inventory)
   const [showBaseCrops, setShowBaseCrops] = useState(false)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const [pinnedId, setPinnedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [mode, setMode] = useState<TreeMode>('neighbors')
+  const [arrangement, setArrangement] = useState<TreeArrangement>('rarity')
+  const arrangementName = useId()
+  const treeBox = useRef<HTMLDivElement>(null)
+  const availableWidth = useContentWidth(treeBox)
   const dialog = useMutationDialog()
   const dialogOpen = dialog.dialog !== null
 
-  const model = useMemo(() => buildTree(data, { showBaseCrops }), [data, showBaseCrops])
+  const specials = useMemo(() => data.mutations.filter((m) => isManualSpecial(data, m)), [data])
+  const model = useMemo(
+    () =>
+      availableWidth === null
+        ? null
+        : buildTree(data, { arrangement, showBaseCrops, selection: selectedId ? { id: selectedId, mode } : null, availableWidth }),
+    [data, arrangement, showBaseCrops, selectedId, mode, availableWidth],
+  )
   const states = useMemo(
     () => new Map(data.mutations.map((m) => [m.id, mutationState(data, m, plan.needs.get(m.id), inventory)])),
     [data, plan, inventory],
@@ -35,49 +57,63 @@ export function EncyclopediaTab() {
     for (const state of states.values()) result.set(state, (result.get(state) ?? 0) + 1)
     return result
   }, [states])
-  const activeId = hoveredId ?? pinnedId
-  const focus = useMemo(() => (activeId ? focusOn(model.edges, activeId) : null), [model, activeId])
+  // Une carte qui disparaît (vue filtrée) ne signale pas la sortie du pointeur : on l'ignore.
+  const shown = useMemo(() => new Set(model?.nodes.map((node) => node.id)), [model])
+  const activeId = [hoveredId, selectedId].find((id) => id !== null && shown.has(id)) ?? null
+  const focus = useMemo(() => (model && activeId ? focusOn(model.edges, activeId) : null), [model, activeId])
 
-  /** Ouvre la fiche et garde la mutation en avant, pour retrouver son chemin en fermant la fiche. */
-  const open = (id: string) => {
-    setPinnedId(id)
-    dialog.open(id)
+  /** Choisit une mutation ; déjà choisie (ou sans recette, hors de l'arbre), ouvre sa fiche. */
+  const choose = (id: string) => {
+    if (id === selectedId || specials.some((m) => m.id === id)) dialog.open(id)
+    else setSelectedId(id)
+  }
+  /** Retour à tout l'arbre : le bouton disparaît, le focus passe à la carte qui était choisie. */
+  const showAll = () => {
+    if (selectedId) document.getElementById(`arbre-${selectedId}`)?.focus()
+    setSelectedId(null)
   }
 
-  // Échap retire la mise en avant, y compris celle du focus rendu à la carte quand la fiche se
-  // ferme ; fiche ouverte, Échap ferme d'abord la fiche.
+  // Échap revient à tout l'arbre et retire la mise en avant (y compris celle du focus rendu à une
+  // carte à la fermeture de la fiche) ; fiche ouverte, Échap ferme d'abord la fiche.
   useEffect(() => {
-    if (!activeId || dialogOpen) return
+    if ((!selectedId && !hoveredId) || dialogOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
-      setPinnedId(null)
+      setSelectedId(null)
       setHoveredId(null)
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [activeId, dialogOpen])
+  }, [selectedId, hoveredId, dialogOpen])
+
+  const selectedName = selectedId ? data.mutationsById.get(selectedId)?.name : undefined
+  const treeLabel = selectedName
+    ? `Arbre des recettes : ${selectedName}, ${mode === 'neighbors' ? 'avant et après' : 'tout le chemin'}`
+    : `Arbre des recettes, ${arrangement === 'rarity' ? 'par rareté' : 'par étape'}`
 
   return (
     <div className="space-y-4">
       <header className="sr-only">
         <h2>Encyclopédie</h2>
-        <p>Arbre des recettes : chaque mutation dans la colonne de son étape, reliée à ses ingrédients. Entrée ouvre la fiche.</p>
+        <p>
+          Arbre des recettes : chaque mutation dans la colonne de sa rareté (ou de son étape), reliée à ses ingrédients. Entrée sur une mutation ne
+          garde que ce qu&apos;il faut pour la faire ; Entrée à nouveau ouvre sa fiche ; Échap revient à tout l&apos;arbre.
+        </p>
       </header>
 
       <div className="flex flex-wrap items-end gap-4">
         <label className="flex min-w-56 flex-col gap-1 text-xs text-ink-muted">
           Trouver une mutation
           <select
-            value={pinnedId ?? ''}
+            value={selectedId ?? ''}
             onChange={(event) => {
               const id = event.target.value
-              if (!id) return setPinnedId(null)
-              open(id)
-              document.getElementById(`arbre-${id}`)?.scrollIntoView({ block: 'nearest', inline: 'center' })
+              if (id) choose(id)
+              else setSelectedId(null)
             }}
             className="h-9 rounded-lg border border-line bg-canvas px-2.5 text-sm text-ink"
           >
-            <option value="">Choisir…</option>
+            <option value="">Tout l&apos;arbre</option>
             {data.rarities.map((rarity) => (
               <optgroup key={rarity} label={formatRarity(rarity)}>
                 {data.mutations
@@ -91,6 +127,10 @@ export function EncyclopediaTab() {
             ))}
           </select>
         </label>
+        <div className="flex flex-col gap-1 text-xs text-ink-muted">
+          <span aria-hidden="true">Colonnes</span>
+          <SegmentedControl legend="Colonnes" name={arrangementName} options={ARRANGEMENTS} value={arrangement} onChange={setArrangement} />
+        </div>
         <label className="flex h-9 items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -103,20 +143,31 @@ export function EncyclopediaTab() {
       </div>
 
       <TreeLegend counts={counts} />
-      <FocusBar focus={focus} state={activeId ? states.get(activeId) : undefined} />
+      <FocusBar
+        selectedId={selectedId}
+        hoveredId={activeId}
+        states={states}
+        mode={mode}
+        onModeChange={setMode}
+        onOpenSheet={dialog.open}
+        onClear={showAll}
+      />
       <RecipeTree
         model={model}
+        viewKey={`${arrangement}:${selectedId ?? 'tout'}:${mode}:${showBaseCrops}`}
+        label={treeLabel}
+        boxRef={treeBox}
         focus={focus}
+        selectedId={selectedId}
         states={states}
         plan={plan}
         inventory={inventory}
         triggerRef={dialog.triggerRef}
         onActivate={setHoveredId}
-        onOpen={open}
-        onClear={() => setPinnedId(null)}
+        onChoose={choose}
       />
 
-      {model.specials.length > 0 && (
+      {specials.length > 0 && (
         <section aria-labelledby="specials-title" className="space-y-2">
           <div>
             <h3 id="specials-title" className="text-sm font-semibold">
@@ -125,22 +176,18 @@ export function EncyclopediaTab() {
             <p className="text-xs text-ink-muted">Hors de l&apos;arbre : aucune recette à poser, une condition à part (voir la fiche).</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            {model.specials.map((id) => {
-              const mutation = data.mutationsById.get(id)
-              if (!mutation) return null
-              return (
-                <MutationTreeCard
-                  key={id}
-                  mutation={mutation}
-                  state={states.get(id) ?? 'special'}
-                  owned={inventory[id] ?? 0}
-                  required={plan.needs.get(id)?.required ?? 0}
-                  style={{ width: 200, height: 48 }}
-                  buttonRef={dialog.triggerRef(id)}
-                  onOpen={() => dialog.open(id)}
-                />
-              )
-            })}
+            {specials.map((mutation) => (
+              <MutationTreeCard
+                key={mutation.id}
+                mutation={mutation}
+                state={states.get(mutation.id) ?? 'special'}
+                owned={inventory[mutation.id] ?? 0}
+                required={plan.needs.get(mutation.id)?.required ?? 0}
+                style={{ width: 200, height: 48 }}
+                buttonRef={dialog.triggerRef(mutation.id)}
+                onOpen={() => dialog.open(mutation.id)}
+              />
+            ))}
           </div>
         </section>
       )}
