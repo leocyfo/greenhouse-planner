@@ -25,6 +25,10 @@ const responseSchema = z.object({
       inventory: z.unknown(),
     }),
   ),
+  /** Date de la lecture sur Hypixel (ms) : le serveur garde chaque profil lu 5 minutes. */
+  fetchedAt: z.number().optional(),
+  /** Dernières données connues, renvoyées parce que Hypixel refuse ou ne répond pas. */
+  stale: z.boolean().optional(),
 })
 
 export type PlayerProfiles = z.infer<typeof responseSchema>

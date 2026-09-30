@@ -207,6 +207,19 @@ dossier [worker/](worker/)) la garde et fait les appels. Il transforme le pseudo
 de Cloudflare), lit les profils sur Hypixel et ne renvoie au site que les inventaires. Tant
 qu'aucun serveur n'est configuré, l'import est masqué sur le site publié.
 
+La clé Hypixel est limitée à 300 requêtes par 5 minutes. Le serveur ne l'utilise qu'à la
+demande, jamais en tâche de fond, et l'épargne de trois façons :
+
+- **Cache de 5 minutes** (Workers KV) : un profil lu il y a moins de 5 minutes est renvoyé sans
+  rappeler Hypixel. Un joueur coûte donc au plus une requête par fenêtre de quota, même cherché
+  ou actualisé en boucle. Le site indique depuis quand le profil a été lu.
+- **Secours** : quand Hypixel refuse (quota épuisé) ou ne répond pas, le serveur renvoie les
+  dernières données connues (gardées un jour), signalées comme telles.
+- **Limite par visiteur** : 10 recherches par minute et par adresse IP, pour que personne ne
+  puisse épuiser le quota à lui seul.
+
+`npx wrangler tail` (dans `worker/`) montre le quota restant après chaque appel à Hypixel.
+
 1. **Clé Hypixel** : sur <https://developer.hypixel.net>, crée une application et demande une
    clé de production (une clé de développement suffit pour essayer, mais expire au bout de
    3 jours).
@@ -219,8 +232,9 @@ qu'aucun serveur n'est configuré, l'import est masqué sur le site publié.
    ```bash
    cd worker
    npx wrangler login
-   npx wrangler secret put HYPIXEL_API_KEY   # colle la clé Hypixel
-   npx wrangler deploy                       # affiche l'adresse du serveur
+   npx wrangler kv namespace create PROFILE_CACHE   # copie l'id affiché dans wrangler.toml
+   npx wrangler secret put HYPIXEL_API_KEY          # colle la clé Hypixel
+   npx wrangler deploy                              # affiche l'adresse du serveur
    ```
 
 5. **Brancher le site** : dans le dépôt GitHub, **Settings → Secrets and variables → Actions →

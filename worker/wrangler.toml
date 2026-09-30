@@ -7,3 +7,16 @@ compatibility_date = "2026-09-01"
 # Adresses du site autorisées à appeler le serveur, séparées par des virgules, sans « / » final
 # (ex. "https://pseudo.github.io,http://localhost:5173"). Vide : toutes les origines.
 ALLOWED_ORIGINS = "https://leocyfo.github.io,http://localhost:5173,http://localhost:5174"
+
+# Cache des profils lus, pour épargner le quota de la clé Hypixel (voir le README). Sur un autre
+# compte : `npx wrangler kv namespace create PROFILE_CACHE`, puis remplace l'id.
+[[kv_namespaces]]
+binding = "PROFILE_CACHE"
+id = "0a71a939fe02498380033d0e9c790ca2"
+
+# Recherches par visiteur (adresse IP) : 10 par minute au plus. namespace_id : numéro libre,
+# propre à ce compte.
+[[ratelimits]]
+name = "SEARCH_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }

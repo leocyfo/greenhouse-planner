@@ -12,7 +12,14 @@ import { fetchPlayerProfiles, PROFILE_IMPORT_ENABLED, ProfileApiError, type Play
 type Step =
   | { readonly kind: 'form'; readonly error: string | null }
   | { readonly kind: 'loading'; readonly name: string }
-  | { readonly kind: 'result'; readonly player: PlayerProfiles['player']; readonly profiles: readonly FetchedProfile[] }
+  | {
+      readonly kind: 'result'
+      readonly player: PlayerProfiles['player']
+      readonly profiles: readonly FetchedProfile[]
+      /** Âge de la lecture sur Hypixel (ms), inconnu avec un ancien serveur. */
+      readonly readAge: number | null
+      readonly stale: boolean
+    }
   | { readonly kind: 'done'; readonly summary: string }
 
 /** Fenêtre d'import, rendue une fois dans l'application ; une nouvelle recherche repart de zéro. */
@@ -63,7 +70,10 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
         const profiles = await Promise.all(
           response.profiles.map(async (profile) => ({ profile, content: await readInventoryMutations(data, profile.inventory) })),
         )
-        if (!controller.signal.aborted) setStep({ kind: 'result', player: response.player, profiles })
+        const readAge = response.fetchedAt === undefined ? null : Date.now() - response.fetchedAt
+        if (!controller.signal.aborted) {
+          setStep({ kind: 'result', player: response.player, profiles, readAge, stale: response.stale === true })
+        }
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
@@ -136,6 +146,8 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
           <ImportResult
             player={step.player}
             profiles={step.profiles}
+            readAge={step.readAge}
+            stale={step.stale}
             onImported={(summary) => setStep({ kind: 'done', summary })}
             onSearchAgain={() => setStep({ kind: 'form', error: null })}
             onCancel={onClose}

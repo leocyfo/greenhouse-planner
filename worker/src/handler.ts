@@ -4,24 +4,60 @@
  * renvoie, pour chaque profil SkyBlock, que l'inventaire du joueur (sacs, inventaire, ender chest,
  * sacs à dos, coffre personnel).
  *
+ * La clé Hypixel est limitée (300 requêtes par 5 minutes). Pour l'épargner, chaque profil lu est
+ * gardé en cache (Workers KV) : renvoyé tel quel pendant 5 minutes, puis en secours quand Hypixel
+ * refuse ou ne répond pas ; et chaque visiteur est limité à quelques recherches par minute.
+ *
  *   GET /profiles?name=<pseudo>
- *   → { player: { uuid, name }, profiles: [{ id, name, selected, gameMode, inventory }] }
+ *   → { player: { uuid, name }, profiles: [{ id, name, selected, gameMode, inventory }], fetchedAt, stale }
  */
+
+/** Ce que le serveur utilise de Workers KV. */
+export interface KvStore {
+  get(key: string, type: 'json'): Promise<unknown>
+  put(key: string, value: string, options?: { readonly expirationTtl?: number }): Promise<void>
+}
+
+/** Ce que le serveur utilise du Rate Limiting de Cloudflare. */
+export interface RateLimiter {
+  limit(options: { readonly key: string }): Promise<{ readonly success: boolean }>
+}
 
 export interface Env {
   /** Clé API Hypixel (secret : `npx wrangler secret put HYPIXEL_API_KEY`). */
   readonly HYPIXEL_API_KEY?: string
   /** Adresses du site autorisées, séparées par des virgules. Vide : toutes les origines. */
   readonly ALLOWED_ORIGINS?: string
+  /** Cache des profils lus. Absent : chaque recherche interroge Hypixel. */
+  readonly PROFILE_CACHE?: KvStore
+  /** Limite de recherches par visiteur. Absente : pas de limite. */
+  readonly SEARCH_LIMITER?: RateLimiter
 }
 
 export type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
 
+/** Accès au monde extérieur, remplaçables dans les tests. */
+export interface Deps {
+  readonly fetcher: Fetcher
+  readonly now: () => number
+  /** Laisse une tâche finir après la réponse (écriture du cache). */
+  readonly waitUntil: (task: Promise<unknown>) => void
+}
+
 /** Pseudo Minecraft : lettres, chiffres et _, 16 caractères au plus (même règle que le site). */
 const PLAYER_NAME = /^[A-Za-z0-9_]{1,16}$/
 const UUID = /^[0-9a-f]{32}$/
-/** Durée de cache des réponses de Hypixel, en secondes : ses données ne bougent pas plus vite. */
-const CACHE_SECONDS = 60
+/**
+ * Un profil lu il y a moins de 5 minutes est renvoyé sans rappeler Hypixel : un joueur coûte au
+ * plus une requête par fenêtre de quota, même cherché ou actualisé en boucle.
+ */
+const FRESH_MS = 5 * 60 * 1000
+/** Le cache garde un profil un jour, en secours quand Hypixel refuse (quota épuisé) ou ne répond pas. */
+const KEEP_SECONDS = 24 * 60 * 60
+/** Préfixe des clés du cache ; à changer si la forme des profils gardés change. */
+const CACHE_PREFIX = 'profiles:v1:'
+/** Cache du navigateur, en secondes. */
+const BROWSER_CACHE_SECONDS = 60
 /** Présente le serveur aux API appelées (certaines refusent les appels anonymes). */
 const USER_AGENT = 'greenhouse-planner (+https://github.com/leocyfo/greenhouse-planner)'
 
@@ -106,8 +142,16 @@ async function lookupPlayer(name: string, fetcher: Fetcher): Promise<PlayerLooku
   return 'error'
 }
 
+interface SlimProfile {
+  readonly id: string
+  readonly name: string
+  readonly selected: boolean
+  readonly gameMode: string | null
+  readonly inventory: Record<string, unknown> | null
+}
+
 /** Ne garde de chaque profil que son nom, s'il est actif, son mode de jeu et l'inventaire du joueur. */
-export function slimProfiles(body: unknown, uuid: string) {
+export function slimProfiles(body: unknown, uuid: string): SlimProfile[] {
   const profiles = isRecord(body) && Array.isArray(body.profiles) ? body.profiles : []
   return profiles.filter(isRecord).map((profile) => {
     const members = isRecord(profile.members) ? profile.members : {}
@@ -122,11 +166,75 @@ export function slimProfiles(body: unknown, uuid: string) {
   })
 }
 
-export async function handleRequest(
-  request: Request,
-  env: Env,
-  fetcher: Fetcher = (url, init) => fetch(url, init),
-): Promise<Response> {
+const isSlimProfile = (value: unknown): value is SlimProfile =>
+  isRecord(value) &&
+  typeof value.id === 'string' &&
+  typeof value.name === 'string' &&
+  typeof value.selected === 'boolean' &&
+  (value.gameMode === null || typeof value.gameMode === 'string') &&
+  (value.inventory === null || isRecord(value.inventory))
+
+/** Profils d'un joueur tels que lus sur Hypixel à la date `fetchedAt` (ms). */
+interface PlayerProfiles {
+  readonly player: Player
+  readonly profiles: readonly SlimProfile[]
+  readonly fetchedAt: number
+}
+
+async function readCache(cache: KvStore | undefined, key: string): Promise<PlayerProfiles | null> {
+  const value = cache ? await cache.get(key, 'json').catch(() => null) : null
+  if (!isRecord(value) || typeof value.fetchedAt !== 'number' || !Array.isArray(value.profiles)) return null
+  const player = isRecord(value.player) ? toPlayer(value.player.uuid, value.player.name) : null
+  const profiles = value.profiles.filter(isSlimProfile)
+  return player && profiles.length === value.profiles.length ? { player, profiles, fetchedAt: value.fetchedAt } : null
+}
+
+function writeCache(cache: KvStore | undefined, key: string, entry: PlayerProfiles, waitUntil: Deps['waitUntil']): void {
+  if (!cache) return
+  waitUntil(
+    cache.put(key, JSON.stringify(entry), { expirationTtl: KEEP_SECONDS }).catch((error: unknown) => {
+      // Offre gratuite de KV : 1 000 écritures par jour ; au-delà, les réponses partent sans cache.
+      console.warn(`cache : écriture refusée (${error instanceof Error ? error.message : String(error)}).`)
+    }),
+  )
+}
+
+type HypixelResult =
+  | { readonly ok: true; readonly body: unknown }
+  | { readonly ok: false; readonly status: number; readonly error: string }
+
+async function fetchHypixel(uuid: string, key: string, fetcher: Fetcher): Promise<HypixelResult> {
+  const response = await fetcher(`https://api.hypixel.net/v2/skyblock/profiles?uuid=${uuid}`, {
+    headers: { 'API-Key': key, 'User-Agent': USER_AGENT },
+  }).catch(() => null)
+  if (!response) return { ok: false, status: 502, error: 'Hypixel est injoignable, réessaie dans un moment.' }
+  // Visible avec `npx wrangler tail` : ce qu'il reste du quota de la clé sur la fenêtre de 5 minutes.
+  const header = (name: string) => response.headers.get(name) ?? '?'
+  console.log(`Hypixel ${response.status} · quota restant ${header('RateLimit-Remaining')}/${header('RateLimit-Limit')}`)
+  if (response.status === 429) {
+    // RateLimit-Reset : secondes avant le quota suivant.
+    const reset = Number(response.headers.get('RateLimit-Reset'))
+    const wait = Number.isFinite(reset) && reset > 0 ? `dans ${Math.ceil(reset)} s` : 'dans quelques minutes'
+    return { ok: false, status: 429, error: `Trop de demandes à Hypixel : réessaie ${wait}.` }
+  }
+  if (response.status === 403) {
+    return { ok: false, status: 502, error: 'Hypixel refuse la clé API du serveur (expirée ou invalide).' }
+  }
+  if (!response.ok) return { ok: false, status: 502, error: `Hypixel ne répond pas (erreur ${response.status}).` }
+  const body: unknown = await response.json().catch(() => null)
+  return body === null ? { ok: false, status: 502, error: 'Réponse de Hypixel illisible, réessaie dans un moment.' } : { ok: true, body }
+}
+
+function profilesResponse(entry: PlayerProfiles, stale: boolean, cors: Readonly<Record<string, string>>): Response {
+  return json({ ...entry, stale }, 200, {
+    ...cors,
+    // Données de secours : pas gardées par le navigateur, pour relire Hypixel dès qu'il répond.
+    'Cache-Control': stale ? 'no-store' : `public, max-age=${BROWSER_CACHE_SECONDS}`,
+  })
+}
+
+export async function handleRequest(request: Request, env: Env, deps: Partial<Deps> = {}): Promise<Response> {
+  const { fetcher = (url, init) => fetch(url, init), now = () => Date.now(), waitUntil = () => undefined } = deps
   const cors = corsHeaders(request.headers.get('Origin'), env)
   if (cors === null) return json({ error: 'Origine non autorisée.' }, 403, {})
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
@@ -138,28 +246,34 @@ export async function handleRequest(
   if (!PLAYER_NAME.test(name)) {
     return json({ error: 'Pseudo invalide : lettres, chiffres et _, 16 caractères au plus.' }, 400, cors)
   }
-  if (!env.HYPIXEL_API_KEY) return json({ error: 'Serveur mal configuré : la clé Hypixel manque.' }, 500, cors)
+  const key = env.HYPIXEL_API_KEY
+  if (!key) return json({ error: 'Serveur mal configuré : la clé Hypixel manque.' }, 500, cors)
+
+  // Quelques recherches par minute et par visiteur : personne ne peut épuiser le quota à lui seul.
+  const visitor = request.headers.get('CF-Connecting-IP') ?? 'inconnu'
+  if (env.SEARCH_LIMITER && !(await env.SEARCH_LIMITER.limit({ key: visitor })).success) {
+    return json({ error: 'Trop de recherches depuis ta connexion : réessaie dans une minute.' }, 429, cors)
+  }
+
+  // Les pseudos Minecraft ne tiennent pas compte des majuscules : « Notch » et « notch », même joueur.
+  const cacheKey = `${CACHE_PREFIX}${name.toLowerCase()}`
+  const cached = await readCache(env.PROFILE_CACHE, cacheKey)
+  const age = cached ? now() - cached.fetchedAt : Infinity
+  if (cached && age < FRESH_MS) {
+    console.log(`cache : profil lu il y a ${Math.round(age / 1000)} s, Hypixel pas appelé.`)
+    return profilesResponse(cached, false, cors)
+  }
 
   const player = await lookupPlayer(name, fetcher)
   if (player === 'not-found') return json({ error: `Aucun joueur Minecraft ne s'appelle « ${name} ».` }, 404, cors)
   if (player === 'error') {
+    if (cached) return profilesResponse(cached, true, cors)
     return json({ error: 'Les services de pseudos Minecraft ne répondent pas, réessaie dans un moment.' }, 502, cors)
   }
 
-  const init: RequestInit & { cf?: { cacheTtl: number; cacheEverything: boolean } } = {
-    headers: { 'API-Key': env.HYPIXEL_API_KEY, 'User-Agent': USER_AGENT },
-    // Cache de Cloudflare (clé : l'adresse, la clé API n'en fait pas partie) : moins d'appels à Hypixel.
-    cf: { cacheTtl: CACHE_SECONDS, cacheEverything: true },
-  }
-  const hypixel = await fetcher(`https://api.hypixel.net/v2/skyblock/profiles?uuid=${player.uuid}`, init)
-  if (hypixel.status === 429) return json({ error: 'Trop de demandes à Hypixel, réessaie dans une minute.' }, 429, cors)
-  if (hypixel.status === 403) {
-    return json({ error: 'Hypixel refuse la clé API du serveur (expirée ou invalide).' }, 502, cors)
-  }
-  if (!hypixel.ok) return json({ error: `Hypixel ne répond pas (erreur ${hypixel.status}).` }, 502, cors)
-  const body: unknown = await hypixel.json().catch(() => null)
-  return json({ player, profiles: slimProfiles(body, player.uuid) }, 200, {
-    ...cors,
-    'Cache-Control': `public, max-age=${CACHE_SECONDS}`,
-  })
+  const hypixel = await fetchHypixel(player.uuid, key, fetcher)
+  if (!hypixel.ok) return cached ? profilesResponse(cached, true, cors) : json({ error: hypixel.error }, hypixel.status, cors)
+  const entry: PlayerProfiles = { player, profiles: slimProfiles(hypixel.body, player.uuid), fetchedAt: now() }
+  writeCache(env.PROFILE_CACHE, cacheKey, entry, waitUntil)
+  return profilesResponse(entry, false, cors)
 }

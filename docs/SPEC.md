@@ -373,8 +373,19 @@ et toutes les recettes qu'il donne sont identiques.
   adresses de Mojang ensuite, en secours ; chaque échec est journalisé (`wrangler tail`). Il ne
   renvoie que le nom, l'état actif, le mode de jeu et l'inventaire du joueur pour chaque profil
   (ni pièces, ni banque, ni autres membres). Origines limitées (ALLOWED_ORIGINS), pseudo vérifié,
-  cache Cloudflare de 60 s, erreurs traduites (joueur introuvable, clé refusée, trop de demandes).
-  Testé avec Vitest.
+  erreurs traduites (joueur introuvable, clé refusée, quota épuisé avec le temps à attendre, tiré
+  de RateLimit-Reset). Testé avec Vitest.
+- Quota de la clé (demande du joueur : 300 requêtes par 5 minutes) : une requête Hypixel par
+  recherche, jamais en tâche de fond. L'ancien cache de Cloudflare (`cf.cacheTtl`) ne marchait pas
+  sur workers.dev (vérifié en ligne : `cf-cache-status: DYNAMIC`, quota 299 → 298 → 297 pour trois
+  recherches du même joueur). Remplacé par :
+  - un cache Workers KV par pseudo (en minuscules) : profil réutilisé 5 minutes sans appeler
+    PlayerDB ni Hypixel, soit au plus une requête par joueur et par fenêtre de quota ; gardé un
+    jour pour servir de secours (`stale: true`) quand Hypixel refuse ou ne répond pas. Offre
+    gratuite de KV : 1 000 écritures par jour, au-delà les réponses partent sans cache ;
+  - 10 recherches par minute et par IP (Rate Limiting de Cloudflare), vérifiées avant tout appel ;
+  - le quota restant journalisé après chaque appel (RateLimit-Remaining, `wrangler tail`).
+  Le site affiche l'âge de la lecture (`fetchedAt`) et prévient quand ce sont des données de secours.
 - Sources lues : sacs (`sacks_counts`, dont le Mutations Sack), inventaire, ender chest, sacs à dos,
   coffre personnel. Les contenus (NBT en gzip et base64) sont décodés dans le navigateur
   (logic/hypixel, lecteur NBT maison, testé) ; chaque objet est reconnu par son identifiant.

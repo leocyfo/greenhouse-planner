@@ -3,7 +3,7 @@ import { CropLabel } from '../../components/game/CropLabel'
 import { getGameData } from '../../data'
 import type { InventoryImport } from '../../logic/hypixel/inventory'
 import { useAppStore } from '../../store/appStore'
-import { sourceList, sourcesText } from './importText'
+import { readAgeText, sourceList, sourcesText } from './importText'
 import type { PlayerProfile, PlayerProfiles } from './profileApi'
 
 export interface FetchedProfile {
@@ -14,6 +14,10 @@ export interface FetchedProfile {
 interface ImportResultProps {
   readonly player: PlayerProfiles['player']
   readonly profiles: readonly FetchedProfile[]
+  /** Âge de la lecture sur Hypixel (ms) ; null : inconnu. */
+  readonly readAge: number | null
+  /** Dernières données connues : Hypixel refuse ou ne répond pas. */
+  readonly stale: boolean
   readonly onImported: (summary: string) => void
   readonly onSearchAgain: () => void
   readonly onCancel: () => void
@@ -23,7 +27,7 @@ const BUTTON = 'rounded-lg border border-line px-3 py-2 text-sm transition-color
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`
 
 /** Choix du profil, aperçu des mutations trouvées (avant → après), puis remplacement du stock. */
-export function ImportResult({ player, profiles, onImported, onSearchAgain, onCancel }: ImportResultProps) {
+export function ImportResult({ player, profiles, readAge, stale, onImported, onSearchAgain, onCancel }: ImportResultProps) {
   const data = getGameData()
   const selectId = useId()
   const inventory = useAppStore((s) => s.progress.inventory)
@@ -75,6 +79,7 @@ export function ImportResult({ player, profiles, onImported, onSearchAgain, onCa
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p>
           Joueur : <strong>{player.name}</strong>
+          {readAge !== null && <span className="text-xs text-ink-muted"> · lu sur Hypixel {readAgeText(readAge)}</span>}
         </p>
         {profiles.length > 1 ? (
           <label htmlFor={selectId} className="flex items-center gap-2">
@@ -100,6 +105,13 @@ export function ImportResult({ player, profiles, onImported, onSearchAgain, onCa
           </p>
         )}
       </div>
+
+      {stale && (
+        <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-warning">
+          Hypixel est saturé ou ne répond pas : voici les dernières données connues
+          {readAge !== null && `, lues ${readAgeText(readAge)}`}. Réessaie dans quelques minutes pour les mettre à jour.
+        </p>
+      )}
 
       {hidden ? (
         <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-warning">
