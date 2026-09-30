@@ -6,4 +6,4 @@ compatibility_date = "2026-09-01"
 [vars]
 # Adresses du site autorisées à appeler le serveur, séparées par des virgules, sans « / » final
 # (ex. "https://pseudo.github.io,http://localhost:5173"). Vide : toutes les origines.
-ALLOWED_ORIGINS = "http://localhost:5173"
+ALLOWED_ORIGINS = "https://leocyfo.github.io,http://localhost:5173,http://localhost:5174"

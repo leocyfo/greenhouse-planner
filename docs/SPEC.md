@@ -365,10 +365,13 @@ et toutes les recettes qu'il donne sont identiques.
   bord, bouton dans l'en-tête), le site lit son profil et compte ses mutations. Choix du joueur :
   un petit serveur (Cloudflare Worker, dossier worker/) garde la clé Hypixel secrète ; le site reste
   statique. Sans serveur configuré (VITE_PROFILE_API_URL), l'import est masqué sur le site publié.
-- Le serveur : pseudo → UUID (Mojang), puis /v2/skyblock/profiles ; il ne renvoie que le nom, l'état
-  actif, le mode de jeu et l'inventaire du joueur pour chaque profil (ni pièces, ni banque, ni autres
-  membres). Origines limitées (ALLOWED_ORIGINS), pseudo vérifié, cache Cloudflare de 60 s, erreurs
-  traduites (joueur introuvable, clé refusée, trop de demandes). Testé avec Vitest.
+- Le serveur : pseudo → UUID, puis /v2/skyblock/profiles. Mojang refuse les appels venus de
+  Cloudflare (403, vérifié en ligne) : PlayerDB (service public) est interrogé d'abord, les deux
+  adresses de Mojang ensuite, en secours ; chaque échec est journalisé (`wrangler tail`). Il ne
+  renvoie que le nom, l'état actif, le mode de jeu et l'inventaire du joueur pour chaque profil
+  (ni pièces, ni banque, ni autres membres). Origines limitées (ALLOWED_ORIGINS), pseudo vérifié,
+  cache Cloudflare de 60 s, erreurs traduites (joueur introuvable, clé refusée, trop de demandes).
+  Testé avec Vitest.
 - Sources lues : sacs (`sacks_counts`, dont le Mutations Sack), inventaire, ender chest, sacs à dos,
   coffre personnel. Les contenus (NBT en gzip et base64) sont décodés dans le navigateur
   (logic/hypixel, lecteur NBT maison, testé) ; chaque objet est reconnu par son identifiant.

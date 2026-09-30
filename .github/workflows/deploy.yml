@@ -29,9 +29,9 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
-          # Adresse du serveur de l'import Hypixel (variable du dépôt PROFILE_API_URL, voir le README).
-          # Vide : l'import est masqué sur le site publié.
-          VITE_PROFILE_API_URL: ${{ vars.PROFILE_API_URL }}
+          # Adresse du serveur de l'import Hypixel : variable du dépôt PROFILE_API_URL (voir le
+          # README), sinon le serveur de ce dépôt. Vide (fork sans variable) : import masqué.
+          VITE_PROFILE_API_URL: ${{ vars.PROFILE_API_URL || (github.repository == 'leocyfo/greenhouse-planner' && 'https://greenhouse-planner-profiles.leocyfo.workers.dev' || '') }}
 
       - name: Envoyer le site construit
         if: github.event_name != 'pull_request'

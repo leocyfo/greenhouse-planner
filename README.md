@@ -202,9 +202,10 @@ Mutations Sack), inventaire, ender chest, sacs à dos et coffre personnel. Il co
 et montre un aperçu (avant → après) ; le stock n'est remplacé qu'après confirmation.
 
 L'API Hypixel demande une clé, qui doit rester secrète : un petit serveur (Cloudflare Worker,
-dossier [worker/](worker/)) la garde et fait les appels. Il transforme le pseudo en UUID (API
-Mojang), lit les profils sur Hypixel et ne renvoie au site que les inventaires. Tant qu'aucun
-serveur n'est configuré, l'import est masqué sur le site publié.
+dossier [worker/](worker/)) la garde et fait les appels. Il transforme le pseudo en UUID
+([PlayerDB](https://playerdb.co), avec l'API Mojang en secours : Mojang refuse les appels venus
+de Cloudflare), lit les profils sur Hypixel et ne renvoie au site que les inventaires. Tant
+qu'aucun serveur n'est configuré, l'import est masqué sur le site publié.
 
 1. **Clé Hypixel** : sur <https://developer.hypixel.net>, crée une application et demande une
    clé de production (une clé de développement suffit pour essayer, mais expire au bout de
@@ -224,8 +225,10 @@ serveur n'est configuré, l'import est masqué sur le site publié.
 
 5. **Brancher le site** : dans le dépôt GitHub, **Settings → Secrets and variables → Actions →
    Variables**, crée `PROFILE_API_URL` avec l'adresse affichée par `wrangler deploy` (ex.
-   `https://greenhouse-planner-profiles.<compte>.workers.dev`), puis relance le workflow. En
-   local, mets la même adresse dans un fichier `.env.local` : `VITE_PROFILE_API_URL=https://…`.
+   `https://greenhouse-planner-profiles.<compte>.workers.dev`), puis relance le workflow. Le
+   dépôt d'origine n'en a pas besoin : son serveur est indiqué par défaut dans
+   [le workflow](.github/workflows/deploy.yml). En local, mets l'adresse dans un fichier
+   `.env.local` : `VITE_PROFILE_API_URL=https://…`.
 
 Côté joueur, l'« Inventory API » doit être activée dans les réglages API de SkyBlock. Les coffres
 de l'île et la grille du greenhouse ne sont pas visibles par l'API. Les identifiants Hypixel des
