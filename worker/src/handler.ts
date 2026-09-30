@@ -6,11 +6,15 @@
  *
  * La clé Hypixel est limitée (300 requêtes par 5 minutes). Pour l'épargner, chaque profil lu est
  * gardé en cache (Workers KV) : renvoyé tel quel pendant 5 minutes, puis en secours quand Hypixel
- * refuse ou ne répond pas ; et chaque visiteur est limité à quelques recherches par minute.
+ * refuse ou ne répond pas ; chaque visiteur est limité à quelques recherches par minute ; et un
+ * budget global (budget.ts) coupe les appels avant la limite de la clé, pour ne jamais la dépasser.
  *
  *   GET /profiles?name=<pseudo>
  *   → { player: { uuid, name }, profiles: [{ id, name, selected, gameMode, inventory }], fetchedAt, stale }
  */
+
+import { BUDGET, budgetClient, type BudgetNamespace, type RequestBudget } from './budget'
+import { isRecord } from './util'
 
 /** Ce que le serveur utilise de Workers KV. */
 export interface KvStore {
@@ -32,6 +36,8 @@ export interface Env {
   readonly PROFILE_CACHE?: KvStore
   /** Limite de recherches par visiteur. Absente : pas de limite. */
   readonly SEARCH_LIMITER?: RateLimiter
+  /** Budget global des requêtes Hypixel (Durable Object, voir budget.ts). Absent : pas de budget. */
+  readonly HYPIXEL_BUDGET?: BudgetNamespace
 }
 
 export type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
@@ -60,9 +66,6 @@ const CACHE_PREFIX = 'profiles:v1:'
 const BROWSER_CACHE_SECONDS = 60
 /** Présente le serveur aux API appelées (certaines refusent les appels anonymes). */
 const USER_AGENT = 'greenhouse-planner (+https://github.com/leocyfo/greenhouse-planner)'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 function json(body: unknown, status: number, headers: Readonly<Record<string, string>>): Response {
   return new Response(JSON.stringify(body), {
@@ -199,30 +202,59 @@ function writeCache(cache: KvStore | undefined, key: string, entry: PlayerProfil
   )
 }
 
-type HypixelResult =
+/** Quota de la clé annoncé par Hypixel : requêtes restantes et secondes avant le quota suivant. */
+interface Quota {
+  readonly remaining: number
+  readonly resetSeconds: number
+}
+
+/** En-têtes RateLimit-* de Hypixel ; un refus 429 sans en-tête compte comme un quota vide. */
+function readQuota(response: Response): Quota | null {
+  const remaining = Number(response.headers.get('RateLimit-Remaining') ?? (response.status === 429 ? 0 : Number.NaN))
+  const reset = Number(response.headers.get('RateLimit-Reset'))
+  if (!Number.isFinite(remaining)) return null
+  return { remaining, resetSeconds: Number.isFinite(reset) && reset > 0 ? Math.ceil(reset) : 60 }
+}
+
+type HypixelResult = { readonly quota: Quota | null } & (
   | { readonly ok: true; readonly body: unknown }
   | { readonly ok: false; readonly status: number; readonly error: string }
+)
 
 async function fetchHypixel(uuid: string, key: string, fetcher: Fetcher): Promise<HypixelResult> {
   const response = await fetcher(`https://api.hypixel.net/v2/skyblock/profiles?uuid=${uuid}`, {
     headers: { 'API-Key': key, 'User-Agent': USER_AGENT },
   }).catch(() => null)
-  if (!response) return { ok: false, status: 502, error: 'Hypixel est injoignable, réessaie dans un moment.' }
+  if (!response) return { ok: false, status: 502, error: 'Hypixel est injoignable, réessaie dans un moment.', quota: null }
+  const quota = readQuota(response)
   // Visible avec `npx wrangler tail` : ce qu'il reste du quota de la clé sur la fenêtre de 5 minutes.
-  const header = (name: string) => response.headers.get(name) ?? '?'
-  console.log(`Hypixel ${response.status} · quota restant ${header('RateLimit-Remaining')}/${header('RateLimit-Limit')}`)
+  console.log(`Hypixel ${response.status} · quota restant ${quota?.remaining ?? '?'}/${response.headers.get('RateLimit-Limit') ?? '?'}`)
   if (response.status === 429) {
-    // RateLimit-Reset : secondes avant le quota suivant.
-    const reset = Number(response.headers.get('RateLimit-Reset'))
-    const wait = Number.isFinite(reset) && reset > 0 ? `dans ${Math.ceil(reset)} s` : 'dans quelques minutes'
-    return { ok: false, status: 429, error: `Trop de demandes à Hypixel : réessaie ${wait}.` }
+    return { ok: false, status: 429, error: `Trop de demandes à Hypixel : réessaie dans ${quota?.resetSeconds ?? 60} s.`, quota }
   }
   if (response.status === 403) {
-    return { ok: false, status: 502, error: 'Hypixel refuse la clé API du serveur (expirée ou invalide).' }
+    return { ok: false, status: 502, error: 'Hypixel refuse la clé API du serveur (expirée ou invalide).', quota }
   }
-  if (!response.ok) return { ok: false, status: 502, error: `Hypixel ne répond pas (erreur ${response.status}).` }
+  if (!response.ok) return { ok: false, status: 502, error: `Hypixel ne répond pas (erreur ${response.status}).`, quota }
   const body: unknown = await response.json().catch(() => null)
-  return body === null ? { ok: false, status: 502, error: 'Réponse de Hypixel illisible, réessaie dans un moment.' } : { ok: true, body }
+  if (body === null) return { ok: false, status: 502, error: 'Réponse de Hypixel illisible, réessaie dans un moment.', quota }
+  return { ok: true, body, quota }
+}
+
+/** Demande au budget global une requête Hypixel : null si elle est accordée, sinon le refus à renvoyer. */
+async function askBudget(budget: RequestBudget | null): Promise<{ readonly status: number; readonly error: string } | null> {
+  if (!budget) return null
+  try {
+    const { used, wait } = await budget.take()
+    // Visible avec `npx wrangler tail` : requêtes Hypixel du site sur les 5 dernières minutes.
+    console.log(`budget Hypixel : ${used}/${BUDGET} sur 5 min${wait === null ? '' : `, refus pendant ${wait} s`}.`)
+    if (wait === null) return null
+    return { status: 429, error: `Beaucoup de recherches en ce moment : pour rester sous la limite de Hypixel, réessaie dans ${wait} s.` }
+  } catch (error) {
+    // Sans compte fiable, pas d'appel : la limite de la clé passe avant l'import.
+    console.warn(`budget Hypixel injoignable (${error instanceof Error ? error.message : String(error)}) : Hypixel pas appelé.`)
+    return { status: 503, error: 'Le serveur ne peut pas vérifier sa limite Hypixel pour le moment : réessaie dans une minute.' }
+  }
 }
 
 function profilesResponse(entry: PlayerProfiles, stale: boolean, cors: Readonly<Record<string, string>>): Response {
@@ -271,7 +303,14 @@ export async function handleRequest(request: Request, env: Env, deps: Partial<De
     return json({ error: 'Les services de pseudos Minecraft ne répondent pas, réessaie dans un moment.' }, 502, cors)
   }
 
+  // Budget global : jamais plus de 240 requêtes sur 5 minutes pour tout le site (limite : 300).
+  const budget = env.HYPIXEL_BUDGET ? budgetClient(env.HYPIXEL_BUDGET) : null
+  const refusal = await askBudget(budget)
+  if (refusal) return cached ? profilesResponse(cached, true, cors) : json({ error: refusal.error }, refusal.status, cors)
+
   const hypixel = await fetchHypixel(player.uuid, key, fetcher)
+  const { quota } = hypixel
+  if (budget && quota) waitUntil(budget.report(quota.remaining, quota.resetSeconds).catch(() => undefined))
   if (!hypixel.ok) return cached ? profilesResponse(cached, true, cors) : json({ error: hypixel.error }, hypixel.status, cors)
   const entry: PlayerProfiles = { player, profiles: slimProfiles(hypixel.body, player.uuid), fetchedAt: now() }
   writeCache(env.PROFILE_CACHE, cacheKey, entry, waitUntil)

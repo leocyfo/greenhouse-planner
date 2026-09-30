@@ -16,7 +16,7 @@ interface ImportResultProps {
   readonly profiles: readonly FetchedProfile[]
   /** Âge de la lecture sur Hypixel (ms) ; null : inconnu. */
   readonly readAge: number | null
-  /** Dernières données connues : Hypixel refuse ou ne répond pas. */
+  /** Dernières données connues : limite de lectures atteinte, ou Hypixel ne répond pas. */
   readonly stale: boolean
   readonly onImported: (summary: string) => void
   readonly onSearchAgain: () => void
@@ -108,7 +108,7 @@ export function ImportResult({ player, profiles, readAge, stale, onImported, onS
 
       {stale && (
         <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-warning">
-          Hypixel est saturé ou ne répond pas : voici les dernières données connues
+          Trop de recherches en ce moment, ou Hypixel ne répond pas : voici les dernières données connues
           {readAge !== null && `, lues ${readAgeText(readAge)}`}. Réessaie dans quelques minutes pour les mettre à jour.
         </p>
       )}

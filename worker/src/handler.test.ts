@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { handleRequest, type Deps, type Env, type Fetcher, type KvStore, type RateLimiter } from './handler'
+import { BUDGET, budgetClient, type BudgetNamespace } from './budget'
+import { handleRequest, type Deps, type Env, type Fetcher, type RateLimiter } from './handler'
+import { budgetNamespace, memoryCache } from './test/fakes'
 
 const UUID = '069a79f444e94726a5befca90e38aaf5'
 const SITE = 'https://moi.github.io'
@@ -56,20 +58,6 @@ function upstream(responses: {
     return route[1]()
   }
   return { fetcher, calls }
-}
-
-/** Workers KV simulé, en mémoire. */
-function memoryCache(): KvStore {
-  const entries = new Map<string, string>()
-  return {
-    get: async (key) => {
-      const value = entries.get(key)
-      return value === undefined ? null : JSON.parse(value)
-    },
-    put: async (key, value) => {
-      entries.set(key, value)
-    },
-  }
 }
 
 /** Écritures du cache lancées après les réponses ; attendues avant la requête suivante. */
@@ -216,6 +204,48 @@ describe('serveur : quota de la clé Hypixel', () => {
     expect(stale.status).toBe(200)
     expect(stale.headers.get('Cache-Control')).toBe('no-store')
     expect(await stale.json()).toEqual({ player: { uuid: UUID, name: 'Notch' }, profiles: [APPLE], fetchedAt: twoHoursAgo, stale: true })
+  })
+
+  it(`n'appelle plus Hypixel une fois le budget global atteint (${BUDGET} requêtes sur 5 minutes)`, async () => {
+    const namespace = budgetNamespace()
+    const budget = budgetClient(namespace)
+    for (let i = 0; i < BUDGET; i++) expect((await budget.take()).wait).toBeNull()
+
+    const { fetcher, calls } = upstream({ playerDb: notch, hypixel: oneProfile })
+    const blocked = await handleRequest(request('/profiles?name=Notch'), { ...ENV, HYPIXEL_BUDGET: namespace }, deps(fetcher))
+    expect(blocked.status).toBe(429)
+    expect(await blocked.json()).toEqual({
+      error: expect.stringMatching(/^Beaucoup de recherches en ce moment : .+ réessaie dans \d+ s\.$/),
+    })
+    expect(hosts(calls)).toEqual(['playerdb.co'])
+  })
+
+  it('coupe les appels quand Hypixel annonce un quota presque vide (clé utilisée ailleurs aussi)', async () => {
+    const env: Env = { ...ENV, HYPIXEL_BUDGET: budgetNamespace() }
+    const lowQuota = () => jsonResponse({ success: true, profiles: [] }, 200, { 'RateLimit-Remaining': '5', 'RateLimit-Reset': '120' })
+    expect((await handleRequest(request('/profiles?name=Notch'), env, deps(upstream({ playerDb: notch, hypixel: lowQuota }).fetcher))).status).toBe(200)
+    await settle()
+
+    const next = upstream({ playerDb: notch, hypixel: oneProfile })
+    const paused = await handleRequest(request('/profiles?name=Autre'), env, deps(next.fetcher))
+    expect(paused.status).toBe(429)
+    expect(await paused.json()).toEqual({ error: expect.stringContaining('réessaie dans 120 s') })
+    expect(hosts(next.calls)).toEqual(['playerdb.co'])
+  })
+
+  it("n'appelle pas Hypixel quand le budget est injoignable : la limite de la clé passe avant", async () => {
+    const broken: BudgetNamespace = {
+      idFromName: (name) => name,
+      get: () => ({
+        fetch: async () => {
+          throw new Error('panne')
+        },
+      }),
+    }
+    const { fetcher, calls } = upstream({ playerDb: notch, hypixel: oneProfile })
+    const response = await handleRequest(request('/profiles?name=Notch'), { ...ENV, HYPIXEL_BUDGET: broken }, deps(fetcher))
+    expect(response.status).toBe(503)
+    expect(hosts(calls)).toEqual(['playerdb.co'])
   })
 
   it('limite les recherches par visiteur, avant tout appel extérieur', async () => {

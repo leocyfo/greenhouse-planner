@@ -386,6 +386,14 @@ et toutes les recettes qu'il donne sont identiques.
   - 10 recherches par minute et par IP (Rate Limiting de Cloudflare), vérifiées avant tout appel ;
   - le quota restant journalisé après chaque appel (RateLimit-Remaining, `wrangler tail`).
   Le site affiche l'âge de la lecture (`fetchedAt`) et prévient quand ce sont des données de secours.
+- Ne jamais dépasser la limite (demande du joueur : un dépassement pourrait faire bannir la clé) :
+  budget global dans un Durable Object (un seul pour tout le serveur, compte exact où que soient
+  les visiteurs ; offre gratuite, stockage SQLite). Au plus 240 requêtes sur 5 minutes glissantes
+  (60 de marge) ; pause jusqu'au quota suivant dès que Hypixel annonce 20 requêtes restantes ou
+  moins (clé utilisée ailleurs aussi). Demandé juste avant chaque appel à Hypixel, après le cache
+  et la recherche du pseudo. Refus : données de secours si le joueur est en cache, sinon 429 avec
+  l'attente. Budget injoignable : pas d'appel (503), la limite passe avant l'import. Le compte est
+  gardé dans le stockage du Durable Object et survit aux redéploiements (vérifié en ligne).
 - Sources lues : sacs (`sacks_counts`, dont le Mutations Sack), inventaire, ender chest, sacs à dos,
   coffre personnel. Les contenus (NBT en gzip et base64) sont décodés dans le navigateur
   (logic/hypixel, lecteur NBT maison, testé) ; chaque objet est reconnu par son identifiant.

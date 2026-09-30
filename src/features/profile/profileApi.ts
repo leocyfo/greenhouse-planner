@@ -27,7 +27,7 @@ const responseSchema = z.object({
   ),
   /** Date de la lecture sur Hypixel (ms) : le serveur garde chaque profil lu 5 minutes. */
   fetchedAt: z.number().optional(),
-  /** Dernières données connues, renvoyées parce que Hypixel refuse ou ne répond pas. */
+  /** Dernières données connues, renvoyées parce que la limite de lectures est atteinte ou que Hypixel ne répond pas. */
   stale: z.boolean().optional(),
 })
 

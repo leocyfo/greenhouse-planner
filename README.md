@@ -207,18 +207,24 @@ dossier [worker/](worker/)) la garde et fait les appels. Il transforme le pseudo
 de Cloudflare), lit les profils sur Hypixel et ne renvoie au site que les inventaires. Tant
 qu'aucun serveur n'est configuré, l'import est masqué sur le site publié.
 
-La clé Hypixel est limitée à 300 requêtes par 5 minutes. Le serveur ne l'utilise qu'à la
-demande, jamais en tâche de fond, et l'épargne de trois façons :
+La clé Hypixel est limitée à 300 requêtes par 5 minutes, et la dépasser pourrait la faire bannir.
+Le serveur ne l'utilise qu'à la demande, jamais en tâche de fond, et ne dépasse jamais la limite :
 
+- **Budget global** (Durable Object, [worker/src/budget.ts](worker/src/budget.ts)) : jamais plus
+  de 240 requêtes sur 5 minutes glissantes pour tout le site, 60 de marge sous la limite. Tout
+  s'arrête aussi dès que Hypixel annonce moins de 20 requêtes restantes (clé utilisée ailleurs),
+  jusqu'au quota suivant. Si le compte ne peut pas être vérifié, Hypixel n'est pas appelé.
 - **Cache de 5 minutes** (Workers KV) : un profil lu il y a moins de 5 minutes est renvoyé sans
   rappeler Hypixel. Un joueur coûte donc au plus une requête par fenêtre de quota, même cherché
   ou actualisé en boucle. Le site indique depuis quand le profil a été lu.
-- **Secours** : quand Hypixel refuse (quota épuisé) ou ne répond pas, le serveur renvoie les
-  dernières données connues (gardées un jour), signalées comme telles.
+- **Secours** : quand le budget est atteint ou que Hypixel ne répond pas, le serveur renvoie les
+  dernières données connues (gardées un jour), signalées comme telles ; sinon, il dit combien de
+  secondes attendre.
 - **Limite par visiteur** : 10 recherches par minute et par adresse IP, pour que personne ne
-  puisse épuiser le quota à lui seul.
+  puisse épuiser le budget à lui seul.
 
-`npx wrangler tail` (dans `worker/`) montre le quota restant après chaque appel à Hypixel.
+`npx wrangler tail` (dans `worker/`) montre, à chaque appel, le budget utilisé
+(« budget Hypixel : 12/240 sur 5 min ») et le quota restant annoncé par Hypixel.
 
 1. **Clé Hypixel** : sur <https://developer.hypixel.net>, crée une application et demande une
    clé de production (une clé de développement suffit pour essayer, mais expire au bout de
