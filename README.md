@@ -14,7 +14,7 @@ toi-même (voir [Import depuis Hypixel](#import-depuis-hypixel)).
 | --- | --- |
 | Tableau de bord | Prochaine mutation à faire pousser, et les objectifs : ce que chacun demande (mutations, coûts), son avancement, à cocher pour guider les calculs |
 | Inventaire | Le Mutations Sack du jeu (fiche complète au clic) ou une liste : mutations possédées et analysées, besoins restants, recherche et filtres ; stock importable depuis ton profil Hypixel |
-| Encyclopédie | Graphe des recettes et fiche détaillée de chaque mutation |
+| Encyclopédie | Arbre des recettes par étape : au survol, tout le chemin d'une mutation et ce qu'elle permet de faire ; fiche détaillée au clic |
 | Calculateur | Arbre des besoins, liste de courses dans l'ordre de farm, crops de base, temps estimé |
 | Grille | Les 3 greenhouses (10 × 10) : spawns possibles, conflits, effets reçus, eau, plans du guide AVRG |
 | Outils | Upgrades du Greenhouse (menu au style Minecraft), durée d'un growth stage, Ethereal Vines, Lonelily, aide-mémoire, sauvegarde |
@@ -272,7 +272,7 @@ worker/          petit serveur de l'import Hypixel (Cloudflare Worker, testé av
 docs/SPEC.md     cahier des charges et décisions validées
 ```
 
-Stack : Vite, React, TypeScript (strict), Tailwind CSS, Zustand, React Flow, zod et Vitest. Le menu
+Stack : Vite, React, TypeScript (strict), Tailwind CSS, Zustand, zod et Vitest. Le menu
 des upgrades utilise la police libre Pixelify Sans, servie avec le site.
 
 ## Sources et avertissement

@@ -33,8 +33,8 @@ et le bestiary. Lis-le en entier avant de commencer.
 - Vite + React + TypeScript (strict)
 - Tailwind CSS
 - Zustand pour l'état global (inventaire, objectifs, grilles, réglages)
-- @xyflow/react (React Flow) pour le graphe de dépendances
 - Vitest pour les tests de la logique
+- (React Flow a servi au premier graphe de l'Encyclopédie, remplacé par un arbre maison en SVG)
 - Aucun backend : 100 % statique, déployable sur GitHub Pages
 
 ## Architecture attendue (à ajuster dans ton plan)
@@ -140,12 +140,13 @@ src/
    - Recherche + filtres : rareté, sol, taille, complété, analysé
 
 3. Encyclopédie
-   - Graphe React Flow : chaque mutation reliée à ses ingrédients, disposé
-     par rareté (colonnes Common → Legendary)
-   - Couleur de l'état : verrouillée / disponible / complétée
-   - Clic = panneau latéral : conditions, sol, taille, growth stages,
-     aperçu de la plantation, effets, drops, mécanique spéciale (`notes`),
-     usages, bouton "calculer" (même fiche en fenêtre depuis l'Inventaire)
+   - Arbre des recettes par étape (voir « Encyclopédie : arbre par étape ») :
+     chaque mutation reliée à ses ingrédients, tous les liens de gauche à droite
+   - Couleur de l'état : verrouillée / disponible / complétée / spéciale
+   - Survol : tout le chemin de la mutation et ce qu'elle permet de faire ;
+     clic = la fiche en fenêtre (la même que depuis l'Inventaire) : conditions,
+     sol, taille, growth stages, aperçu de la plantation, effets, drops,
+     mécanique spéciale (`notes`), usages, bouton "calculer"
 
 4. Calculateur
    - Une ou plusieurs cibles + quantités, mode Minimum ou Optimum
@@ -204,7 +205,7 @@ src/
 3. Store + persistance + Inventaire
 4. Calculateur
 5. Objectifs + Tableau de bord
-6. Encyclopédie (graphe)
+6. Encyclopédie (arbre des recettes)
 7. Grille (logique + tests, puis UI)
 8. Outils, export/import, responsive, finitions
 9. README (lancer le projet, modifier les données, déployer sur GitHub
@@ -281,7 +282,7 @@ et toutes les recettes qu'il donne sont identiques.
 - Fond de l'application (image du joueur, 30/09/2026) : capture du Garden (Background.png),
   réencodée en WebP (src/assets/background.webp, 240 Ko au lieu de 1,9 Mo), fixe, floutée et
   assombrie (dégradé plus sombre vers le bas). Panneaux à 86 % d'opacité pour laisser voir le fond ;
-  opaques pour les fenêtres et le panneau mobile de l'Encyclopédie (`bg-panel-solid`), et partout
+  opaques pour les fenêtres et les cartes de l'arbre de l'Encyclopédie (`bg-panel-solid`), et partout
   si le système demande moins de transparence ou plus de contraste.
 - Sols : texture de la face du dessus des blocs du wiki, remise à plat (grille, légende, pinceau,
   badges), posée sur la couleur du sol.
@@ -334,14 +335,33 @@ et toutes les recettes qu'il donne sont identiques.
   L'infobulle donne le nombre exact, avec séparateur de milliers.
 
 ### Fiche d'une mutation (demande du joueur)
-- Même fiche dans l'Encyclopédie (panneau) et depuis l'Inventaire (fenêtre, sac ou liste), au style
-  du wiki de skymutations.eu : en-tête à la couleur de la rareté, pastilles taille / sol / stages,
+- Même fiche, dans une fenêtre, depuis l'Encyclopédie et l'Inventaire (sac ou liste), au style du
+  wiki de skymutations.eu : en-tête à la couleur de la rareté, pastilles taille / sol / stages,
   conditions en lignes, « Sert à » en pastilles cliquables.
 - Tout visible sans défiler (demande du joueur) : fenêtre large (1024 px) ; une bande sous le titre
   réunit taille, sol, stages, stock, besoin, analyse et « Calculer » ; les sections suivent en colonnes
   équilibrées par le navigateur (colonnes CSS, sections jamais coupées). Vérifié sur les 40 fiches en
-  1764 × 887 et 1366 × 768. Une seule colonne dans le panneau de l'Encyclopédie et sur mobile, où la
-  fiche défile.
+  1764 × 887 et 1366 × 768. Une seule colonne sur mobile, où la fiche défile.
+
+### Encyclopédie : arbre par étape (demande du joueur : « change l'affichage, change d'outil ou
+recrée tout »)
+- L'ancien graphe (React Flow, colonnes par rareté) était illisible : les ingrédients d'une
+  mutation étaient dans n'importe quelle colonne, d'où des liens dans tous les sens. Refait de zéro,
+  sans bibliothèque : cartes en HTML, liens en SVG, positions calculées par une logique pure et
+  testée (`encyclopedia/graphModel.ts`). React Flow est retiré du projet (chunk de l'onglet : 10 Ko).
+- Une colonne par étape : étape = 1 + niveau de recette (logic/graph, `recipeLevels`), donc chaque
+  ingrédient est à gauche de sa recette et tous les liens vont de gauche à droite : 9, 8, 8, 7, 5 et
+  1 mutations, 57 liens. Dans une colonne : rareté puis nom, puis 4 passes du barycentre (moins de
+  croisements) ; points d'attache répartis sur les bords des cartes, dans l'ordre de l'autre bout.
+  Godseed et Jerryflower (conditions spéciales, sans recette) sont à part, sous l'arbre.
+- Au repos, liens discrets. Survol ou focus clavier d'une carte : tout son chemin (ingrédients,
+  jusqu'au départ) en bleu, les recettes qui l'utilisent en orange, le reste estompé ; les
+  ingrédients directs portent leur quantité (×6, « 1 consommé », « 2 catalyseur ») et un résumé
+  écrit (recette, « sert à », longueur du chemin) s'affiche au-dessus, à hauteur fixe pour que
+  l'arbre ne bouge pas. Clic : la fiche en fenêtre, et la mutation reste en avant après fermeture
+  (Échap ou clic dans le vide pour l'enlever). « Trouver une mutation » fait de même.
+- Crops de base en option (colonne à gauche). Les 6 étapes tiennent dans la largeur du site
+  (1 230 px) ; au-delà (crops de base, petits écrans, mobile), l'arbre défile horizontalement.
 - Aperçu de la plantation (repliable) : la mutation au centre (vert) et ses ingrédients autour
   (orange), les mutations 2x2 et 3x3 posées le long de l'emplacement (`logic/plantingPreview.ts`).
   Chaque exemple est vérifié par la logique de la Grille ; un test le vérifie pour toutes les
@@ -350,12 +370,12 @@ et toutes les recettes qu'il donne sont identiques.
 
 ### Animations (demande du joueur)
 - Règles : courtes (120 à 260 ms), utiles (retour d'action, continuité, repère), jamais en boucle
-  (sauf le texte « Chargement du graphe… », le temps du chargement), toutes coupées par « réduire
-  les animations ». Définies une seule fois dans index.css (fade-in, fade-up, pop-in, slide-in-right,
-  slide-up, pop, bump, tooltip-in).
+  (sauf le texte « Chargement de l'arbre… », le temps du chargement), toutes coupées par « réduire
+  les animations ». Définies une seule fois dans index.css (fade-in, fade-up, pop-in, pop, bump,
+  tooltip-in).
 - Où : changement d'onglet et passage Sac / Liste (fondu), infobulles, barres d'avancement (500 ms),
-  fiche (ouverture, passage à une autre mutation), panneau de l'Encyclopédie (glisse), nœuds du graphe
-  (s'éclairent au survol), détail d'un objectif, sections repliables, branches de l'arbre du
+  fiche (ouverture, passage à une autre mutation), arbre de l'Encyclopédie (cartes qui s'éclairent
+  au survol, chemin qui s'allume en fondu, quantités qui « pop »), détail d'un objectif, sections repliables, branches de l'arbre du
   calculateur (flèche qui pivote), recommandation du tableau de bord quand elle change, cartes de la
   liste (case qui « pop »), sac (nombre qui rebondit, ✓ qui apparaît, reflet d'enchantement qui balaie
   l'objet au survol comme dans le jeu), grille (crop posé, spawns possibles), palette, messages
@@ -462,7 +482,7 @@ et toutes les recettes qu'il donne sont identiques.
 
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,
-  30/09/2026) : cartes, fiches, objectifs, sac, graphe, outils, infobulles Minecraft. Les marques
+  30/09/2026) : cartes, fiches, objectifs, sac, arbre, outils, infobulles Minecraft. Les marques
   restent dans mutations.json (`null`, `verified: false`, `conflicts`) et dans le modèle chargé
   (`unverified`), sans affichage. Gardés : les avertissements utiles au calcul (quantité inconnue
   comptée 1, durée inconnue, decay, conflit de spawn sur la grille). Les lignes ci-dessous décrivent

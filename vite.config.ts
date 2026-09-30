@@ -14,8 +14,7 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         // Les bibliothèques changent rarement : dans leurs propres fichiers, elles restent en
-        // cache d'un déploiement à l'autre. Les paquets sont listés un par un pour que React
-        // Flow reste dans le chunk de l'Encyclopédie, chargé à la demande.
+        // cache d'un déploiement à l'autre.
         codeSplitting: {
           groups: [
             { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },

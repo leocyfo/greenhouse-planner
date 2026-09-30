@@ -28,7 +28,7 @@ function TabContent({ tabId }: { readonly tabId: TabId }) {
       return <InventoryTab />
     case 'encyclopedie':
       return (
-        <Suspense fallback={<p className="animate-pulse text-sm text-ink-muted">Chargement du graphe…</p>}>
+        <Suspense fallback={<p className="animate-pulse text-sm text-ink-muted">Chargement de l&apos;arbre…</p>}>
           <EncyclopediaTab />
         </Suspense>
       )

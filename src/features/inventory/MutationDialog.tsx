@@ -23,7 +23,6 @@ export function MutationDialog({ mutationId, onClose, onSelect }: MutationDialog
   return (
     <Modal onClose={onClose} width="max-w-5xl">
       <MutationDetails
-        layout="dialog"
         mutationId={mutation.id}
         state={mutationState(data, mutation, need, inventory)}
         need={need}

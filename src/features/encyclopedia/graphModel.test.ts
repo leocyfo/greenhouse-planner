@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { recipesUsing } from '../../logic/graph'
 import { computePlan } from '../../logic/recipes'
 import { mutationById, projectData } from '../../test/projectData'
-import { baseNodeId, buildGraph, COLUMN_WIDTH, mutationState } from './graphModel'
+import {
+  amountText,
+  baseNodeId,
+  buildTree,
+  CARD_WIDTH,
+  edgeRole,
+  focusOn,
+  HEADER_HEIGHT,
+  isDimmed,
+  mutationState,
+} from './graphModel'
 
 const data = projectData()
 
@@ -32,50 +42,100 @@ describe('graphe : état des mutations', () => {
   })
 })
 
-describe('graphe : disposition', () => {
-  const graph = buildGraph(data, { showBaseCrops: false })
+describe('arbre : disposition par étape', () => {
+  const tree = buildTree(data, { showBaseCrops: false })
+  const node = (id: string) => tree.nodes.find((n) => n.id === id)
 
-  it('place les 40 mutations en 5 colonnes, de Common à Legendary', () => {
-    expect(graph.nodes).toHaveLength(40)
-    expect(graph.columns.map((c) => [c.label, c.count])).toEqual([
-      ['Common', 9],
-      ['Uncommon', 6],
-      ['Rare', 9],
-      ['Epic', 9],
-      ['Legendary', 7],
+  it("range chaque mutation dans la colonne de son étape, les conditions spéciales à part", () => {
+    expect(tree.columns.map((c) => [c.title, c.count])).toEqual([
+      ['Étape 1', 9],
+      ['Étape 2', 8],
+      ['Étape 3', 8],
+      ['Étape 4', 7],
+      ['Étape 5', 5],
+      ['Étape 6', 1],
     ])
-    for (const node of graph.nodes) {
-      expect(node.x, node.id).toBe(mutationById(data, node.id).rarityRank * COLUMN_WIDTH)
+    expect(tree.nodes).toHaveLength(38)
+    expect([...tree.specials].sort()).toEqual(['godseed', 'jerryflower'])
+    expect(node('dustgrain')?.column).toBe(0)
+    expect(node('all_in_aloe')?.column).toBe(5)
+  })
+
+  it('fait aller tous les liens de gauche à droite, du bord de l’ingrédient à celui de la recette', () => {
+    for (const edge of tree.edges) {
+      const from = node(edge.source)
+      const to = node(edge.target)
+      expect(from && to && from.column < to.column, edge.id).toBe(true)
+      expect(edge.path.startsWith(`M${(from?.x ?? 0) + CARD_WIDTH} `), edge.id).toBe(true)
+      expect(edge.path.split(' ').at(-2)?.endsWith(String(to?.x)), edge.id).toBe(true)
     }
   })
 
-  it('ne superpose jamais deux nœuds d’une même colonne', () => {
-    for (const column of graph.columns) {
-      const ys = graph.nodes.filter((n) => n.x === column.x).map((n) => n.y)
-      expect(new Set(ys).size, column.label).toBe(ys.length)
+  it('ne superpose jamais deux cartes et reste sous les titres', () => {
+    for (const column of tree.columns) {
+      const cards = tree.nodes.filter((n) => n.x === column.x).sort((a, b) => a.y - b.y)
+      cards.forEach((card, index) => {
+        expect(card.y, card.id).toBeGreaterThanOrEqual(HEADER_HEIGHT)
+        expect(card.y + card.height, card.id).toBeLessThanOrEqual(tree.height)
+        const next = cards[index + 1]
+        if (next) expect(card.y + card.height, card.id).toBeLessThan(next.y)
+      })
     }
   })
 
   it('relie chaque recette à ses ingrédients mutations (conditions et prérequis)', () => {
-    const edge = (source: string, target: string) => graph.edges.find((e) => e.source === source && e.target === target)
+    const edge = (source: string, target: string) => tree.edges.find((e) => e.source === source && e.target === target)
     expect(edge('chocoberry', 'blastberry')).toMatchObject({ relation: 'condition', cells: 5, units: 5 })
     expect(edge('snoozling', 'plantboy_advance')).toMatchObject({ cells: 6, units: 2 })
     expect(edge('turtlellini', 'shellfruit')).toMatchObject({ relation: 'consumed' })
     expect(edge('blastberry', 'shellfruit')).toMatchObject({ relation: 'catalyst' })
-    expect(graph.edges.some((e) => e.source.startsWith('base:'))).toBe(false)
+    expect(tree.edges).toHaveLength(57)
+    expect(tree.edges.some((e) => e.source.startsWith('base:'))).toBe(false)
   })
 
   it('ajoute une colonne de crops de base en option', () => {
-    const withBase = buildGraph(data, { showBaseCrops: true })
-    expect(withBase.nodes).toHaveLength(57)
-    expect(withBase.columns[0]).toMatchObject({ label: 'Crops de base', count: 17 })
-    expect(withBase.edges.find((e) => e.source === baseNodeId('Wheat') && e.target === 'dustgrain')).toMatchObject({
-      units: 2,
-    })
+    const withBase = buildTree(data, { showBaseCrops: true })
+    expect(withBase.nodes).toHaveLength(55)
+    expect(withBase.columns[0]).toMatchObject({ title: 'Crops de base', count: 17 })
+    expect(withBase.columns[1]).toMatchObject({ title: 'Étape 1', count: 9 })
+    expect(withBase.edges.find((e) => e.source === baseNodeId('Wheat') && e.target === 'dustgrain')).toMatchObject({ units: 2 })
   })
 
   it('donne une disposition identique à chaque calcul', () => {
-    expect(buildGraph(data, { showBaseCrops: false })).toEqual(graph)
+    expect(buildTree(data, { showBaseCrops: false })).toEqual(tree)
+  })
+})
+
+describe('arbre : mutation mise en avant', () => {
+  const tree = buildTree(data, { showBaseCrops: false })
+  const edge = (source: string, target: string) => tree.edges.find((e) => e.source === source && e.target === target)
+
+  it("montre tout son chemin jusqu'au départ, et les recettes qui l'utilisent", () => {
+    const focus = focusOn(tree.edges, 'blastberry')
+    expect([...focus.path].sort()).toEqual(['ashwreath', 'chocoberry', 'choconut', 'gloomgourd'])
+    expect([...focus.uses].sort()).toEqual(['shellfruit', 'startlevine'])
+    const role = (source: string, target: string) => {
+      const found = edge(source, target)
+      return found ? edgeRole(found, focus) : 'absent'
+    }
+    expect(role('chocoberry', 'blastberry')).toBe('path')
+    expect(role('choconut', 'chocoberry')).toBe('path')
+    expect(role('blastberry', 'startlevine')).toBe('use')
+    expect(role('cheesebite', 'startlevine')).toBe('none')
+  })
+
+  it('estompe le reste, et rien sans mise en avant', () => {
+    const focus = focusOn(tree.edges, 'blastberry')
+    expect(isDimmed('cheesebite', focus)).toBe(true)
+    expect(isDimmed('choconut', focus)).toBe(false)
+    expect(isDimmed('startlevine', focus)).toBe(false)
+    expect(isDimmed('cheesebite', null)).toBe(false)
+  })
+
+  it('écrit la quantité de chaque ingrédient', () => {
+    expect(amountText({ relation: 'condition', units: 5 })).toBe('×5')
+    expect(amountText({ relation: 'consumed', units: 1 })).toBe('1 consommé')
+    expect(amountText({ relation: 'catalyst', units: 2 })).toBe('2 catalyseur')
   })
 })
 

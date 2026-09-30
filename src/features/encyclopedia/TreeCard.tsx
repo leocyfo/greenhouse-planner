@@ -1,0 +1,123 @@
+/** Cartes de l'arbre des recettes : une mutation (bouton qui ouvre sa fiche) ou un crop de base. */
+import type { CSSProperties } from 'react'
+import { WikiIcon } from '../../components/game/WikiIcon'
+import { formatRarity } from '../../components/labels'
+import { rarityColor, TREE_COLORS } from '../../theme/palette'
+import type { Mutation } from '../../types/game'
+import type { MutationState } from './graphModel'
+import { STATE_INFO } from './stateInfo'
+
+/** Quantité de l'ingrédient dans la recette mise en avant, à la couleur du chemin. */
+function AmountPill({ amount }: { readonly amount: string }) {
+  return (
+    <span
+      className="shrink-0 animate-pop rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums"
+      style={{ color: TREE_COLORS.path, background: `color-mix(in srgb, ${TREE_COLORS.path} 16%, transparent)` }}
+    >
+      {amount}
+    </span>
+  )
+}
+
+interface MutationTreeCardProps {
+  readonly mutation: Mutation
+  readonly state: MutationState
+  readonly owned: number
+  readonly required: number
+  /** Étape de la mutation (« Étape 2 »), pour le nom accessible. */
+  readonly step?: string
+  readonly dimmed?: boolean
+  readonly active?: boolean
+  readonly amount?: string | null
+  readonly style?: CSSProperties
+  readonly buttonRef?: (element: HTMLElement | null) => void
+  readonly onOpen: () => void
+  /** Survol ou focus clavier : met la mutation en avant. */
+  readonly onActivate?: () => void
+  readonly onDeactivate?: () => void
+}
+
+export function MutationTreeCard({
+  mutation,
+  state,
+  owned,
+  required,
+  step,
+  dimmed = false,
+  active = false,
+  amount = null,
+  style,
+  buttonRef,
+  onOpen,
+  onActivate,
+  onDeactivate,
+}: MutationTreeCardProps) {
+  const info = STATE_INFO[state]
+  const color = rarityColor(mutation.rarity)
+  const stock = `${owned}${required > 0 ? ` / ${required}` : ''}`
+  const label = [
+    mutation.name,
+    formatRarity(mutation.rarity),
+    step,
+    info.label,
+    `${owned} en stock${required > 0 ? ` sur ${required} demandés` : ''}`,
+  ]
+    .filter(Boolean)
+    .join(', ')
+  return (
+    <button
+      ref={buttonRef}
+      id={`arbre-${mutation.id}`}
+      type="button"
+      aria-label={`${label}. Ouvrir la fiche.`}
+      onClick={onOpen}
+      onPointerEnter={onActivate}
+      onPointerLeave={onDeactivate}
+      onFocus={onActivate}
+      onBlur={onDeactivate}
+      className={`flex items-center gap-2 rounded-lg border px-2 text-left shadow-sm shadow-black/30 transition duration-150 hover:brightness-125 motion-safe:active:scale-[0.97] ${dimmed ? 'opacity-25' : ''} ${active ? 'shadow-lg ring-2 ring-ink' : ''}`}
+      // Bordures côté par côté : le raccourci borderColor écraserait la bande de rareté à chaque
+      // changement d'état (React ne réapplique pas borderLeftColor, qui n'a pas changé).
+      style={{
+        ...style,
+        borderTopColor: `color-mix(in srgb, ${info.color} 55%, transparent)`,
+        borderRightColor: `color-mix(in srgb, ${info.color} 55%, transparent)`,
+        borderBottomColor: `color-mix(in srgb, ${info.color} 55%, transparent)`,
+        borderLeftColor: color,
+        borderLeftWidth: 4,
+        background: `color-mix(in srgb, ${info.color} 12%, var(--color-panel-solid))`,
+      }}
+    >
+      <WikiIcon name={mutation.name} size={28} />
+      <span className="min-w-0 flex-1 leading-tight">
+        <span className="block truncate text-[13px] font-semibold" style={{ color }}>
+          {mutation.name}
+        </span>
+        <span className="block text-[11px] text-ink-muted tabular-nums">
+          <span aria-hidden="true">{info.icon}</span> {stock}
+        </span>
+      </span>
+      {amount && <AmountPill amount={amount} />}
+    </button>
+  )
+}
+
+interface BaseCropChipProps {
+  readonly name: string
+  readonly dimmed: boolean
+  readonly amount: string | null
+  readonly style: CSSProperties
+}
+
+export function BaseCropChip({ name, dimmed, amount, style }: BaseCropChipProps) {
+  return (
+    <div
+      className={`flex items-center gap-1.5 rounded-full border border-line bg-panel-raised pr-1 pl-2.5 text-xs text-ink-muted transition-opacity duration-150 ${dimmed ? 'opacity-25' : ''}`}
+      style={style}
+    >
+      <WikiIcon name={name} size={16} />
+      <span className="min-w-0 flex-1 truncate">{name}</span>
+      {amount && <AmountPill amount={amount} />}
+    </div>
+  )
+}

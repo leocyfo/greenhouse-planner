@@ -56,10 +56,15 @@ export const GRID_COLORS = {
   waterShort: '#f07167',
 } as const
 
-/** Arêtes du graphe : normales et mises en évidence (couleurs concrètes pour les flèches SVG). */
-export const EDGE_COLORS = {
-  normal: '#3a4050',
-  highlighted: '#6cc070',
+/**
+ * Liens de l'arbre de l'Encyclopédie : au repos, puis, autour de la mutation mise en avant, son
+ * chemin (ingrédients jusqu'au départ) et ce qu'elle permet de faire. Toujours expliqués par la
+ * légende et le résumé écrit au-dessus de l'arbre.
+ */
+export const TREE_COLORS = {
+  edge: '#4a5263',
+  path: '#6cc9ff',
+  use: '#ffb454',
 } as const
 
 /** Couleur neutre si une rareté ou un sol ajouté au JSON n'a pas encore de couleur. */

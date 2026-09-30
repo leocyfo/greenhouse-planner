@@ -24,12 +24,8 @@ interface MutationDetailsProps {
   readonly onClose: () => void
   /** Ouvre la fiche d'une autre mutation (ingrédient, recette). */
   readonly onSelect: (mutationId: string) => void
-  /** Panneau à côté du graphe (Encyclopédie) ou petite fenêtre (dans une Modal). */
-  readonly layout?: 'panel' | 'dialog'
 }
 
-const PANEL_CLASS =
-  'fixed inset-x-0 bottom-0 z-40 flex animate-slide-up lg:animate-slide-in-right max-h-[75vh] flex-col overflow-hidden rounded-t-2xl border-t border-line bg-panel-solid shadow-2xl shadow-black/60 lg:static lg:z-auto lg:h-[70vh] lg:max-h-none lg:rounded-xl lg:border lg:shadow-none'
 const DIALOG_CLASS =
   'flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-2xl border border-line bg-panel-solid shadow-2xl shadow-black/60 sm:max-h-[calc(100dvh-3rem)]'
 
@@ -46,12 +42,13 @@ function recipeUseText(use: RecipeUse): string {
 }
 
 /**
- * Fiche d'une mutation, au style du wiki de skymutations.eu, pensée pour tenir sans défiler : en-tête
- * à la couleur de la rareté, une bande (taille, sol, stages, stock, besoin, analyse, « calculer »),
- * puis les sections en colonnes équilibrées par le navigateur, autant que la largeur le permet (une
- * seule dans le panneau de l'Encyclopédie ou sur mobile, où la fiche défile).
+ * Fiche d'une mutation (dans une Modal, voir inventory/MutationDialog), au style du wiki de
+ * skymutations.eu, pensée pour tenir sans défiler : en-tête à la couleur de la rareté, une bande
+ * (taille, sol, stages, stock, besoin, analyse, « calculer »), puis les sections en colonnes
+ * équilibrées par le navigateur, autant que la largeur le permet (une seule sur mobile, où la fiche
+ * défile).
  */
-export function MutationDetails({ mutationId, state, need, onClose, onSelect, layout = 'panel' }: MutationDetailsProps) {
+export function MutationDetails({ mutationId, state, need, onClose, onSelect }: MutationDetailsProps) {
   const data = getGameData()
   const titleId = useId()
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -97,15 +94,9 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect, la
       <CropLabel crop={crop} />
     )
 
-  // Dans une fenêtre, la fiche porte elle-même role="dialog" (voir components/Modal).
-  const Root = layout === 'dialog' ? 'div' : 'aside'
+  // La fiche porte elle-même role="dialog" (voir components/Modal).
   return (
-    <Root
-      role={layout === 'dialog' ? 'dialog' : undefined}
-      aria-modal={layout === 'dialog' ? true : undefined}
-      aria-labelledby={titleId}
-      className={layout === 'dialog' ? DIALOG_CLASS : PANEL_CLASS}
-    >
+    <div role="dialog" aria-modal aria-labelledby={titleId} className={DIALOG_CLASS}>
       <header className="flex items-center gap-3 border-b border-line px-4 py-2.5">
         <span aria-hidden="true" className="h-10 w-1 shrink-0 rounded-full" style={{ background: color }} />
         <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-canvas">
@@ -332,6 +323,6 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect, la
           </Section>
         </div>
       </div>
-    </Root>
+    </div>
   )
 }
