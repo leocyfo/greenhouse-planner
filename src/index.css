@@ -1,0 +1,429 @@
+@import 'tailwindcss';
+
+/* Jetons de l'interface (thème sombre par défaut). */
+@theme {
+  --color-canvas: #0e1014;
+  /* Panneaux légèrement transparents : le fond (capture du Garden) passe à travers. */
+  --color-panel: rgb(22 25 32 / 0.86);
+  /* Même teinte, opaque : fenêtres et panneaux posés au-dessus de la page. */
+  --color-panel-solid: #161920;
+  --color-panel-raised: #1d212a;
+  --color-line: #2a2f3a;
+  --color-ink: #e7e9ee;
+  --color-ink-muted: #a0a8b8;
+  --color-accent: #6cc070;
+  --color-accent-strong: #8fd88f;
+  --color-warning: #f2c14e;
+  --color-danger: #f07167;
+
+  --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /*
+   * Animations de l'interface : courtes (120 à 260 ms), jamais en boucle, toutes coupées par
+   * « réduire les animations » (règle en bas de fichier).
+   * - fade-in / fade-up : un contenu apparaît ou change (onglet, section dépliée, message) ;
+   * - pop-in : la fenêtre de fiche s'ouvre ; slide-* : le panneau de l'Encyclopédie arrive ;
+   * - pop : une marque apparaît (case cochée, crop posé) ; bump : un nombre change ;
+   * - tooltip-in : une infobulle s'ouvre.
+   */
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-fade-up: fade-up 220ms ease-out;
+  --animate-pop-in: pop-in 180ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  --animate-slide-in-right: slide-in-right 220ms ease-out;
+  --animate-slide-up: slide-up 240ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  --animate-pop: pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  --animate-bump: bump 240ms ease-out;
+  --animate-tooltip-in: tooltip-in 120ms ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+  }
+
+  @keyframes bump {
+    40% {
+      transform: scale(1.3);
+    }
+  }
+
+  @keyframes tooltip-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    /* L'en-tête est collant : un élément qui reçoit le focus ne doit pas passer dessous. */
+    scroll-padding-top: 8rem;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Moins de transparence ou plus de contraste demandés par le système : panneaux opaques. */
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    :root {
+      --color-panel: var(--color-panel-solid);
+    }
+  }
+}
+
+@layer components {
+  /*
+   * Fond de l'application : capture du Garden fournie par le joueur, fixe, floutée et assombrie
+   * (plus fort vers le bas, où se trouve le contenu) pour que le texte reste lisible.
+   */
+  .app-background {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgb(14 16 20 / 0.5), rgb(14 16 20 / 0.82)),
+      url('./assets/background.webp');
+    background-position: center;
+    background-size: cover;
+    filter: blur(4px);
+    /* Le flou adoucit les bords : un léger agrandissement les cache. */
+    transform: scale(1.04);
+    pointer-events: none;
+  }
+
+  /* Barre du haut : verre dépoli, le fond passe à travers (opaque si moins de transparence). */
+  .app-header-bar {
+    background-color: rgb(14 16 20 / 0.55);
+    backdrop-filter: blur(12px) saturate(1.2);
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .app-header-bar {
+      background-color: var(--color-canvas);
+      backdrop-filter: none;
+    }
+  }
+}
+
+/*
+ * Style Minecraft, pour les menus du jeu (Greenhouse Upgrades dans Outils, Mutations Sack dans
+ * Inventaire) : fenêtre grise, cases, vitres colorées, infobulle et codes couleur du jeu (§0 à §f,
+ * avec leur ombre au quart de la couleur). Toutes les couleurs de ce style sont ici.
+ *
+ * Les mesures d'une fenêtre dépendent de --mc-px, la taille d'un pixel de l'interface (la « GUI
+ * scale » du jeu) : une case fait 18 pixels et l'objet 16, comme dans le jeu. Les infobulles
+ * gardent une taille fixe, pour rester lisibles.
+ */
+@layer components {
+  .mc {
+    --mc-px: 2px;
+    --mc-slot: calc(var(--mc-px) * 18);
+    --mc-shadow: var(--mc-px);
+    font-family: 'Pixelify Sans', ui-monospace, monospace;
+  }
+
+  @media (max-width: 420px) {
+    .mc {
+      --mc-px: calc(32px / 18);
+    }
+  }
+
+  /*
+   * Fenêtre qui remplit la largeur de son conteneur (.mc-fit) sans dépasser la hauteur de l'écran
+   * (moins l'en-tête collant) : 172 pixels d'interface de large (9 cases de 18, marges et bord),
+   * 23 plus 18 par rangée de haut. Jamais plus petite que la taille normale, sauf si la largeur y
+   * oblige (mobile).
+   */
+  .mc-fit {
+    container-type: inline-size;
+  }
+
+  .mc-window.mc-window--fit {
+    --mc-by-width: calc((100cqi - 1px) / 172);
+    --mc-by-height: calc((100dvh - 9rem) / (23 + var(--mc-rows) * 18));
+    --mc-px: max(min(var(--mc-by-width), 2px), min(var(--mc-by-width), var(--mc-by-height)));
+  }
+
+  .mc-window {
+    display: inline-block;
+    padding: calc(var(--mc-px) * 4);
+    background: #c6c6c6;
+    border: var(--mc-px) solid #000;
+    border-radius: calc(var(--mc-px) * 2);
+    box-shadow:
+      inset calc(var(--mc-px) * 1.5) calc(var(--mc-px) * 1.5) 0 #fff,
+      inset calc(var(--mc-px) * -1.5) calc(var(--mc-px) * -1.5) 0 #555;
+  }
+
+  .mc-title {
+    margin: 0 var(--mc-px) calc(var(--mc-px) * 3);
+    color: #404040;
+    font-size: calc(var(--mc-px) * 8);
+    line-height: calc(var(--mc-px) * 10);
+  }
+
+  .mc-grid {
+    display: grid;
+    grid-template-columns: repeat(9, var(--mc-slot));
+    grid-auto-rows: var(--mc-slot);
+  }
+
+  .mc-slot {
+    position: relative;
+    display: flex;
+    width: var(--mc-slot);
+    height: var(--mc-slot);
+    align-items: center;
+    justify-content: center;
+    background: #8b8b8b;
+    box-shadow:
+      inset var(--mc-px) var(--mc-px) 0 #373737,
+      inset calc(var(--mc-px) * -1) calc(var(--mc-px) * -1) 0 #fff;
+  }
+
+  button.mc-slot {
+    cursor: pointer;
+  }
+
+  /* Survol : voile blanc, comme dans le jeu. */
+  :is(button, [tabindex]).mc-slot:hover::after {
+    position: absolute;
+    inset: var(--mc-px);
+    z-index: 2;
+    background: rgb(255 255 255 / 0.4);
+    content: '';
+  }
+
+  /* Focus clavier : double contour noir et blanc, visible sur toutes les vitres. */
+  .mc-slot:focus-visible {
+    outline: max(2px, var(--mc-px)) solid #000;
+    outline-offset: calc(max(2px, var(--mc-px)) * -1);
+  }
+
+  .mc-slot:focus-visible::before {
+    position: absolute;
+    inset: max(2px, var(--mc-px));
+    z-index: 3;
+    border: max(2px, var(--mc-px)) solid #fff;
+    content: '';
+  }
+
+  .mc-pane {
+    position: absolute;
+    inset: var(--mc-px);
+    box-shadow:
+      inset var(--mc-px) var(--mc-px) 0 rgb(255 255 255 / 0.3),
+      inset calc(var(--mc-px) * -1) calc(var(--mc-px) * -1) 0 rgb(0 0 0 / 0.18);
+  }
+
+  /* Texture de vitre du wiki ; les couleurs .mc-pane--* servent si l'image manque. */
+  .mc-pane-img {
+    position: absolute;
+    inset: var(--mc-px);
+    width: calc(100% - var(--mc-px) * 2);
+    height: calc(100% - var(--mc-px) * 2);
+    image-rendering: pixelated;
+  }
+
+  .mc-pane--gray {
+    background: #616161;
+  }
+
+  .mc-pane--lime {
+    background: #8fbe57;
+  }
+
+  .mc-pane--yellow {
+    background: #d9c95c;
+  }
+
+  .mc-pane--red {
+    background: #b86a66;
+  }
+
+  .mc-icon {
+    position: relative;
+    z-index: 1;
+    width: calc(var(--mc-px) * 16);
+    height: calc(var(--mc-px) * 16);
+  }
+
+  /* Caractère affiché comme un objet (le « ? » d'aide). */
+  .mc-glyph {
+    position: relative;
+    z-index: 1;
+    font-size: calc(var(--mc-px) * 12);
+    line-height: 1;
+  }
+
+  /* Objet pâle, case assombrie (filtres), reflet d'enchantement et marque en haut à gauche. */
+  .mc-dim {
+    opacity: 0.55;
+  }
+
+  .mc-muted > * {
+    opacity: 0.2;
+  }
+
+  /*
+   * Reflet d'enchantement : au repos, une bande violette fixe ; au survol ou au focus de la case,
+   * elle balaie l'objet une fois, comme le reflet animé du jeu (sort d'un côté, revient de l'autre).
+   */
+  .mc-glint {
+    position: absolute;
+    inset: var(--mc-px);
+    z-index: 1;
+    background: linear-gradient(135deg, transparent 40%, rgb(176 96 255 / 0.5) 50%, transparent 60%);
+    background-position: 50% 50%;
+    background-size: 300% 300%;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  :is(button, [tabindex]).mc-slot:is(:hover, :focus-visible) .mc-glint {
+    animation: mc-glint 900ms ease-in-out;
+  }
+
+  @keyframes mc-glint {
+    45% {
+      background-position: 0% 0%;
+    }
+    45.01% {
+      background-position: 100% 100%;
+    }
+  }
+
+  .mc-badge {
+    position: absolute;
+    top: calc(var(--mc-px) * 0.5);
+    left: calc(var(--mc-px) * 1.5);
+    z-index: 2;
+    color: #5f5;
+    font-size: calc(var(--mc-px) * 7);
+    line-height: 1;
+    text-shadow: var(--mc-px) var(--mc-px) 0 #153f15;
+    pointer-events: none;
+  }
+
+  .mc-count {
+    position: absolute;
+    right: calc(var(--mc-px) * 2);
+    bottom: var(--mc-px);
+    z-index: 1;
+    color: #fff;
+    font-size: calc(var(--mc-px) * 8);
+    line-height: 1;
+    text-shadow: var(--mc-px) var(--mc-px) 0 #3f3f3f;
+    pointer-events: none;
+  }
+
+  /* Infobulle : fond sombre, cadre clair, coins crantés. */
+  .mc-tooltip {
+    --mc-shadow: 2px;
+    z-index: 50;
+    max-width: min(22rem, calc(100vw - 16px));
+    padding: 8px 10px;
+    background: rgb(12 16 30 / 0.96);
+    border: 2px solid rgb(12 16 30 / 0.96);
+    box-shadow: inset 0 0 0 2px #b9c6d9;
+    clip-path: polygon(
+      2px 0,
+      calc(100% - 2px) 0,
+      100% 2px,
+      100% calc(100% - 2px),
+      calc(100% - 2px) 100%,
+      2px 100%,
+      0 calc(100% - 2px),
+      0 2px
+    );
+    font-family: 'Pixelify Sans', ui-monospace, monospace;
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .mc-c-0 { color: #000; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #000; }
+  .mc-c-1 { color: #00a; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #00002a; }
+  .mc-c-2 { color: #0a0; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #002a00; }
+  .mc-c-3 { color: #0aa; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #002a2a; }
+  .mc-c-4 { color: #a00; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #2a0000; }
+  .mc-c-5 { color: #a0a; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #2a002a; }
+  .mc-c-6 { color: #fa0; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f2a00; }
+  .mc-c-7 { color: #aaa; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #2a2a2a; }
+  .mc-c-8 { color: #555; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #151515; }
+  .mc-c-9 { color: #55f; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #15153f; }
+  .mc-c-a { color: #5f5; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #153f15; }
+  .mc-c-b { color: #5ff; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #153f3f; }
+  .mc-c-c { color: #f55; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f1515; }
+  .mc-c-d { color: #f5f; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f153f; }
+  .mc-c-e { color: #ff5; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f3f15; }
+  .mc-c-f { color: #fff; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f3f3f; }
+}
+
+/*
+ * « Réduire les animations » : plus de transitions, et les arêtes surlignées du graphe
+ * restent en pointillés fixes (elles se distinguent aussi par la couleur, l'épaisseur et le
+ * libellé). Hors couche pour passer devant la feuille de style de React Flow.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .react-flow__edge.animated path {
+    animation: none !important;
+  }
+}

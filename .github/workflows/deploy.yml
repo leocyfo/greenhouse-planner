@@ -1,0 +1,59 @@
+# Vérifie, construit et publie l'application sur GitHub Pages.
+# Prérequis : Settings > Pages > Build and deployment > Source : « GitHub Actions ».
+name: Déploiement GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  # Sur une pull request : vérification seulement, sans publication.
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Vérifier et construire
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          # Adresse du serveur de l'import Hypixel (variable du dépôt PROFILE_API_URL, voir le README).
+          # Vide : l'import est masqué sur le site publié.
+          VITE_PROFILE_API_URL: ${{ vars.PROFILE_API_URL }}
+
+      - name: Envoyer le site construit
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    name: Publier sur GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Une publication à la fois ; celle en cours n'est jamais annulée.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
