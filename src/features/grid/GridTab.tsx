@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Panel } from '../../components/Panel'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { tabElementId, tabPanelId } from '../../components/tabIds'
 import { Tabs } from '../../components/Tabs'
 import { getGameData } from '../../data'
@@ -23,7 +22,10 @@ import { Palette } from './Palette'
 
 const TABS_PREFIX = 'greenhouse'
 
-/** Onglet Grille : 3 greenhouses, plusieurs plans chacun, palette, plateau et analyse. */
+/**
+ * Onglet Grille : 3 greenhouses, plusieurs plans chacun, palette, plateau et analyse. Il utilise
+ * toute la largeur de la page (voir app/tabs.ts).
+ */
 export function GridTab() {
   const data = getGameData()
   const size = data.mechanics.greenhouse
@@ -44,6 +46,7 @@ export function GridTab() {
   const [hoverCell, setHoverCell] = useState<number | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const paletteTitleId = useId()
 
   const greenhouseIndex = grids.activeGreenhouse
   const greenhouse = grids.greenhouses[greenhouseIndex]
@@ -140,13 +143,11 @@ export function GridTab() {
     <>
       <LayoutToolbar greenhouse={greenhouseIndex} layouts={greenhouse.layouts} active={layout} />
 
-      <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[16rem_minmax(0,1fr)_20rem]">
-        <aside className="hidden lg:block">
-          <Panel title="Palette">{palette}</Panel>
-        </aside>
-
+      {/* Plateau au centre de la zone ; la case et la consommation à côté en grand écran. */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* En grand écran, les cases « Afficher » passent à côté de la grille : elle garde la hauteur. */}
+          <div className="flex flex-wrap items-center justify-between gap-3 xl:hidden">
             <OverlayToggles value={overlays} onChange={setOverlays} />
             <button
               type="button"
@@ -182,7 +183,10 @@ export function GridTab() {
           <GridLegend />
         </div>
 
-        <div className="space-y-4 lg:col-span-2 xl:col-span-1">
+        <div className="space-y-4">
+          <div className="hidden rounded-xl border border-line bg-panel p-3 xl:block">
+            <OverlayToggles value={overlays} onChange={setOverlays} />
+          </div>
           {tool === 'godseed' ? (
             <GodseedPanel grid={grid} analysis={analysis} anchor={anchor} />
           ) : (
@@ -194,37 +198,50 @@ export function GridTab() {
     </>
   )
 
+  // Mise en page de SkyCrypt, sur toute la largeur : les crops et mutations à gauche, sur toute la
+  // hauteur (la place du personnage), la grille à droite (la place des stats).
   return (
-    <div className="space-y-4">
+    <div className="gap-5 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] xl:grid-cols-[minmax(22rem,28%)_minmax(0,1fr)]">
       <h2 className="sr-only">Grille</h2>
 
-      <Tabs
-        tabs={grids.greenhouses.map((_, index) => ({
-          id: String(index),
-          label: `Greenhouse ${index + 1}${unlocked.includes(index) ? '' : ' 🔒'}`,
-        }))}
-        selected={String(greenhouseIndex)}
-        onSelect={(id) => setActiveGreenhouse(Number(id))}
-        idPrefix={TABS_PREFIX}
-        label="Greenhouses"
-        className="border-b border-line"
-      />
+      <aside aria-labelledby={paletteTitleId} className="hidden lg:block">
+        <div className="sticky top-32 flex h-[calc(100dvh-9rem)] flex-col rounded-2xl border border-line bg-panel p-4 shadow-lg shadow-black/20 xl:top-20 xl:h-[calc(100dvh-6rem)]">
+          <h3 id={paletteTitleId} className="mb-3 text-base font-semibold">
+            Crops et mutations
+          </h3>
+          {palette}
+        </div>
+      </aside>
 
-      <div
-        role="tabpanel"
-        id={tabPanelId(TABS_PREFIX, String(greenhouseIndex))}
-        aria-labelledby={tabElementId(TABS_PREFIX, String(greenhouseIndex))}
-        className="space-y-4"
-      >
-        {locked ? (
-          <LockedGreenhouse
-            index={greenhouseIndex}
-            price={vineState.purchases[greenhouseIndex - 1]?.price}
-            previousLocked={greenhouseIndex > 1 && !unlocked.includes(greenhouseIndex - 1)}
-          />
-        ) : (
-          editor
-        )}
+      <div className="min-w-0 space-y-4">
+        <Tabs
+          tabs={grids.greenhouses.map((_, index) => ({
+            id: String(index),
+            label: `Greenhouse ${index + 1}${unlocked.includes(index) ? '' : ' 🔒'}`,
+          }))}
+          selected={String(greenhouseIndex)}
+          onSelect={(id) => setActiveGreenhouse(Number(id))}
+          idPrefix={TABS_PREFIX}
+          label="Greenhouses"
+          className="border-b border-line"
+        />
+
+        <div
+          role="tabpanel"
+          id={tabPanelId(TABS_PREFIX, String(greenhouseIndex))}
+          aria-labelledby={tabElementId(TABS_PREFIX, String(greenhouseIndex))}
+          className="space-y-4"
+        >
+          {locked ? (
+            <LockedGreenhouse
+              index={greenhouseIndex}
+              price={vineState.purchases[greenhouseIndex - 1]?.price}
+              previousLocked={greenhouseIndex > 1 && !unlocked.includes(greenhouseIndex - 1)}
+            />
+          ) : (
+            editor
+          )}
+        </div>
       </div>
 
       {paletteOpen && !locked && (

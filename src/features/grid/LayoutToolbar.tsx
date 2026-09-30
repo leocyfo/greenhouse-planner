@@ -11,7 +11,10 @@ interface LayoutToolbarProps {
   readonly active: GridLayoutState
 }
 
-/** Plans du greenhouse : choisir, créer, dupliquer, renommer, supprimer, vider, charger un plan AVRG. */
+/**
+ * Plans du greenhouse : choisir, créer, dupliquer, renommer, supprimer, vider, charger un plan AVRG.
+ * Sur une seule ligne quand la place le permet, pour laisser la hauteur à la grille.
+ */
 export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProps) {
   const presets = getGameData().layouts
   const setActiveLayout = useAppStore((s) => s.setActiveLayout)
@@ -32,7 +35,7 @@ export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProp
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-line bg-panel p-3">
+    <div className="rounded-xl border border-line bg-panel p-3">
       <div className="flex flex-wrap items-end gap-2">
         {renaming === null ? (
           <label className="flex min-w-48 flex-col gap-1 text-xs text-ink-muted">
@@ -105,34 +108,34 @@ export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProp
             </button>
           </>
         )}
-      </div>
 
-      {presets.length > 0 && (
-        <div className="flex flex-wrap items-end gap-2 border-t border-line pt-3">
-          <label className="flex min-w-56 flex-col gap-1 text-xs text-ink-muted">
-            Plan du guide AVRG
-            <select
-              value={presetId}
-              onChange={(event) => setPresetId(event.target.value)}
-              className="h-9 rounded-lg border border-line bg-canvas px-2.5 text-sm text-ink"
+        {presets.length > 0 && (
+          <div className="ml-auto flex flex-wrap items-end gap-2">
+            <label className="flex min-w-56 flex-col gap-1 text-xs text-ink-muted">
+              Plan du guide AVRG
+              <select
+                value={presetId}
+                onChange={(event) => setPresetId(event.target.value)}
+                className="h-9 rounded-lg border border-line bg-canvas px-2.5 text-sm text-ink"
+              >
+                {presets.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => loadPreset(greenhouse, presetId)}
+              className="h-9 rounded-lg bg-accent px-3 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
             >
-              {presets.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() => loadPreset(greenhouse, presetId)}
-            className="h-9 rounded-lg bg-accent px-3 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
-          >
-            Charger dans un nouveau plan
-          </button>
-          {preset?.notes && <p className="w-full text-xs text-ink-muted">{preset.notes}</p>}
-        </div>
-      )}
+              Charger dans un nouveau plan
+            </button>
+          </div>
+        )}
+      </div>
+      {preset?.notes && <p className="mt-2 text-xs text-ink-muted">{preset.notes}</p>}
     </div>
   )
 }

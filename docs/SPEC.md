@@ -448,6 +448,17 @@ recrée tout »)
   seule image sur une empreinte 2x2 ou 3x3) ; conflit = bordure rouge ; effets reçus = pastille,
   eau = goutte. Les Lonelily (spawn au hasard) ne sont pas dessinées, leurs conflits oui. Le détail
   reste dans le panneau Case et le nom accessible des cases. Palette en grille de cartes.
+- Mise en page de SkyCrypt (demande du joueur, capture d'un profil) : l'onglet utilise toute la
+  largeur de la page (`FULL_WIDTH_TABS`, les autres onglets restent à 1 280 px). À gauche, à la
+  place du personnage : « Crops et mutations » (outils, recherche, cartes), une colonne sur toute
+  la hauteur de l'écran, collante, dont la liste défile seule. À droite, à la place des stats :
+  greenhouses, barre des plans (une seule ligne quand la place le permet), grille, et à côté en
+  grand écran « Afficher », « Case » et la consommation.
+- Taille des cases : toute la place disponible, en largeur et en hauteur (du haut du plateau au
+  bas de l'écran, mesuré à l'ouverture et à chaque changement de taille), entre 44 et 72 px ; les
+  icônes suivent. La grille tient entière à l'écran en 1920 × 950, 1873 × 944 et 1459 × 900
+  (cases de 64, 64 et 53 px) ; plus petit, elle garde 44 px (comme avant) et la page défile.
+  Mobile inchangé : palette dans un panneau (bouton « Palette »), grille qui défile.
 - Poser une mutation met ses cases à son sol (Blastberry → Sand) ; un crop de base garde le sol.
 - Les greenhouses 2 et 3 ne se modifient qu'une fois débloqués dans Outils (Plot Limit) : sinon leur
   onglet porte un cadenas et affiche le prix avec un lien vers les upgrades. « Ce que la grille

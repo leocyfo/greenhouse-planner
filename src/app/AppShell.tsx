@@ -9,13 +9,13 @@ import { ToolsTab } from '../features/tools/ToolsTab'
 import { PlayerButton } from '../features/profile/PlayerButton'
 import { PlayerImportDialog } from '../features/profile/PlayerImportDialog'
 import { AppFooter } from './AppFooter'
-import { DEFAULT_TAB, TAB_IDS, TABS, type TabId } from './tabs'
+import { DEFAULT_TAB, FULL_WIDTH_TABS, TAB_IDS, TABS, type TabId } from './tabs'
 import { useHashTab } from './useHashTab'
 
 const APP_NAME = 'Greenhouse Planner'
 const TAB_PREFIX = 'main'
 
-// Le graphe (React Flow) pèse lourd : il n'est téléchargé qu'à l'ouverture de l'Encyclopédie.
+// L'Encyclopédie n'est téléchargée qu'à son ouverture.
 const EncyclopediaTab = lazy(() =>
   import('../features/encyclopedia/EncyclopediaTab').then((module) => ({ default: module.EncyclopediaTab })),
 )
@@ -99,7 +99,7 @@ export function AppShell() {
         id={panelId}
         aria-labelledby={tabElementId(TAB_PREFIX, tab.id)}
         tabIndex={0}
-        className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6"
+        className={`mx-auto w-full flex-1 px-4 py-6 sm:px-6 ${FULL_WIDTH_TABS.has(tab.id) ? '' : 'max-w-7xl'}`}
       >
         {/* Une clé par onglet : le contenu arrive en fondu à chaque changement d'onglet. */}
         <div key={tab.id} className="animate-fade-up">

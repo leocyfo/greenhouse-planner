@@ -44,15 +44,18 @@ export function EncyclopediaTab() {
     dialog.open(id)
   }
 
-  // Échap retire la mise en avant ; fiche ouverte, Échap ferme d'abord la fiche.
+  // Échap retire la mise en avant, y compris celle du focus rendu à la carte quand la fiche se
+  // ferme ; fiche ouverte, Échap ferme d'abord la fiche.
   useEffect(() => {
-    if (!pinnedId || dialogOpen) return
+    if (!activeId || dialogOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setPinnedId(null)
+      if (event.key !== 'Escape') return
+      setPinnedId(null)
+      setHoveredId(null)
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [pinnedId, dialogOpen])
+  }, [activeId, dialogOpen])
 
   return (
     <div className="space-y-4">

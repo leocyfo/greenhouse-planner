@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from 'react'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { getGameData } from '../../data'
 import { wikiImage } from '../../data/wikiImages'
@@ -12,7 +12,38 @@ import { ringShadow } from './gridStyle'
 import { cellName, groundLabel } from './gridText'
 import { DRAG_TYPE, type Overlays } from './gridTypes'
 
-const CELL = '2.75rem'
+/**
+ * Côté d'une case : toute la place disponible, en largeur (le plateau fait 10 cases + 41 px :
+ * 9 écarts de 3 px, marges et bordure) comme en hauteur (--board-height : de son haut au bas de
+ * l'écran), entre 44 et 72 px. Les icônes suivent (tailles en %).
+ */
+const CELL = 'clamp(2.75rem, min(calc((100cqw - 41px) / 10), calc((var(--board-height, 100dvh) - 41px) / 10)), 4.5rem)'
+/** Marge laissée sous le plateau, en bas de l'écran. */
+const BOTTOM_MARGIN = 16
+
+/**
+ * Hauteur disponible pour le plateau : du haut du plateau (dans la page, quel que soit le
+ * défilement) au bas de l'écran. Recalculée quand l'écran ou la page change de taille (barre des
+ * plans sur une ou deux lignes, notes d'un plan…).
+ */
+function useAvailableHeight(element: RefObject<HTMLElement | null>): number | null {
+  const [height, setHeight] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    const update = () => {
+      const top = element.current ? element.current.getBoundingClientRect().top + window.scrollY : 0
+      setHeight(Math.max(0, Math.round(window.innerHeight - top - BOTTOM_MARGIN)))
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(document.documentElement)
+    window.addEventListener('resize', update)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [element])
+  return height
+}
 /** Voile sombre sur le sol des cases vides : les crops posés ressortent en pleine lumière. */
 const EMPTY_VEIL = 'linear-gradient(rgb(14 16 20 / 0.55), rgb(14 16 20 / 0.55))'
 
@@ -80,6 +111,8 @@ export function GridBoard({
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
   const [focusedCell, setFocusedCell] = useState(0)
   const painting = useRef(false)
+  const boardRef = useRef<HTMLDivElement>(null)
+  const availableHeight = useAvailableHeight(boardRef)
 
   const cropName = (crop: CropRef) =>
     crop.kind === 'base' ? crop.name : (data.mutationsById.get(crop.id)?.name ?? crop.id)
@@ -158,16 +191,23 @@ export function GridBoard({
   )
 
   return (
-    <div className="overflow-x-auto pb-2" onPointerUp={() => (painting.current = false)} onPointerLeave={() => onHover(null)}>
+    <div className="@container overflow-x-auto pb-2" onPointerUp={() => (painting.current = false)} onPointerLeave={() => onHover(null)}>
       <p id={helpId} className="sr-only">
         Flèches pour se déplacer, Entrée pour agir avec l&apos;outil choisi, Suppr pour effacer.
       </p>
       <div
+        ref={boardRef}
         role="group"
         aria-label={label}
         aria-describedby={helpId}
-        className="relative grid w-max touch-manipulation select-none gap-[3px] rounded-xl border border-line bg-canvas p-1.5"
-        style={{ gridTemplateColumns: `repeat(${grid.width}, ${CELL})`, gridTemplateRows: `repeat(${grid.height}, ${CELL})` }}
+        className="relative mx-auto grid w-max touch-manipulation select-none gap-[3px] rounded-xl border border-line bg-canvas p-1.5"
+        style={
+          {
+            ...(availableHeight !== null && { '--board-height': `${availableHeight}px` }),
+            gridTemplateColumns: `repeat(${grid.width}, ${CELL})`,
+            gridTemplateRows: `repeat(${grid.height}, ${CELL})`,
+          } as CSSProperties
+        }
       >
         {/* Couche 1 : les cases (boutons). Les crops 1x1 sont dessinés dedans. */}
         {grid.ground.map((ground, cell) => {
@@ -220,7 +260,7 @@ export function GridBoard({
               {single &&
                 (wikiImage(cropName(single.crop)) ? (
                   // Une clé par crop : un crop posé (ou remplacé) apparaît avec un petit rebond.
-                  <WikiIcon key={cropName(single.crop)} name={cropName(single.crop)} size={34} className="animate-pop drop-shadow" />
+                  <WikiIcon key={cropName(single.crop)} name={cropName(single.crop)} size={34} className="size-[78%] animate-pop drop-shadow" />
                 ) : (
                   // Crop sans image (Fire) : son abréviation, faute de mieux.
                   <span
@@ -247,7 +287,7 @@ export function GridBoard({
               className="pointer-events-none z-10 flex animate-pop items-center justify-center rounded-md"
               style={{ ...position(placement.x, placement.y, side), boxShadow: ringShadow(GRID_COLORS.placed) }}
             >
-              <WikiIcon name={cropName(placement.crop)} size={side * 30} className="drop-shadow" />
+              <WikiIcon name={cropName(placement.crop)} size={side * 30} className="size-[70%] drop-shadow" />
             </div>
           )
         })}
@@ -258,7 +298,7 @@ export function GridBoard({
             className="pointer-events-none z-10 flex animate-fade-in items-center justify-center rounded-md"
             style={{ ...position(option.x, option.y, option.side), boxShadow: ringShadow(GRID_COLORS.spawn) }}
           >
-            <WikiIcon name={mutationName(option.mutationId)} size={option.side * 26} className="opacity-45" />
+            <WikiIcon name={mutationName(option.mutationId)} size={option.side * 26} className="size-[60%] opacity-45" />
           </div>
         ))}
 
@@ -287,7 +327,7 @@ export function GridBoard({
               }`}
               style={{ ...position(x, y), boxShadow: ring ? ringShadow(ring) : undefined }}
             >
-              {ghost && <WikiIcon key={ghost} name={mutationName(ghost)} size={30} className="animate-fade-in opacity-45" />}
+              {ghost && <WikiIcon key={ghost} name={mutationName(ghost)} size={30} className="size-[68%] animate-fade-in opacity-45" />}
               {effect && <EffectDot tone={effect} className="absolute bottom-1 left-1" />}
               {water && <WaterDrop tone={water} className="absolute top-0.5 right-0.5" />}
             </div>

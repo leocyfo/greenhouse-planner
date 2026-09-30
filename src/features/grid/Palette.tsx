@@ -31,7 +31,10 @@ interface PaletteProps {
   readonly labels: ReadonlyMap<string, string>
 }
 
-/** Palette : outil, crop à poser (avec recherche et glisser-déposer) ou sol à peindre. */
+/**
+ * Palette : outil, crop à poser (avec recherche et glisser-déposer) ou sol à peindre. Dans une
+ * colonne de hauteur fixe, la liste des crops prend toute la place restante et défile seule.
+ */
 export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrushChange, allowLocked, labels }: PaletteProps) {
   const data = getGameData()
   const [search, setSearch] = useState('')
@@ -73,7 +76,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
   const selectedKey = crop ? cropKey(crop) : null
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <fieldset>
         <legend className="mb-1.5 text-xs font-medium text-ink-muted">Outil</legend>
         <div className="grid grid-cols-3 gap-1.5">
@@ -134,7 +137,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
           </div>
         </fieldset>
       ) : (
-        <div>
+        <div className="flex min-h-0 flex-1 flex-col">
           <label className="flex flex-col gap-1 text-xs font-medium text-ink-muted">
             Crop à poser
             <input
@@ -145,7 +148,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
               className="h-9 rounded-lg border border-line bg-canvas px-3 text-sm font-normal text-ink placeholder:text-ink-muted/70"
             />
           </label>
-          <div className="mt-2 max-h-[26rem] space-y-3 overflow-y-auto pr-1">
+          <div className="mt-2 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
             {groups.map((group) => (
               <div key={group.title}>
                 <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-ink-muted">{group.title}</p>
