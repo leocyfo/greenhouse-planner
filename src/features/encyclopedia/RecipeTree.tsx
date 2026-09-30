@@ -27,6 +27,10 @@ interface RecipeTreeProps {
   /** Zone mesurée : l'espace entre les colonnes suit sa largeur. */
   readonly boxRef: RefObject<HTMLDivElement | null>
   readonly focus: TreeFocus | null
+  /** Recherche en cours : seules ces mutations restent en pleine lumière. */
+  readonly matches: ReadonlySet<string> | null
+  /** « Tout le chemin » : quantité totale de chaque nœud pour 1 exemplaire de la mutation choisie. */
+  readonly totals: ReadonlyMap<string, number> | null
   readonly selectedId: string | null
   readonly states: ReadonlyMap<string, MutationState>
   readonly plan: Plan
@@ -44,6 +48,8 @@ export function RecipeTree({
   label,
   boxRef,
   focus,
+  matches,
+  totals,
   selectedId,
   states,
   plan,
@@ -56,9 +62,17 @@ export function RecipeTree({
   const roleOf = (edge: TreeEdge) => (focus ? edgeRole(edge, focus) : 'none')
   // Les liens mis en avant sont dessinés en dernier, donc par-dessus les autres.
   const edges = model ? [...model.edges].sort((a, b) => ROLE_ORDER[roleOf(a)] - ROLE_ORDER[roleOf(b)]) : []
-  const amounts = new Map(
-    focus && model ? model.edges.filter((edge) => edge.target === focus.id).map((edge) => [edge.source, amountText(edge)]) : [],
+  // Quantités : le total pour la mutation choisie (« Tout le chemin »), sinon celles de la recette
+  // de la mutation mise en avant.
+  const selectedName = selectedId ? data.mutationsById.get(selectedId)?.name : undefined
+  const amounts = new Map<string, { readonly text: string; readonly title?: string }>(
+    totals
+      ? [...totals].map(([id, total]) => [id, { text: `×${total}`, title: `${total} au total pour 1 ${selectedName ?? ''}` }])
+      : focus && model
+        ? model.edges.filter((edge) => edge.target === focus.id).map((edge) => [edge.source, { text: amountText(edge) }])
+        : [],
   )
+  const dimmedNode = (id: string) => (matches ? !matches.has(id) : isDimmed(id, focus))
 
   return (
     <div ref={boxRef} className="overflow-x-auto rounded-xl border border-line bg-panel p-3">
@@ -84,7 +98,7 @@ export function RecipeTree({
                 fill="none"
                 strokeDasharray={edge.relation === 'condition' ? undefined : '5 4'}
                 className="transition-[opacity,stroke] duration-150"
-                {...edgeStyle(roleOf(edge), focus !== null)}
+                {...edgeStyle(roleOf(edge), focus !== null || matches !== null)}
               />
             ))}
           </svg>
@@ -123,7 +137,7 @@ export function RecipeTree({
                     step={`Étape ${node.step}`}
                     selected={selected}
                     active={focus?.id === node.id}
-                    dimmed={isDimmed(node.id, focus)}
+                    dimmed={dimmedNode(node.id)}
                     amount={amounts.get(node.id) ?? null}
                     actionLabel={selected ? 'Choisie. Ouvrir la fiche' : "Ne garder que ce qu'il faut pour la faire"}
                     style={FILL}
@@ -135,7 +149,7 @@ export function RecipeTree({
                 ) : node.kind === 'base' ? (
                   <BaseCropChip
                     name={node.id.slice('base:'.length)}
-                    dimmed={isDimmed(node.id, focus)}
+                    dimmed={dimmedNode(node.id)}
                     amount={amounts.get(node.id) ?? null}
                     style={FILL}
                   />

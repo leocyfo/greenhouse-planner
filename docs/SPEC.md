@@ -145,7 +145,9 @@ src/
    - Couleur de l'état : verrouillée / disponible / complétée / spéciale
    - Survol : tout le chemin de la mutation et ce qu'elle permet de faire ;
      clic = la choisir : l'arbre ne garde que ce qu'il faut pour la faire, en deux
-     vues (« Avant et après », « Tout le chemin ») ; second clic ou bouton « Fiche »
+     vues (« Avant et après », « Tout le chemin », avec le total de chaque ingrédient
+     pour en faire 1) et un bouton « Calculer » ; recherche par nom avec suggestions ;
+     second clic ou bouton « Fiche »
      = la fiche en fenêtre (la même que depuis l'Inventaire) : conditions,
      sol, taille, growth stages, aperçu de la plantation, effets, drops,
      mécanique spéciale (`notes`), usages, bouton "calculer"
@@ -372,8 +374,8 @@ recrée tout »)
   ingrédients directs portent leur quantité (×6, « 1 consommé », « 2 catalyseur ») et un résumé
   écrit (recette, « sert à », étape, nombre de mutations avant elle) s'affiche au-dessus, à hauteur
   fixe pour que l'arbre ne bouge pas.
-- Mutation choisie (demande du joueur, 30/09/2026) : un clic sur une carte, ou « Trouver une
-  mutation », ne garde que ce qu'il faut pour la faire, dans leurs étapes (les étapes vides
+- Mutation choisie (demande du joueur, 30/09/2026) : un clic sur une carte, ou la recherche, ne
+  garde que ce qu'il faut pour la faire, dans leurs étapes (les étapes vides
   disparaissent), avec deux vues au choix dans la barre du haut :
   « Avant et après » = ses ingrédients directs et les recettes qui l'utilisent ;
   « Tout le chemin » = toutes les mutations à faire avant elle, jusqu'au départ (rien après).
@@ -382,6 +384,21 @@ recrée tout »)
   l'arbre (fiche ouverte, Échap la ferme d'abord). Les cartes glissent vers leur nouvelle place
   (240 ms), les liens reviennent en fondu. Godseed et Jerryflower, hors de l'arbre, ouvrent
   directement leur fiche.
+- Quantités de « Tout le chemin » (demande du joueur, 30/09/2026) : chaque carte (et chaque crop de
+  base affiché) porte le total qu'il en faut pour obtenir 1 exemplaire de la mutation choisie
+  (« ×5 », détail au survol et dans le nom accessible). Même calcul que le Calculateur
+  (`computePlan`), en mode Minimum et sans compter le stock (`chainTotals`) ; la barre le rappelle
+  (« ×N = total pour en faire 1, sans compter ton stock »). Dans les autres vues, les pastilles
+  restent les quantités de la recette de la mutation mise en avant.
+- Bouton « Calculer » dans la barre (à côté de « Fiche ») : le Calculateur avec cette seule
+  mutation, autant d'exemplaires que demandent les objectifs suivis (au moins 1), comme le bouton
+  de la fiche.
+- Recherche (demande du joueur, 30/09/2026), à la place de la liste déroulante « Trouver une
+  mutation » : champ « Rechercher une mutation » avec suggestions (combobox : flèches, Entrée,
+  Échap). Sans tenir compte des majuscules, des accents ni de la ponctuation (« do not eat » trouve
+  Do-not-eat-shroom), les noms qui commencent par la recherche d'abord (`searchMutations`). Pendant
+  la saisie, seules les cartes qui correspondent restent en pleine lumière. Entrée choisit la
+  suggestion ; Échap ferme les suggestions, puis vide le champ, puis revient à tout l'arbre.
 - Crops de base en option (colonne à gauche) ; dans une vue filtrée, seulement ceux des recettes
   affichées.
 - Colonnes par rareté (demande du joueur, 30/09/2026 : « pourquoi les Epic, Legendary… ne sont pas

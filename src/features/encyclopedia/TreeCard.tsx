@@ -7,14 +7,21 @@ import type { Mutation } from '../../types/game'
 import type { MutationState } from './graphModel'
 import { STATE_INFO } from './stateInfo'
 
-/** Quantité de l'ingrédient dans la recette mise en avant, à la couleur du chemin. */
-function AmountPill({ amount }: { readonly amount: string }) {
+/** Quantité affichée sur une carte : son texte (« ×6 ») et, s'il y a lieu, son explication. */
+export interface CardAmount {
+  readonly text: string
+  readonly title?: string
+}
+
+/** Quantité de l'ingrédient (recette mise en avant, ou total du chemin), à la couleur du chemin. */
+function AmountPill({ amount }: { readonly amount: CardAmount }) {
   return (
     <span
+      title={amount.title}
       className="shrink-0 animate-pop rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums"
       style={{ color: TREE_COLORS.path, background: `color-mix(in srgb, ${TREE_COLORS.path} 16%, transparent)` }}
     >
-      {amount}
+      {amount.text}
     </span>
   )
 }
@@ -31,7 +38,7 @@ interface MutationTreeCardProps {
   readonly active?: boolean
   /** Mutation choisie : l'arbre ne garde que ce qu'il faut pour la faire. */
   readonly selected?: boolean
-  readonly amount?: string | null
+  readonly amount?: CardAmount | null
   /** Ce que fait le clic, pour le nom accessible (« Ouvrir la fiche » par défaut). */
   readonly actionLabel?: string
   readonly style?: CSSProperties
@@ -68,6 +75,7 @@ export function MutationTreeCard({
     step,
     info.label,
     `${owned} en stock${required > 0 ? ` sur ${required} demandés` : ''}`,
+    amount ? (amount.title ?? `${amount.text} dans la recette`) : undefined,
   ]
     .filter(Boolean)
     .join(', ')
@@ -112,7 +120,7 @@ export function MutationTreeCard({
 interface BaseCropChipProps {
   readonly name: string
   readonly dimmed: boolean
-  readonly amount: string | null
+  readonly amount: CardAmount | null
   readonly style: CSSProperties
 }
 

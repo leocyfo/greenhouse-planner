@@ -8,6 +8,7 @@ import {
   buildTree,
   CARD_WIDTH,
   chainOf,
+  chainTotals,
   edgeRole,
   focusOn,
   HEADER_HEIGHT,
@@ -326,5 +327,21 @@ describe('arbre : colonnes par rareté', () => {
     const mutations = data.mutations.map((m) => (m.id === 'chocoberry' ? { ...m, rarity: 'LEGENDARY', rarityRank: 4 } : m))
     const changed = { ...data, mutations, mutationsById: new Map(mutations.map((m) => [m.id, m])) }
     expect(buildTree(changed, { arrangement: 'rarity', showBaseCrops: false }).headers[0]?.title).toBe('Étape 1')
+  })
+})
+
+describe('arbre : quantités de « Tout le chemin »', () => {
+  it('donne le total de chaque ingrédient pour 1 exemplaire, comme le Calculateur en mode Minimum', () => {
+    const totals = chainTotals(data, 'blastberry')
+    expect(Object.fromEntries(totals)).toMatchObject({ chocoberry: 5, ashwreath: 3, choconut: 6, gloomgourd: 2 })
+    expect(totals.has('blastberry')).toBe(false)
+    // Les crops de base aussi, pour la colonne des crops de base.
+    expect(totals.get(baseNodeId('Cocoa Beans'))).toBeGreaterThan(0)
+  })
+
+  it('ne compte pas le stock et suit le calcul du plan', () => {
+    const plan = computePlan(data, { targets: [{ mutationId: 'all_in_aloe', quantity: 1 }], inventory: {}, mode: 'minimum' })
+    const totals = chainTotals(data, 'all_in_aloe')
+    for (const id of chainOf(data, 'all_in_aloe')) expect(totals.get(id), id).toBe(plan.needs.get(id)?.required)
   })
 })

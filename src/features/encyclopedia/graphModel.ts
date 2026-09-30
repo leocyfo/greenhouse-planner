@@ -6,7 +6,7 @@
 import { formatRarity } from '../../components/labels'
 import { recipeInputs, recipeLevels, type InputRelation } from '../../logic/graph'
 import { isManualSpecial, missingInputs } from '../../logic/nextAction'
-import type { Inventory, MutationNeed } from '../../logic/recipes'
+import { computePlan, type Inventory, type MutationNeed } from '../../logic/recipes'
 import type { GameData, Mutation } from '../../types/game'
 import { layoutColumns } from './treeLayout'
 
@@ -144,6 +144,18 @@ export function chainOf(data: GameData, id: string): ReadonlySet<string> {
   }
   visit(id)
   return chain
+}
+
+/**
+ * Quantités totales pour obtenir 1 exemplaire d'une mutation : le calcul du Calculateur, en mode
+ * Minimum et sans compter le stock. Par id de nœud (mutations, et crops de base via baseNodeId).
+ */
+export function chainTotals(data: GameData, id: string): ReadonlyMap<string, number> {
+  const plan = computePlan(data, { targets: [{ mutationId: id, quantity: 1 }], inventory: {}, mode: 'minimum' })
+  const totals = new Map<string, number>()
+  for (const [mutationId, need] of plan.needs) if (mutationId !== id) totals.set(mutationId, need.required)
+  for (const crop of plan.baseCrops) totals.set(baseNodeId(crop.name), crop.quantity)
+  return totals
 }
 
 type RawEdge = Omit<TreeEdge, 'path'>

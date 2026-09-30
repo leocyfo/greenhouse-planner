@@ -24,12 +24,25 @@ interface FocusBarProps {
   readonly states: ReadonlyMap<string, MutationState>
   readonly mode: TreeMode
   readonly onModeChange: (mode: TreeMode) => void
+  /** L'arbre affiche le total de chaque mutation pour en faire 1 (« Tout le chemin »). */
+  readonly showsTotals: boolean
   readonly onOpenSheet: (mutationId: string) => void
+  readonly onCalculate: (mutationId: string) => void
   /** Retour à tout l'arbre. */
   readonly onClear: () => void
 }
 
-export function FocusBar({ selectedId, hoveredId, states, mode, onModeChange, onOpenSheet, onClear }: FocusBarProps) {
+export function FocusBar({
+  selectedId,
+  hoveredId,
+  states,
+  mode,
+  onModeChange,
+  showsTotals,
+  onOpenSheet,
+  onCalculate,
+  onClear,
+}: FocusBarProps) {
   const data = getGameData()
   const modeName = useId()
   const id = selectedId ?? hoveredId
@@ -69,14 +82,26 @@ export function FocusBar({ selectedId, hoveredId, states, mode, onModeChange, on
           <span className="text-ink-muted">
             · Étape {step} · {before === 0 ? 'aucune mutation avant elle' : `${before} mutation${before > 1 ? 's' : ''} avant elle`}
           </span>
+          {selectedId && showsTotals && before > 0 && (
+            <span className="text-ink-muted">
+              · <span style={{ color: TREE_COLORS.path }}>×N</span> = total pour en faire 1, sans compter ton stock
+            </span>
+          )}
         </p>
         {selectedId && (
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedControl legend="Mutations gardées" name={modeName} options={MODES} value={mode} onChange={onModeChange} />
             <button
               type="button"
-              onClick={() => onOpenSheet(selectedId)}
+              onClick={() => onCalculate(selectedId)}
               className="h-8 rounded-lg bg-accent px-3 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
+            >
+              Calculer<span className="sr-only"> {mutation.name}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenSheet(selectedId)}
+              className="h-8 rounded-lg border border-line px-3 text-sm text-ink transition-colors hover:bg-panel-raised"
             >
               Fiche
             </button>

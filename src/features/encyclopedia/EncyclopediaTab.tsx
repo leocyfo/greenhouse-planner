@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { formatRarity } from '../../components/labels'
+import { goToTab } from '../../app/navigation'
 import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
 import { isManualSpecial } from '../../logic/nextAction'
@@ -7,9 +7,18 @@ import { useAppStore } from '../../store/appStore'
 import { useGoalPlan } from '../../store/useGoalPlan'
 import { useMutationDialog } from '../inventory/useMutationDialog'
 import { FocusBar } from './FocusBar'
-import { buildTree, focusOn, mutationState, type MutationState, type TreeArrangement, type TreeMode } from './graphModel'
+import {
+  buildTree,
+  chainTotals,
+  focusOn,
+  mutationState,
+  type MutationState,
+  type TreeArrangement,
+  type TreeMode,
+} from './graphModel'
+import { searchMutations } from './searchMutations'
+import { MutationSearch } from './MutationSearch'
 import { RecipeTree } from './RecipeTree'
-import { STATE_INFO } from './stateInfo'
 import { MutationTreeCard } from './TreeCard'
 import { TreeLegend } from './TreeLegend'
 import { useContentWidth } from './useContentWidth'
@@ -29,6 +38,8 @@ export function EncyclopediaTab() {
   const data = getGameData()
   const { plan } = useGoalPlan()
   const inventory = useAppStore((s) => s.progress.inventory)
+  const calculateOnly = useAppStore((s) => s.calculateOnly)
+  const [query, setQuery] = useState('')
   const [showBaseCrops, setShowBaseCrops] = useState(false)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -61,11 +72,23 @@ export function EncyclopediaTab() {
   const shown = useMemo(() => new Set(model?.nodes.map((node) => node.id)), [model])
   const activeId = [hoveredId, selectedId].find((id) => id !== null && shown.has(id)) ?? null
   const focus = useMemo(() => (model && activeId ? focusOn(model.edges, activeId) : null), [model, activeId])
+  const results = useMemo(() => searchMutations(data.mutations, query), [data, query])
+  const matches = useMemo(() => (query.trim() ? new Set(results.map((m) => m.id)) : null), [query, results])
+  const selectedInTree = selectedId !== null && shown.has(selectedId)
+  const totals = useMemo(
+    () => (selectedId && selectedInTree && mode === 'chain' ? chainTotals(data, selectedId) : null),
+    [data, selectedId, selectedInTree, mode],
+  )
 
   /** Choisit une mutation ; déjà choisie (ou sans recette, hors de l'arbre), ouvre sa fiche. */
   const choose = (id: string) => {
     if (id === selectedId || specials.some((m) => m.id === id)) dialog.open(id)
     else setSelectedId(id)
+  }
+  /** Le Calculateur, avec cette seule mutation (autant que demandent les objectifs, au moins 1). */
+  const calculate = (id: string) => {
+    calculateOnly(id, Math.max(plan.needs.get(id)?.required ?? 0, 1))
+    goToTab('calculateur')
   }
   /** Retour à tout l'arbre : le bouton disparaît, le focus passe à la carte qui était choisie. */
   const showAll = () => {
@@ -96,37 +119,14 @@ export function EncyclopediaTab() {
       <header className="sr-only">
         <h2>Encyclopédie</h2>
         <p>
-          Arbre des recettes : chaque mutation dans la colonne de sa rareté (ou de son étape), reliée à ses ingrédients. Entrée sur une mutation ne
-          garde que ce qu&apos;il faut pour la faire ; Entrée à nouveau ouvre sa fiche ; Échap revient à tout l&apos;arbre.
+          Arbre des recettes : chaque mutation dans la colonne de sa rareté (ou de son étape), reliée à ses ingrédients. Entrée sur une
+          mutation ne garde que ce qu&apos;il faut pour la faire ; Entrée à nouveau ouvre sa fiche ; Échap revient à tout l&apos;arbre.
+          La recherche propose les mutations dont le nom correspond.
         </p>
       </header>
 
       <div className="flex flex-wrap items-end gap-4">
-        <label className="flex min-w-56 flex-col gap-1 text-xs text-ink-muted">
-          Trouver une mutation
-          <select
-            value={selectedId ?? ''}
-            onChange={(event) => {
-              const id = event.target.value
-              if (id) choose(id)
-              else setSelectedId(null)
-            }}
-            className="h-9 rounded-lg border border-line bg-canvas px-2.5 text-sm text-ink"
-          >
-            <option value="">Tout l&apos;arbre</option>
-            {data.rarities.map((rarity) => (
-              <optgroup key={rarity} label={formatRarity(rarity)}>
-                {data.mutations
-                  .filter((m) => m.rarity === rarity)
-                  .map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} — {STATE_INFO[states.get(m.id) ?? 'locked'].label}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
+        <MutationSearch query={query} results={results} states={states} onQueryChange={setQuery} onChoose={choose} />
         <div className="flex flex-col gap-1 text-xs text-ink-muted">
           <span aria-hidden="true">Colonnes</span>
           <SegmentedControl legend="Colonnes" name={arrangementName} options={ARRANGEMENTS} value={arrangement} onChange={setArrangement} />
@@ -149,7 +149,9 @@ export function EncyclopediaTab() {
         states={states}
         mode={mode}
         onModeChange={setMode}
+        showsTotals={totals !== null}
         onOpenSheet={dialog.open}
+        onCalculate={calculate}
         onClear={showAll}
       />
       <RecipeTree
@@ -158,6 +160,8 @@ export function EncyclopediaTab() {
         label={treeLabel}
         boxRef={treeBox}
         focus={focus}
+        matches={matches}
+        totals={totals}
         selectedId={selectedId}
         states={states}
         plan={plan}
