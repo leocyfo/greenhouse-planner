@@ -40,3 +40,23 @@ export function parseMcText(text: string, defaultColor: McColor = 'f'): McSegmen
 export function plainMcText(text: string): string {
   return text.replace(CODE, '')
 }
+
+const STACK_UNITS = [
+  [1_000_000_000, 'B'],
+  [1_000_000, 'M'],
+  [1_000, 'k'],
+] as const
+
+/**
+ * Nombre d'une case, abrégé au-delà de 999 pour tenir dans la case, comme les mods SkyBlock :
+ * 1463 → 1.4k, 14609 → 14k. Arrondi vers le bas : jamais plus que ce qu'on a.
+ */
+export function stackCountLabel(count: number): string {
+  for (const [size, unit] of STACK_UNITS) {
+    if (count < size) continue
+    // En dixièmes d'unité, calculés en entiers : pas d'erreur d'arrondi des flottants.
+    const tenths = Math.floor(count / (size / 10))
+    return `${tenths < 100 ? tenths / 10 : Math.floor(tenths / 10)}${unit}`
+  }
+  return String(count)
+}

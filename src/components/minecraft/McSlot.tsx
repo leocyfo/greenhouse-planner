@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { wikiImage } from '../../data/wikiImages'
 import { usePopupPosition } from '../usePopupPosition'
 import { hideTooltip, showTooltip, useTooltipShown } from './activeTooltip'
+import { stackCountLabel } from './mcFormat'
 import { McText } from './McText'
 
 /** Couleur de la vitre (stained glass pane) qui remplit la case. */
@@ -24,7 +25,7 @@ function Pane({ color }: { readonly color: PaneColor }) {
 interface McSlotProps {
   readonly pane?: PaneColor
   readonly icon?: ReactNode
-  /** Nombre affiché en bas à droite, comme la taille d'une pile d'objets. */
+  /** Nombre affiché en bas à droite, comme la taille d'une pile d'objets (abrégé dès 1000). */
   readonly count?: number
   /** Plus petit nombre affiché : 2 comme dans le jeu (une pile de 1 n'a pas de chiffre), ou 1. */
   readonly countFrom?: number
@@ -79,7 +80,7 @@ export function McSlot({
       )}
       {count !== undefined && count >= countFrom && (
         <span key={count} className="mc-count animate-bump">
-          {count}
+          {stackCountLabel(count)}
         </span>
       )}
     </>

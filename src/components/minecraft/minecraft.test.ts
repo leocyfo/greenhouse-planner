@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { currentTooltip, hideTooltip, registerTooltip, showTooltip } from './activeTooltip'
-import { parseMcText, plainMcText } from './mcFormat'
+import { parseMcText, plainMcText, stackCountLabel } from './mcFormat'
 
 describe('Minecraft : une seule infobulle à la fois', () => {
   it('fait passer la case survolée devant le focus clavier, qui revient quand la souris part', () => {
@@ -59,5 +59,21 @@ describe('Minecraft : codes couleur', () => {
 
   it('retire les codes pour les noms accessibles', () => {
     expect(plainMcText('Améliore ton tier §aGrowth Speed§7.')).toBe('Améliore ton tier Growth Speed.')
+  })
+})
+
+describe('Minecraft : nombre des cases', () => {
+  it('abrège au-delà de 999, arrondi vers le bas, pour tenir dans la case', () => {
+    expect([7, 999, 1000, 1463, 9999, 14609, 999_999, 1_250_000, 2_000_000_000].map(stackCountLabel)).toEqual([
+      '7',
+      '999',
+      '1k',
+      '1.4k',
+      '9.9k',
+      '14k',
+      '999k',
+      '1.2M',
+      '2B',
+    ])
   })
 })

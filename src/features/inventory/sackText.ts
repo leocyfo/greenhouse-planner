@@ -2,7 +2,7 @@
  * Textes du Mutations Sack : infobulles à la manière du jeu (codes couleur Minecraft) et noms
  * accessibles des cases. Les données viennent de mutations.json, jamais d'ici.
  */
-import { formatRarity } from '../../components/labels'
+import { formatNumber, formatRarity } from '../../components/labels'
 import type { MutationNeed } from '../../logic/recipes'
 import { RARITY_MC_CODES } from '../../theme/palette'
 import type { Mutation, MutationsSack } from '../../types/game'
@@ -26,9 +26,9 @@ export function sackTooltip(entry: SackEntry): string[] {
     `§${RARITY_MC_CODES[mutation.rarity] ?? 'f'}${mutation.name}`,
     `§8${formatRarity(mutation.rarity)} · ${mutation.size} · sol ${mutation.surface}`,
     '',
-    `§7En stock : §a${owned}`,
+    `§7En stock : §a${formatNumber(owned)}`,
     need
-      ? `§7Besoin : §e${owned} / ${need.required}${need.missing > 0 ? ` §c(manque ${need.missing})` : ' §a✓'}`
+      ? `§7Besoin : §e${formatNumber(owned)} / ${formatNumber(need.required)}${need.missing > 0 ? ` §c(manque ${formatNumber(need.missing)})` : ' §a✓'}`
       : '§7Pas demandée par tes objectifs',
     `§7Analysée : ${analyzed ? '§aoui' : '§cnon'}`,
   ]
@@ -50,7 +50,7 @@ export function untrackedTooltip(name: string): string[] {
 export function sackHelpTooltip(sack: MutationsSack): string[] {
   return [
     `§d${sack.name}`,
-    ...Object.entries(sack.capacity).map(([size, amount]) => `§7${size} : §a${amount.toLocaleString('fr-FR')} §7de chaque objet`),
+    ...Object.entries(sack.capacity).map(([size, amount]) => `§7${size} : §a${formatNumber(amount)} §7de chaque objet`),
     '',
     '§fNombre §7: en stock',
     '§7Objet pâle : aucun en stock',

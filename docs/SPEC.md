@@ -329,6 +329,9 @@ et toutes les recettes qu'il donne sont identiques.
   la largeur restante, agrandi comme la « GUI scale » du jeu sans dépasser la hauteur de l'écran
   (toutes les mesures du style Minecraft dépendent de `--mc-px`). Les infobulles gardent leur
   taille, une seule à la fois. Sur mobile : réglages, sac, puis légende.
+- Nombre des cases abrégé dès 1000, arrondi vers le bas comme les mods SkyBlock (1463 → 1.4k,
+  14609 → 14k) : les stocks importés dépassent souvent 999 et débordaient sur la case voisine.
+  L'infobulle donne le nombre exact, avec séparateur de milliers.
 
 ### Fiche d'une mutation (demande du joueur)
 - Même fiche dans l'Encyclopédie (panneau) et depuis l'Inventaire (fenêtre, sac ou liste), au style
