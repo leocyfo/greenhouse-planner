@@ -8,6 +8,7 @@ import { stagesBeforeDry } from '../../logic/water'
 import { useAppStore } from '../../store/appStore'
 import { activeLayoutOf, toGridInput } from '../../store/grids'
 import type { CropRef } from '../../types/game'
+import { AutofillPanel } from './AutofillPanel'
 import { CellInspector } from './CellInspector'
 import { ConsumptionPanel } from './ConsumptionPanel'
 import { GodseedPanel } from './GodseedPanel'
@@ -193,6 +194,7 @@ export function GridTab() {
             <CellInspector grid={grid} analysis={analysis} cell={inspected} waterStages={waterStages} />
           )}
           <ConsumptionPanel />
+          <AutofillPanel key={greenhouseIndex} greenhouse={greenhouseIndex} layout={layout} />
         </div>
       </div>
     </>

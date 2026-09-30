@@ -7,6 +7,8 @@ export default defineConfig({
   // Chemins relatifs : le build fonctionne aussi dans un sous-dossier (GitHub Pages).
   base: './',
   plugins: [react(), tailwindcss()],
+  // Web Worker du remplissage automatique : module ES, comme le reste du site.
+  worker: { format: 'es' },
   build: {
     // Les images du wiki restent des fichiers à part (mis en cache, chargés à l'affichage) au
     // lieu d'être intégrées en base64 dans le JavaScript, comme Vite le fait sous 4 ko.

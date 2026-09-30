@@ -6,7 +6,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { withCrop, withGround, withoutCropAt } from '../logic/grid'
 import type { PlanMode } from '../logic/recipes'
-import type { CropRef, GameData } from '../types/game'
+import type { CropRef, GameData, Placement } from '../types/game'
 import {
   normalizeLonelilyCells,
   normalizeSpots,
@@ -72,6 +72,8 @@ export interface AppActions {
   deleteLayout: (greenhouse: number, layoutId: string) => void
   /** Charge un plan AVRG dans un nouveau plan du greenhouse. */
   loadPreset: (greenhouse: number, presetId: string) => void
+  /** Ajoute un plan tout fait (remplissage automatique) et l'affiche ; ignoré si le sol n'a pas la taille de la grille. */
+  addGeneratedLayout: (greenhouse: number, name: string, ground: readonly string[], placements: readonly Placement[]) => void
   /** Pose un crop ; renvoie la raison d'un refus, ou null. */
   placeCrop: (greenhouse: number, layoutId: string, crop: CropRef, x: number, y: number) => string | null
   removeCropAt: (greenhouse: number, layoutId: string, x: number, y: number) => void
@@ -193,6 +195,12 @@ export function createAppStore(defaults: PersistedState, storage?: StateStorage,
           if (!preset) return
           set((s) => ({
             grids: withLayoutAdded(s.grids, greenhouse, layoutFromPreset(makeId(), preset, size, defaultSurface)),
+          }))
+        },
+        addGeneratedLayout: (greenhouse, name, ground, placements) => {
+          if (ground.length !== size.width * size.height) return
+          set((s) => ({
+            grids: withLayoutAdded(s.grids, greenhouse, { id: makeId(), name, ground: [...ground], placements: [...placements] }),
           }))
         },
         placeCrop: (greenhouse, layoutId, crop, x, y) => {

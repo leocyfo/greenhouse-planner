@@ -167,6 +167,7 @@ src/
    - Compteur : ce que la grille consomme vs l'inventaire
    - Plusieurs layouts sauvegardés, dupliquer, renommer
    - Légende des sols et des couleurs toujours visible
+   - Plan automatique pour une mutation (voir « Plan automatique »)
 
 6. Outils
    - Calculateur de durée d'un growth stage (curseurs)
@@ -544,6 +545,68 @@ recrée tout »)
   le badge « à vérifier » : un crop voisin donne ses effets une fois, les effets s'additionnent,
   Effect Spread relaie sur un niveau, Immunity annule les effets négatifs. Le vérificateur Godseed
   compte les effets émis directement par les crops autour de la zone.
+
+### Plan automatique (demande du joueur, 30/09/2026)
+- Panneau « Plan automatique » dans la Grille (colonne de droite, sous la consommation) :
+  mutation (celles qui apparaissent par leurs conditions : pas Lonelily, Godseed, Shellfruit ni
+  Jerryflower), nombre d'emplacements voulus (4 par défaut, 1 pour une cible de plusieurs cases),
+  option « Seulement avec les mutations de mon stock », « Créer le plan ». Mutation proposée : la
+  prochaine action du Tableau de bord. Le plan trouvé est ajouté comme nouveau plan du greenhouse
+  (« Auto : Blastberry (4) ») et affiché ; rien n'est écrasé. Résumé : emplacements obtenus (et
+  voulus, s'il en manque), crops posés, conflits.
+- Objectif (`logic/autofill.ts`, logique pure, déterministe, testée) : les emplacements voulus au
+  moindre coût, pas le plus d'emplacements possible (les mutations coûtent cher). Ordre :
+  emplacements manquants, conflits (une autre mutation peut apparaître sur un emplacement),
+  apparitions indésirables sur les cases laissées vides, coût des crops posés, étendue depuis le
+  coin haut gauche (plan compact), tenue. Coût d'une mutation posée (`mutationCost`) : ce qu'il faut
+  de mutations pour en faire une, d'après le Calculateur en mode Minimum (Choconut 1, Chocoberry 9,
+  Magic Jellybean 8, PlantBoy Advance 62) ; un crop de base presque rien. Compter chaque mutation
+  pareil était trompeur : 3 PlantBoy Advance et 15 Magic Jellybean (18 mutations) coûtent bien plus
+  que le plan AVRG d'All-in Aloe (1 PlantBoy Advance et 20 Magic Jellybean).
+- Tenue (demande du joueur, 30/09/2026 : « les mutations de la même sorte le plus proche possible,
+  connectées, et symétriques », capture d'un plan Blastberry éparpillé à côté du plan AVRG) :
+  départage entre plans de même coût, jamais une raison de poser un crop de plus. Compte les
+  groupes séparés d'une même sorte (4 voisins), les cases qui diffèrent de leur reflet (gauche-droite
+  et haut-bas ; un demi-tour, comme le moulinet d'All-in Aloe, compte aussi, un peu moins) et les
+  paires de voisins de même sorte. Résultat : Blastberry (4 et 8), Cheesebite, Magic Jellybean,
+  Chloronite, Chocoberry, Startlevine, Devourer symétriques, chaque mutation d'un seul tenant quand
+  c'est possible (toutes les Chocoberry d'un Blastberry reliées), comme les plans AVRG. Seuls les ingrédients de la cible sont posés ;
+  les cases verrouillées ou cassées du plan affiché sont gardées et évitées, les autres repartent du
+  sol de départ (Dirt, sans les sols peints pour un autre plan) ; les emplacements prennent le sol
+  de la cible, les mutations posées le leur (comme à la main).
+- Recherche : recuit simulé (poser, retirer, décaler, changer un crop), compte des voisins tenu à
+  jour case par case ; un voisin manquant coûte (progression pas à pas, même pour les 12 voisins
+  d'un Glasscorn) et un emplacement incomplet coûte en plus un prix fixe (finir un emplacement vaut
+  mieux qu'en avancer plusieurs, et un conflit inévitable ne bloque pas la cible). Départs : grille
+  vide, et pour une cible d'une case des réseaux serrés d'emplacements (une case sur deux, comme les
+  plans AVRG) dont les ingrédients sont répartis par une petite recherche dédiée (échanges de cases,
+  prix des manques qui monte : les mutations vont sur les cases partagées par le plus
+  d'emplacements, comme la rangée de Duskbloom du plan Magic Jellybean), puis rangés pour la tenue
+  par des échanges qui gardent chaque emplacement complet ; avec un stock limité, aussi des réseaux
+  plus petits. Moyeux : quand un seul ingrédient fait plusieurs cases et qu'un exemplaire suffit à
+  un emplacement (All-in Aloe et son PlantBoy Advance, Puffercloud et son Snoozling), ce gros
+  ingrédient au centre et un emplacement contre chacun de ses côtés, en moulinet (plan AVRG
+  d'All-in Aloe). Nettoyage final : chaque crop inutile aux emplacements obtenus est retiré ; puis
+  un polissage (échanger ou déplacer des crops) pour la tenue et la compacité, sans jamais perdre
+  sur le reste. Le plan est revérifié par analyzeGrid, qui fait foi.
+- Test (demande du joueur : « au moins aussi bien que les plans AVRG ») : pour chacun des 12 plans
+  AVRG à une seule mutation, même nombre d'emplacements demandé sur un greenhouse vide : au moins
+  autant d'emplacements, un coût au plus égal, pas plus de conflits. Résultat : égalité partout
+  (Blastberry 21 et 37 mutations, Cheesebite 7 + 14 Fermento, Magic Jellybean 9 + 28 Sugar Cane,
+  Chloronite, Chorus Fruit, Startlevine, Devourer, Glasscorn 12, All-in Aloe 1 PlantBoy Advance et
+  20 Magic Jellybean…). Aussi testés : plans Blastberry de 4 et 8 emplacements symétriques (les deux
+  reflets) avec toutes les Chocoberry d'un seul tenant, All-in Aloe avec un seul PlantBoy Advance,
+  petite zone (4 x 3 cases : 1 emplacement de Blastberry,
+  8 crops), stock respecté, conflit évitable évité (Chocoberry sans Creambloom), conflit inévitable
+  signalé (Zombud et Witherbloom : même sol, mêmes Dead Plant), cibles et ingrédients de plusieurs
+  cases, même plan pour la même demande.
+- Conflits inévitables affichés avec le résultat : Zombud (Witherbloom), et la case centrale d'un
+  Snoozling (3x3 vide : une Lonelily peut y apparaître ; le plan AVRG a les mêmes).
+- Sans emplacement possible : message clair au lieu d'un plan inutile, « pas assez de place sur les
+  cases libres de ce plan », ou « pas assez de stock… il faut au moins 5 Chocoberry (tu en as 2),
+  3 Ashwreath (tu en as 0) ».
+- Calcul d'une demi-seconde environ, dans un Web Worker (`grid/autofill.worker.ts`, fichier à part
+  de 179 Ko chargé au premier calcul) : la page reste fluide ; « Calcul… » sur le bouton.
 
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,

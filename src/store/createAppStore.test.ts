@@ -196,6 +196,15 @@ describe('store : grilles', () => {
     return { state, greenhouse, active }
   }
 
+  it('ajoute un plan tout fait (plan automatique) et l’affiche ; ignore un sol de mauvaise taille', () => {
+    const { state, greenhouse, active } = gridStore()
+    const ground = new Array<string>(100).fill('Dirt')
+    state().addGeneratedLayout(0, 'Auto : Blastberry (4)', ground, [{ crop: { kind: 'mutation', id: 'chocoberry' }, x: 0, y: 0 }])
+    expect(active()).toMatchObject({ id: 'id-1', name: 'Auto : Blastberry (4)', placements: [{ x: 0, y: 0 }] })
+    state().addGeneratedLayout(0, 'Trop petit', ['Dirt'], [])
+    expect(greenhouse().layouts).toHaveLength(2)
+  })
+
   it('démarre avec un plan vide par greenhouse', () => {
     const { state, active } = gridStore()
     expect(state().grids.greenhouses).toHaveLength(3)
