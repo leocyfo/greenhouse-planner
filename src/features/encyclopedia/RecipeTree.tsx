@@ -141,7 +141,7 @@ export function RecipeTree({
                   {header.title}
                 </p>
                 <p className="text-[11px] text-ink-muted">
-                  {header.key === 'base' ? `${header.count} crops` : plural(header.count, 'mutation')}
+                  {plural(header.count, header.key === 'base' ? 'crop' : 'mutation')}
                 </p>
               </div>
             ))}

@@ -5,11 +5,10 @@ import { tr } from '../../i18n/locale'
 import { isManualSpecial } from '../../logic/nextAction'
 import { useAppStore } from '../../store/appStore'
 import { useGoalPlan } from '../../store/useGoalPlan'
-import { GoalCalculation, MutationCalculation } from '../calculator/MutationCalculation'
+import { TREE_COLORS } from '../../theme/palette'
 import { useMutationDialog } from '../inventory/useMutationDialog'
 import { clearEncyclopediaFocus, useEncyclopediaFocus } from './encyclopediaFocus'
-import { FocusBar } from './FocusBar'
-import { GoalBar, GoalPicker } from './GoalBar'
+import { GoalPicker } from './GoalPicker'
 import {
   buildTree,
   chainTotals,
@@ -23,6 +22,7 @@ import {
 import { searchMutations } from './searchMutations'
 import { MutationSearch } from './MutationSearch'
 import { RecipeTree } from './RecipeTree'
+import { GoalPanel, MutationPanel } from './SelectionPanel'
 import { MutationTreeCard } from './TreeCard'
 import { useContentWidth } from './useContentWidth'
 
@@ -210,6 +210,58 @@ export function EncyclopediaTab() {
           label: showBaseCrops ? tr('Masquer les crops de base', 'Hide the base crops') : tr('Afficher les crops de base', 'Show the base crops'),
         }
 
+  const selectionShown = selectedId !== null || goalShown
+  const treeShown = !goalShown || goalInTree
+  const tree = treeShown && (
+    <RecipeTree
+      model={model}
+      viewKey={`${arrangement}:${selectedId ?? goalId ?? 'tout'}:${mode}:${showBaseCrops}`}
+      label={treeLabel}
+      boxRef={treeBox}
+      focus={focus}
+      matches={matches}
+      totals={totals}
+      totalsFor={goalShown && goalName ? goalName : `1 ${selectedName ?? ''}`}
+      selectedId={selectedId}
+      states={states}
+      plan={plan}
+      inventory={inventory}
+      triggerRef={dialog.triggerRef}
+      onActivate={setHoveredId}
+      onChoose={choose}
+      expander={expander}
+    />
+  )
+  const specialsSection = shownSpecials.length > 0 && (
+    <section aria-labelledby="specials-title" className="space-y-2">
+      <div>
+        <h3 id="specials-title" className="text-sm font-semibold">
+          {tr('Conditions spéciales', 'Special conditions')}
+        </h3>
+        <p className="text-xs text-ink-muted">
+          {tr(
+            "Hors de l'arbre : aucune recette à poser, une condition à part (voir la fiche).",
+            'Outside the tree: no recipe to lay out, a separate condition (see the sheet).',
+          )}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {shownSpecials.map((mutation) => (
+          <MutationTreeCard
+            key={mutation.id}
+            mutation={mutation}
+            state={states.get(mutation.id) ?? 'special'}
+            owned={inventory[mutation.id] ?? 0}
+            required={plan.needs.get(mutation.id)?.required ?? 0}
+            style={{ width: 200, height: 48 }}
+            buttonRef={dialog.triggerRef(mutation.id)}
+            onOpen={() => dialog.open(mutation.id)}
+          />
+        ))}
+      </div>
+    </section>
+  )
+
   return (
     <div className="space-y-4">
       <header className="sr-only">
@@ -222,92 +274,62 @@ export function EncyclopediaTab() {
         </p>
       </header>
 
-      {/* Tout l'arbre : la recherche et le choix des colonnes ; une mutation choisie : les colonnes
-          passent dans la barre au-dessus de l'arbre, à côté de « Calculer ». */}
-      {!selectedId && !goalId && (
-        <div className="flex flex-wrap items-end gap-4">
-          <MutationSearch query={query} results={results} states={states} onQueryChange={setQuery} onChoose={choose} />
-          <div className="flex flex-col gap-1 text-xs text-ink-muted">
-            <span aria-hidden="true">{tr('Colonnes', 'Columns')}</span>
-            {columnsControl}
-          </div>
-          <GoalPicker onChoose={chooseGoal} />
-        </div>
-      )}
-
-      {goalShown && goalId && goalTargets && (
-        <GoalBar
-          goalId={goalId}
-          targetIds={goalTargets}
-          showsTotals={goalInTree}
-          controls={goalInTree ? columnsControl : undefined}
-          onClear={showAll}
-        />
-      )}
-      <FocusBar
-        selectedId={selectedId}
-        controls={columnsControl}
-        states={states}
-        showsTotals={totals !== null}
-        onOpenSheet={dialog.open}
-        onClear={showAll}
-      />
-      {(!goalShown || goalInTree) && (
-        <RecipeTree
-          model={model}
-          viewKey={`${arrangement}:${selectedId ?? goalId ?? 'tout'}:${mode}:${showBaseCrops}`}
-          label={treeLabel}
-          boxRef={treeBox}
-          focus={focus}
-          matches={matches}
-          totals={totals}
-          totalsFor={goalShown && goalName ? goalName : `1 ${selectedName ?? ''}`}
-          selectedId={selectedId}
-          states={states}
-          plan={plan}
-          inventory={inventory}
-          triggerRef={dialog.triggerRef}
-          onActivate={setHoveredId}
-          onChoose={choose}
-          expander={expander}
-        />
-      )}
-
-      {/* Le calcul de la mutation ou de l'objectif choisi, sous son arbre (l'ancien Calculateur). */}
-      {selectedId ? (
-        <MutationCalculation key={selectedId} mutationId={selectedId} initialQuantity={Math.max(plan.needs.get(selectedId)?.required ?? 0, 1)} />
-      ) : (
-        goalId && <GoalCalculation key={goalId} goalId={goalId} />
-      )}
-
-      {!selectedId && shownSpecials.length > 0 && (
-        <section aria-labelledby="specials-title" className="space-y-2">
-          <div>
-            <h3 id="specials-title" className="text-sm font-semibold">
-              {tr('Conditions spéciales', 'Special conditions')}
-            </h3>
-            <p className="text-xs text-ink-muted">
-              {tr(
-                "Hors de l'arbre : aucune recette à poser, une condition à part (voir la fiche).",
-                'Outside the tree: no recipe to lay out, a separate condition (see the sheet).',
+      {selectionShown ? (
+        // Mutation ou objectif choisi : l'arbre à gauche (avec sa petite barre), le panneau à droite.
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
+          <div className="min-w-0 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={showAll}
+                title={tr('Échap', 'Esc')}
+                className="h-9 rounded-lg border border-line bg-panel px-3 text-sm text-ink-muted transition-colors hover:text-ink"
+              >
+                <span aria-hidden="true">← </span>
+                {tr("Tout l'arbre", 'Whole tree')}
+              </button>
+              {treeShown && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {totals && (
+                    <p className="text-xs text-ink-muted">
+                      <span style={{ color: TREE_COLORS.path }}>×N</span>{' '}
+                      {goalShown
+                        ? tr("= total pour l'objectif, sans compter ton stock", '= total for the goal, not counting your stock')
+                        : tr('= total pour en faire 1, sans compter ton stock', '= total to make 1, not counting your stock')}
+                    </p>
+                  )}
+                  {columnsControl}
+                </div>
               )}
-            </p>
+            </div>
+            {tree}
+            {goalShown && specialsSection}
           </div>
-          <div className="flex flex-wrap gap-3">
-            {shownSpecials.map((mutation) => (
-              <MutationTreeCard
-                key={mutation.id}
-                mutation={mutation}
-                state={states.get(mutation.id) ?? 'special'}
-                owned={inventory[mutation.id] ?? 0}
-                required={plan.needs.get(mutation.id)?.required ?? 0}
-                style={{ width: 200, height: 48 }}
-                buttonRef={dialog.triggerRef(mutation.id)}
-                onOpen={() => dialog.open(mutation.id)}
-              />
-            ))}
+          {selectedId ? (
+            <MutationPanel
+              key={selectedId}
+              mutationId={selectedId}
+              state={states.get(selectedId) ?? 'locked'}
+              initialQuantity={Math.max(plan.needs.get(selectedId)?.required ?? 0, 1)}
+              onOpenSheet={() => dialog.open(selectedId)}
+            />
+          ) : (
+            goalId && goalTargets && <GoalPanel key={goalId} goalId={goalId} targetIds={goalTargets} />
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-end gap-4">
+            <MutationSearch query={query} results={results} states={states} onQueryChange={setQuery} onChoose={choose} />
+            <div className="flex flex-col gap-1 text-xs text-ink-muted">
+              <span aria-hidden="true">{tr('Colonnes', 'Columns')}</span>
+              {columnsControl}
+            </div>
+            <GoalPicker onChoose={chooseGoal} />
           </div>
-        </section>
+          {tree}
+          {specialsSection}
+        </>
       )}
 
       {dialog.dialog}

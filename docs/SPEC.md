@@ -722,6 +722,17 @@ recrée tout »)
 - Le mot « copies » n'apparaît plus (il se confond avec l'objet Cropie du jeu) : en anglais, on
   parle de mutations (« 15 mutations · 4 kinds », « for each one made »).
 
+### Encyclopédie : panneau de la sélection (demande du joueur : « une meilleure interface », 01/10/2026)
+- Une mutation ou un objectif choisi : l'arbre à gauche, avec au-dessus « ← Tout l'arbre », le
+  rappel ×N et les colonnes ; à droite (dessous sur mobile), un panneau qui reste à l'écran
+  (`SelectionPanel.tsx`) : icône, nom, rareté, état, étape, « N mutations avant elle », quantité
+  voulue, puis le calcul en liste compacte (`CalculationStats.tsx` : à obtenir, crops de base, temps
+  minimum, tout à la suite, durée d'un stage, déjà en stock ; achats au bazar, quantités ou durées
+  inconnues ; decay repliée) et « Voir la fiche ». Pour un objectif : ce qu'il demande (mutations,
+  pièces, Copper…, paliers) au lieu de la quantité.
+- Retirés car répétés : la barre au-dessus de l'arbre (recette et « sert à » en texte, que l'arbre
+  montre déjà) et les grandes cartes du calcul (le temps minimum y apparaissait deux fois).
+
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,
   30/09/2026) : cartes, fiches, objectifs, sac, arbre, outils, infobulles Minecraft. Les marques
