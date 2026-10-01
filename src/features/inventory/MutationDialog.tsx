@@ -3,7 +3,7 @@ import { getGameData } from '../../data'
 import { useAppStore } from '../../store/appStore'
 import { useGoalPlan } from '../../store/useGoalPlan'
 import { mutationState } from '../encyclopedia/graphModel'
-import { MutationDetails } from '../encyclopedia/MutationDetails'
+import { MutationSheet } from '../encyclopedia/MutationSheet'
 
 interface MutationDialogProps {
   readonly mutationId: string
@@ -21,8 +21,8 @@ export function MutationDialog({ mutationId, onClose, onSelect }: MutationDialog
   if (!mutation) return null
   const need = plan.needs.get(mutation.id)
   return (
-    <Modal onClose={onClose} width="max-w-5xl">
-      <MutationDetails
+    <Modal onClose={onClose} width="max-w-lg">
+      <MutationSheet
         mutationId={mutation.id}
         state={mutationState(data, mutation, need, inventory)}
         need={need}

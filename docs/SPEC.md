@@ -340,13 +340,27 @@ et toutes les recettes qu'il donne sont identiques.
   L'infobulle donne le nombre exact, avec séparateur de milliers.
 
 ### Fiche d'une mutation (demande du joueur)
-- Même fiche, dans une fenêtre, depuis l'Encyclopédie et l'Inventaire (sac ou liste), au style du
-  wiki de skymutations.eu : en-tête à la couleur de la rareté, pastilles taille / sol / stages,
-  conditions en lignes, « Sert à » en pastilles cliquables.
-- Tout visible sans défiler (demande du joueur) : fenêtre large (1024 px) ; une bande sous le titre
-  réunit taille, sol, stages, stock, besoin, analyse et « Calculer » ; les sections suivent en colonnes
-  équilibrées par le navigateur (colonnes CSS, sections jamais coupées). Vérifié sur les 40 fiches en
-  1764 × 887 et 1366 × 768. Une seule colonne sur mobile, où la fiche défile.
+- Même fiche, dans une fenêtre, depuis l'Encyclopédie et l'Inventaire (sac ou liste).
+- Refaite le 01/10/2026 (demande du joueur : « trop de choses, pas lisible », captures du menu
+  « Garden Mutation » d'un mod du jeu à l'appui), en fenêtre Minecraft (`MutationSheet.tsx`,
+  textes dans `sheetText.ts`, testés) :
+  - deux onglets au-dessus de la fenêtre : la plantation (icône Seeds) et les infos (icône Plant
+    Diagnostics Tool) ;
+  - titre « Garden Mutation » / « SkyBlock Info » entre deux flèches, qui passent à la mutation
+    précédente ou suivante (ordre des données, « 16/40 » sous la fenêtre) ;
+  - en tête du panneau : le sol de l'emplacement (son bloc), le nom à la couleur de la rareté et
+    le bouton W, qui ouvre la recherche du wiki sur le nom (elle mène à la page si elle existe) ;
+  - plantation : l'exemple vérifié de la logique de la grille (`plantingPreview`), en cases du
+    jeu teintées (vert : l'emplacement, jaune : les ingrédients ; un crop 2x2 ou 3x3 couvre son
+    empreinte). Chaque case a son infobulle (combien en poser), un ingrédient s'ouvre d'un clic.
+    Les prérequis consommés ou catalyseurs sont en cases à part, avec leur nombre ; une mutation
+    sans plantation (Shellfruit, Godseed) montre sa condition spéciale ;
+  - infos : comme la description d'un objet du jeu, en lignes courtes sur fond sombre : rareté,
+    état, taille, sol, stages, récolte, drops, effets, « sert à », route AVRG, bestiary, notes ;
+  - en bas de la fenêtre, au style du jeu : stock (compteur − / champ noir / +), « Analysée »,
+    besoin et « Calculer », puis le numéro « 22/40 ».
+  - Rien autour (demande du joueur : « enlève le contour noir, laisse juste Garden Mutation ») :
+    seulement la fenêtre, ses onglets et un bouton ✕ du jeu ; un clic à côté ferme aussi la fiche.
 
 ### Encyclopédie : arbre par étape (demande du joueur : « change l'affichage, change d'outil ou
 recrée tout »)
@@ -652,9 +666,9 @@ recrée tout »)
 
 ### Police des menus Minecraft (demande du joueur, 01/10/2026 : « change la police, pas lisible »)
 - Les fenêtres du jeu (Mutations Sack, Greenhouse Upgrades) et leurs infobulles utilisent la police
-  du site, en gras, au lieu d'une police pixel (« Pixelify Sans », jamais chargée : le navigateur
-  prenait une police à chasse fixe). Infobulles en 14 px avec une ombre fine ; le gris foncé (§8) et
-  le bleu (§9) du jeu y sont éclaircis pour rester lisibles sur le fond sombre.
+  du site, en gras, au lieu de la police pixel « Pixelify Sans » (paquet retiré le 01/10/2026).
+  Infobulles en 14 px avec une ombre fine ; le gris foncé (§8) et le bleu (§9) du jeu y sont
+  éclaircis pour rester lisibles sur le fond sombre.
 
 ### Retraits et crafts (demande du joueur, 01/10/2026, captures à l'appui)
 - Retirés : l'estimation des Lonelily (Outils, avec sa logique `lonelilyEstimate` /
@@ -678,6 +692,35 @@ recrée tout »)
 - Recherche et colonnes (demande du joueur) : la recherche ne s'affiche que sur tout l'arbre (elle
   est vidée en choisissant une mutation). Une mutation choisie, le choix « Par rareté / Par
   étape » passe dans la barre au-dessus de l'arbre, à côté de « Calculer ».
+
+### Encyclopédie et Calculateur fusionnés (demande du joueur, 01/10/2026)
+- Plus d'onglet Calculateur : une mutation choisie dans l'Encyclopédie a son calcul sous l'arbre
+  (`calculator/MutationCalculation.tsx`) : quantité voulue (au départ, ce que demandent les
+  objectifs, au moins 1), chiffres clés (mutations à obtenir et nombre de sortes, crops de base,
+  temps minimum, déjà en stock), mutations à acheter au bazar s'il y en a, temps estimé et alerte
+  de decay. Les réglages enregistrés du calculateur (mode, emplacements…) s'appliquent ; ses
+  cibles ne servent plus. L'arbre au-dessus tient lieu d'arbre des besoins.
+- Retirés à la demande du joueur (captures) : liste de courses, tableau des crops de base,
+  chemin le plus long et hypothèses du temps estimé. Retiré avec l'onglet : le calcul de plusieurs
+  mutations choisies à la main.
+- Objectifs (demande du joueur : « il manque calculer le Rose Dragon ou les autres crafts ») :
+  sur tout l'arbre, « Calculer un objectif » propose les objectifs des données (Rose Dragon Pet,
+  Analyser les 40, Sun's Grasp, Cocoa Leech Shards, Mutations Sacks, Trunk Polish). Un objectif
+  choisi : la barre dit ce qu'il demande ; l'arbre garde ses mutations, tout leur chemin et les
+  crops de base, avec le total de chacune (×N, sans compter le stock : Optimum avec les totaux
+  AVRG pour la route du Rose Dragon, `goalTotals`) ; dessous, son calcul (avec le stock), et la
+  quantité inconnue comptée 1 signalée. Un objectif sans mutation dans l'arbre (Sun's Grasp :
+  Godseed) n'affiche que ses mutations spéciales et son calcul. « Calculer cet objectif » (fiche
+  d'un objectif au tableau de bord) ouvre l'Encyclopédie sur l'objectif.
+- Corrigé : après un objectif sans arbre (Sun's Grasp), l'arbre suivant avait toutes ses cartes à
+  gauche, superposées. La largeur était mesurée sur l'ancien élément retiré de la page (NaN) ;
+  `useContentWidth` suit maintenant l'élément affiché et ignore une mesure invalide, et la mise en
+  page de l'arbre prend la largeur par défaut si on lui en donne une invalide (test).
+- « Voir dans l'encyclopédie » (prochaine action) et « Calculer » (fiche d'une mutation) ouvrent
+  l'Encyclopédie sur la mutation, avec son calcul (`encyclopediaFocus.ts`). Un ancien lien
+  `#/calculateur` mène au tableau de bord.
+- Le mot « copies » n'apparaît plus (il se confond avec l'objet Cropie du jeu) : en anglais, on
+  parle de mutations (« 15 mutations · 4 kinds », « for each one made »).
 
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,

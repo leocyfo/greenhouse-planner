@@ -7,6 +7,7 @@ import { formatRarity } from '../../components/labels'
 import { tr } from '../../i18n/locale'
 import { recipeInputs, recipeLevels, type InputRelation } from '../../logic/graph'
 import { isManualSpecial, missingInputs } from '../../logic/nextAction'
+import { mergeGoalTargets } from '../../logic/goals'
 import { computePlan, type Inventory, type MutationNeed } from '../../logic/recipes'
 import type { GameData, Mutation } from '../../types/game'
 import { layoutColumns } from './treeLayout'
@@ -72,6 +73,11 @@ export interface TreeOptions {
   /** Colonne des crops de base pour tout l'arbre ; une mutation choisie montre toujours les siens. */
   readonly showBaseCrops: boolean
   readonly selection?: TreeSelection | null
+  /**
+   * Objectif choisi : seules restent ses mutations, tout ce qu'il faut pour les faire et les crops
+   * de base (ignoré si une mutation est choisie).
+   */
+  readonly goalTargets?: readonly string[] | null
   /** Largeur disponible en pixels : l'espace entre les colonnes s'y adapte. */
   readonly availableWidth?: number
 }
@@ -161,6 +167,24 @@ export function chainTotals(data: GameData, id: string): ReadonlyMap<string, num
   return totals
 }
 
+/** Mutations demandées par un objectif (celles de l'arbre et les autres), dans l'ordre des données. */
+export function goalTargetIds(data: GameData, goalId: string, analyzed: ReadonlySet<string>): string[] {
+  return mergeGoalTargets(data, new Set([goalId]), analyzed).targets.map((target) => target.mutationId)
+}
+
+/**
+ * Quantités totales pour un objectif, sans compter le stock : le calcul du Calculateur (Optimum,
+ * avec les totaux AVRG, pour la route du Rose Dragon ; Minimum sinon). Par id de nœud.
+ */
+export function goalTotals(data: GameData, goalId: string, analyzed: ReadonlySet<string>): ReadonlyMap<string, number> {
+  const goal = mergeGoalTargets(data, new Set([goalId]), analyzed)
+  const plan = computePlan(data, { targets: goal.targets, inventory: {}, mode: goal.route ? 'optimum' : 'minimum', route: goal.route })
+  const totals = new Map<string, number>()
+  for (const [mutationId, need] of plan.needs) totals.set(mutationId, need.required)
+  for (const crop of plan.baseCrops) totals.set(baseNodeId(crop.name), crop.quantity)
+  return totals
+}
+
 type RawEdge = Omit<TreeEdge, 'path'>
 
 /** Ce qui reste affiché : tout l'arbre, ou seulement ce qu'il faut pour la mutation choisie. */
@@ -171,6 +195,12 @@ function visiblePart(
   options: TreeOptions,
 ): { readonly ids: ReadonlySet<string>; readonly edges: readonly RawEdge[] } {
   const selection = options.selection
+  const goalTargets = options.goalTargets?.filter((id) => treeIds.has(id)) ?? []
+  if (goalTargets.length > 0 && !(selection && treeIds.has(selection.id))) {
+    const needed = new Set(goalTargets.flatMap((id) => [id, ...chainOf(data, id)]))
+    const kept = edges.filter((edge) => needed.has(edge.target))
+    return { ids: new Set([...goalTargets, ...kept.flatMap((edge) => [edge.source, edge.target])]), edges: kept }
+  }
   if (!selection || !treeIds.has(selection.id)) {
     const baseIds = options.showBaseCrops ? data.baseCrops.map((crop) => baseNodeId(crop.name)) : []
     return { ids: new Set([...treeIds, ...baseIds]), edges }
@@ -221,7 +251,8 @@ export function buildTree(data: GameData, options: TreeOptions): TreeModel {
   const specials = data.mutations.filter((m) => isManualSpecial(data, m)).map((m) => m.id)
   const inTree = data.mutations.filter((m) => !specials.includes(m.id))
   const selected = options.selection ? inTree.some((m) => m.id === options.selection?.id) : false
-  const showBaseCrops = options.showBaseCrops || selected
+  const goal = options.goalTargets?.some((id) => inTree.some((m) => m.id === id)) ?? false
+  const showBaseCrops = options.showBaseCrops || selected || goal
   const byRarityThenName = (a: Mutation, b: Mutation) => a.rarityRank - b.rarityRank || a.name.localeCompare(b.name, 'fr')
 
   const allEdges: RawEdge[] = inTree.flatMap((mutation) =>
@@ -281,7 +312,9 @@ export function buildTree(data: GameData, options: TreeOptions): TreeModel {
   const columns = [...(baseIds.length > 0 ? [baseColumn] : []), ...mutationColumns]
 
   const fixedWidth = columns.reduce((sum, column) => sum + column.width, 0)
-  const free = (options.availableWidth ?? DEFAULT_WIDTH) - fixedWidth
+  // Largeur inconnue ou invalide (NaN) : la largeur par défaut, pour ne jamais placer une carte en NaN.
+  const measured = options.availableWidth
+  const free = (measured !== undefined && Number.isFinite(measured) ? measured : DEFAULT_WIDTH) - fixedWidth
   const columnGap =
     columns.length > 1 ? Math.min(MAX_COLUMN_GAP, Math.max(MIN_COLUMN_GAP, Math.floor(free / (columns.length - 1)))) : 0
   const layout = layoutColumns(columns, visible.edges, { top: HEADER_HEIGHT, columnGap })

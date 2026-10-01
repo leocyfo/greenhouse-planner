@@ -1,6 +1,3 @@
-// Police pixel du style Minecraft, chargée seulement là où une fenêtre Minecraft s'affiche.
-import '@fontsource/pixelify-sans/400.css'
-import '@fontsource/pixelify-sans/700.css'
 import { useId, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import { McSlot } from './McSlot'
 

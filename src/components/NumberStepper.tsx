@@ -10,10 +10,21 @@ interface NumberStepperProps {
   readonly inputLabel?: string
   readonly min?: number
   readonly max?: number
+  /** « mc » : au style des fenêtres du jeu (fiche d'une mutation), voir .mc-stepper dans index.css. */
+  readonly variant?: 'default' | 'mc'
 }
 
 const BUTTON =
   'flex w-8 items-center justify-center text-base text-ink-muted transition-colors hover:bg-panel-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-40'
+
+const CLASSES = {
+  default: {
+    box: 'inline-flex h-8 w-fit items-stretch overflow-hidden rounded-lg border border-line bg-canvas',
+    button: BUTTON,
+    input: 'w-12 border-x border-line bg-transparent text-center text-sm tabular-nums text-ink',
+  },
+  mc: { box: 'mc-stepper', button: '', input: 'tabular-nums' },
+} as const
 
 /** Compteur − / champ / + ; les flèches haut et bas du clavier ajustent aussi la valeur. */
 export function NumberStepper({
@@ -23,7 +34,9 @@ export function NumberStepper({
   inputLabel,
   min = 0,
   max = Number.MAX_SAFE_INTEGER,
+  variant = 'default',
 }: NumberStepperProps) {
+  const classes = CLASSES[variant]
   // Texte en cours de saisie ; null = on affiche la valeur reçue.
   const [draft, setDraft] = useState<string | null>(null)
   const clamp = (next: number) => Math.min(max, Math.max(min, next))
@@ -43,13 +56,13 @@ export function NumberStepper({
   }
 
   return (
-    <div className="inline-flex h-8 w-fit items-stretch overflow-hidden rounded-lg border border-line bg-canvas">
+    <div className={classes.box}>
       <button
         type="button"
         aria-label={tr(`${name} : retirer 1`, `${name}: remove 1`)}
         disabled={value <= min}
         onClick={() => change(value - 1)}
-        className={BUTTON}
+        className={classes.button}
       >
         −
       </button>
@@ -66,14 +79,14 @@ export function NumberStepper({
         }}
         onBlur={() => setDraft(null)}
         onKeyDown={handleKeyDown}
-        className="w-12 border-x border-line bg-transparent text-center text-sm tabular-nums text-ink"
+        className={classes.input}
       />
       <button
         type="button"
         aria-label={tr(`${name} : ajouter 1`, `${name}: add 1`)}
         disabled={value >= max}
         onClick={() => change(value + 1)}
-        className={BUTTON}
+        className={classes.button}
       >
         +
       </button>

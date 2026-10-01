@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { goToTab, tabHref } from '../../app/navigation'
+import { tabHref } from '../../app/navigation'
 import { CropLabel } from '../../components/game/CropLabel'
 import { SizeBadge, SoilBadge, StagesBadge } from '../../components/game/MutationBadges'
 import { recipeLines } from '../../components/game/recipeText'
@@ -10,6 +10,7 @@ import { nextActions } from '../../logic/nextAction'
 import { useAppStore } from '../../store/appStore'
 import type { GoalStatus } from '../../store/useGoalStatuses'
 import { useGoalPlan } from '../../store/useGoalPlan'
+import { showInEncyclopedia } from '../encyclopedia/encyclopediaFocus'
 
 const LINK = 'text-sm text-accent-strong underline-offset-2 hover:underline'
 
@@ -23,7 +24,6 @@ interface NextActionCardProps {
 export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps) {
   const data = getGameData()
   const inventory = useAppStore((s) => s.progress.inventory)
-  const calculateOnly = useAppStore((s) => s.calculateOnly)
   const { plan } = useGoalPlan()
   const actions = useMemo(() => nextActions(data, plan, inventory), [data, plan, inventory])
   const hasGoals = statuses.some((status) => status.active)
@@ -114,13 +114,10 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             type="button"
-            onClick={() => {
-              calculateOnly(id, need.required)
-              goToTab('calculateur')
-            }}
+            onClick={() => showInEncyclopedia(id)}
             className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-canvas transition hover:bg-accent-strong motion-safe:active:scale-[0.97]"
           >
-            {tr('Voir dans le calculateur', 'Open in the calculator')}
+            {tr("Voir dans l'encyclopédie", 'See in the encyclopedia')}
           </button>
           <a href={tabHref('inventaire')} className={LINK}>
             {tr('Mettre à jour mon inventaire', 'Update my inventory')}

@@ -28,7 +28,7 @@ export function recipeLines(data: GameData, mutation: Mutation): string[] {
   if (around.length > 0) lines.push(tr(`Autour de l'emplacement : ${around.join(', ')}`, `Around the spot: ${around.join(', ')}`))
   for (const input of inputs) {
     const name = cropName(data, input.crop)
-    if (input.relation === 'consumed') lines.push(tr(`Consomme ${input.units} ${name} par exemplaire`, `Consumes ${input.units} ${name} per copy`))
+    if (input.relation === 'consumed') lines.push(tr(`Consomme ${input.units} ${name} par exemplaire`, `Consumes ${input.units} ${name} for each one made`))
     if (input.relation === 'catalyst') {
       lines.push(tr(`Avec ${input.units} ${name} (catalyseur, non consommé)`, `With ${input.units} ${name} (catalyst, not consumed)`))
     }

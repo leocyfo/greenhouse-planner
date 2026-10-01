@@ -17,8 +17,8 @@ export function ResultSummary({ result }: { readonly result: CalculatorResult })
   const cards = [
     {
       label: tr('À obtenir', 'To get'),
-      value: plural(missing.length, 'mutation'),
-      detail: plural(copies, tr('exemplaire', 'copy'), tr('exemplaires', 'copies')) + bought,
+      value: plural(copies, 'mutation'),
+      detail: plural(missing.length, tr('sorte', 'kind')) + bought,
     },
     {
       label: tr('Crops de base', 'Base crops'),
@@ -33,7 +33,7 @@ export function ResultSummary({ result }: { readonly result: CalculatorResult })
     {
       label: tr('Déjà en stock', 'Already in stock'),
       value: tr(`${percent} %`, `${percent}%`),
-      detail: tr(`${progress.done} / ${progress.total} exemplaires`, `${progress.done} / ${progress.total} copies`),
+      detail: `${progress.done} / ${progress.total} mutations`,
     },
   ]
 

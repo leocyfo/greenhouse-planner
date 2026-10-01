@@ -11,6 +11,8 @@ import {
   chainTotals,
   edgeRole,
   focusOn,
+  goalTargetIds,
+  goalTotals,
   HEADER_HEIGHT,
   isDimmed,
   MAX_COLUMN_GAP,
@@ -217,6 +219,34 @@ describe('arbre : mutation choisie', () => {
     expect(ids(withBase).filter((id) => id.startsWith('base:'))).toEqual(
       ['Cocoa Beans', 'Fire', 'Melon', 'Nether Wart', 'Pumpkin'].map(baseNodeId).sort(),
     )
+  })
+
+  it('objectif choisi : ses mutations, tout leur chemin et les crops de base, avec les totaux du calcul', () => {
+    const targets = goalTargetIds(data, 'rose_dragon', new Set())
+    expect(targets.sort()).toEqual(['all_in_aloe', 'devourer', 'glasscorn', 'phantomleaf', 'timestalk'])
+    const model = buildTree(data, { arrangement: 'rarity', showBaseCrops: false, goalTargets: targets })
+    const needed = new Set(targets.flatMap((id) => [id, ...chainOf(data, id)]))
+    const mutations = ids(model).filter((id) => !id.startsWith('base:'))
+    expect(mutations).toEqual([...needed].sort())
+    expect(ids(model).some((id) => id.startsWith('base:'))).toBe(true)
+    expectNoEdgeUnderCards(model)
+    // Route AVRG : les totaux du guide (Optimum), sans compter le stock.
+    const totals = goalTotals(data, 'rose_dragon', new Set())
+    expect(totals.get('glasscorn')).toBe(1)
+    expect(totals.get('snoozling')).toBe(mutationById(data, 'snoozling').roseDragonOptimum)
+  })
+
+  it('une largeur invalide (élément retiré de la page) ne place jamais une carte en NaN', () => {
+    const model = buildTree(data, { arrangement: 'rarity', showBaseCrops: false, goalTargets: ['devourer'], availableWidth: Number.NaN })
+    expect(model.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y))).toBe(true)
+    expect(model.headers.every((header) => Number.isFinite(header.x))).toBe(true)
+    expect(Number.isFinite(model.width)).toBe(true)
+  })
+
+  it('objectif sans mutation dans l’arbre (Sun’s Grasp : Godseed) : l’arbre reste entier', () => {
+    expect(goalTargetIds(data, 'suns_grasp', new Set())).toEqual(['godseed'])
+    const model = buildTree(data, { arrangement: 'rarity', showBaseCrops: false, goalTargets: ['godseed'] })
+    expect(model).toEqual(buildTree(data, { arrangement: 'rarity', showBaseCrops: false }))
   })
 
   it('montre tout l’arbre pour une mutation hors de l’arbre ou inconnue', () => {

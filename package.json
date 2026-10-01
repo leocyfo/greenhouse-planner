@@ -1,7 +1,7 @@
 {
   "name": "greenhouse-planner",
   "private": true,
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Planificateur des mutations du Greenhouse de Hypixel SkyBlock",
   "type": "module",
   "engines": {
@@ -17,7 +17,6 @@
     "images": "node scripts/fetch-wiki-images.mjs"
   },
   "dependencies": {
-    "@fontsource/pixelify-sans": "^5.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "zod": "^4.6.5",

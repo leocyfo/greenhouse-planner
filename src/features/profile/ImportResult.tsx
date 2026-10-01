@@ -26,8 +26,8 @@ interface ImportResultProps {
 }
 
 const BUTTON = 'rounded-lg border border-line px-3 py-2 text-sm transition-colors hover:bg-panel-raised'
-/** « 3 exemplaires », « 3 copies ». */
-const copies = (count: number) => plural(count, tr('exemplaire', 'copy'), tr('exemplaires', 'copies'))
+/** « 3 exemplaires », « 3 in total » (« copies » se confondrait avec l'objet Cropie du jeu). */
+const copies = (count: number) => tr(plural(count, 'exemplaire'), `${count} in total`)
 
 /** Choix du profil, aperçu des mutations trouvées (avant → après), puis remplacement du stock. */
 export function ImportResult({ player, profiles, readAge, stale, onImported, onSearchAgain, onCancel }: ImportResultProps) {
@@ -80,7 +80,7 @@ export function ImportResult({ player, profiles, readAge, stale, onImported, onS
     onImported(
       tr(
         `Stock mis à jour depuis le profil ${profile.name} de ${player.name} : ${plural(content.mutations.length, 'mutation')}, ${copies(totalItems)}.`,
-        `Stock updated from ${player.name}'s ${profile.name} profile: ${plural(content.mutations.length, 'mutation')}, ${copies(totalItems)}.`,
+        `Stock updated from ${player.name}'s ${profile.name} profile: ${plural(content.mutations.length, 'different mutation', 'different mutations')}, ${copies(totalItems)}.`,
       ),
     )
   }
@@ -165,7 +165,7 @@ export function ImportResult({ player, profiles, readAge, stale, onImported, onS
           <p>
             {tr(
               `${plural(content.mutations.length, 'mutation')} trouvée${content.mutations.length > 1 ? 's' : ''}, ${copies(totalItems)}.`,
-              `${plural(content.mutations.length, 'mutation')} found, ${copies(totalItems)}.`,
+              `${plural(content.mutations.length, 'different mutation', 'different mutations')} found, ${copies(totalItems)}.`,
             )}
             {notRead.length > 0 && tr(` Absents du profil : ${sourceList(notRead)}.`, ` Missing from the profile: ${sourceList(notRead)}.`)}
             {content.unreadableSources.length > 0 &&

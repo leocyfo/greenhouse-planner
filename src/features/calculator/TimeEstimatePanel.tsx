@@ -6,8 +6,14 @@ import { useAppStore } from '../../store/appStore'
 import type { CalculatorResult } from './calculatorResult'
 import { cropName } from '../../components/game/recipeText'
 
-/** Estimation du temps : chemin le plus long, hypothèses et alertes. */
-export function TimeEstimatePanel({ result }: { readonly result: CalculatorResult }) {
+interface TimeEstimatePanelProps {
+  readonly result: CalculatorResult
+  /** Chemin le plus long et hypothèses (Calculateur) ; sans : les durées et les alertes seulement. */
+  readonly details?: boolean
+}
+
+/** Estimation du temps : durées, chemin le plus long, hypothèses et alertes. */
+export function TimeEstimatePanel({ result, details = true }: TimeEstimatePanelProps) {
   const data = getGameData()
   const spots = useAppStore((s) => s.calculator.spots)
   const cells = useAppStore((s) => s.calculator.lonelilyCells)
@@ -37,7 +43,7 @@ export function TimeEstimatePanel({ result }: { readonly result: CalculatorResul
         </div>
       </dl>
 
-      {estimate.criticalPath.length > 0 && (
+      {details && estimate.criticalPath.length > 0 && (
         <div>
           <p className="mb-1 text-xs text-ink-muted">{tr('Chemin le plus long (ce qui fixe la durée) :', 'Longest path (what sets the duration):')}</p>
           <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
@@ -59,24 +65,26 @@ export function TimeEstimatePanel({ result }: { readonly result: CalculatorResul
         </div>
       )}
 
-      <p className="text-xs text-ink-muted">
-        {tr(
-          `Hypothèses : spawns instantanés et efficacité parfaite (comme le guide AVRG), ${spots} emplacement${spots > 1 ? 's' : ''} par recette`,
-          `Assumptions: instant spawns and perfect efficiency (like the AVRG guide), ${spots} spot${spots !== 1 ? 's' : ''} per recipe`,
-        )}
-        {randomSpawn &&
-          tr(
-            `, ${cropName(data, { kind: 'mutation', id: randomSpawn.mutationId })} : ${cells} cases vides ≈ ${formatDecimal(perStage, 2)} par stage`,
-            `, ${cropName(data, { kind: 'mutation', id: randomSpawn.mutationId })}: ${cells} empty cells ≈ ${formatDecimal(perStage, 2)} per stage`,
+      {details && (
+        <p className="text-xs text-ink-muted">
+          {tr(
+            `Hypothèses : spawns instantanés et efficacité parfaite (comme le guide AVRG), ${spots} emplacement${spots > 1 ? 's' : ''} par recette`,
+            `Assumptions: instant spawns and perfect efficiency (like the AVRG guide), ${spots} spot${spots !== 1 ? 's' : ''} per recipe`,
           )}
-        .
-      </p>
+          {randomSpawn &&
+            tr(
+              `, ${cropName(data, { kind: 'mutation', id: randomSpawn.mutationId })} : ${cells} cases vides ≈ ${formatDecimal(perStage, 2)} par stage`,
+              `, ${cropName(data, { kind: 'mutation', id: randomSpawn.mutationId })}: ${cells} empty cells ≈ ${formatDecimal(perStage, 2)} per stage`,
+            )}
+          .
+        </p>
+      )}
 
-      {spots === 1 && estimate.criticalPathStages > 0 && (
+      {details && spots === 1 && estimate.criticalPathStages > 0 && (
         <p className="text-xs text-ink-muted">
           {tr(
             "Avec un seul emplacement, chaque recette produit ses exemplaires l'un après l'autre. Les plans du guide AVRG en utilisent plusieurs (jusqu'à 8 pour les Magic Jellybean) : augmente « Emplacements par recette » pour une estimation plus proche de la réalité.",
-            'With a single spot, each recipe makes its copies one after the other. The AVRG guide layouts use several (up to 8 for the Magic Jellybean): raise “Spots per recipe” for an estimate closer to reality.',
+            'With a single spot, each recipe makes its mutations one after the other. The AVRG guide layouts use several (up to 8 for the Magic Jellybean): raise “Spots per recipe” for an estimate closer to reality.',
           )}
         </p>
       )}

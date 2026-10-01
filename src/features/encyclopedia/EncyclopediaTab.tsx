@@ -1,17 +1,21 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { goToTab } from '../../app/navigation'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
 import { tr } from '../../i18n/locale'
 import { isManualSpecial } from '../../logic/nextAction'
 import { useAppStore } from '../../store/appStore'
 import { useGoalPlan } from '../../store/useGoalPlan'
+import { GoalCalculation, MutationCalculation } from '../calculator/MutationCalculation'
 import { useMutationDialog } from '../inventory/useMutationDialog'
+import { clearEncyclopediaFocus, useEncyclopediaFocus } from './encyclopediaFocus'
 import { FocusBar } from './FocusBar'
+import { GoalBar, GoalPicker } from './GoalBar'
 import {
   buildTree,
   chainTotals,
   focusOn,
+  goalTargetIds,
+  goalTotals,
   mutationState,
   type TreeArrangement,
   type TreeMode,
@@ -42,34 +46,67 @@ const arrangements = () =>
 
 /**
  * Onglet Encyclopédie : l'arbre des recettes, colonnes par rareté (ou par étape), sur toute la
- * largeur de la page. Survoler
- * une mutation met en avant son chemin ; la choisir (clic) ne garde que ce qu'il faut pour la faire,
- * avant et après ou tout le chemin ; un second clic ouvre sa fiche.
+ * largeur de la page. Survoler une mutation met en avant son chemin ; la choisir (clic) ne garde
+ * que ce qu'il faut pour la faire, avant et après ou tout le chemin, avec son calcul dessous ; un
+ * second clic ouvre sa fiche. Un objectif choisi (Rose Dragon, crafts…) garde tout ce qu'il
+ * demande, avec son calcul.
  */
 export function EncyclopediaTab() {
   const data = getGameData()
   const { plan } = useGoalPlan()
   const inventory = useAppStore((s) => s.progress.inventory)
-  const calculateOnly = useAppStore((s) => s.calculateOnly)
+  const analyzedList = useAppStore((s) => s.progress.analyzed)
   const [query, setQuery] = useState('')
   const [showBaseCrops, setShowBaseCrops] = useState(false)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Ouverte depuis le tableau de bord ou une fiche : la mutation demandée est choisie d'emblée.
+  const focusRequest = useEncyclopediaFocus((s) => s.request)
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    focusRequest && 'mutationId' in focusRequest ? focusRequest.mutationId : null,
+  )
+  // Objectif choisi (Rose Dragon, crafts…) : son arbre et son calcul ; jamais en même temps qu'une mutation.
+  const [goalId, setGoalId] = useState<string | null>(() => (focusRequest && 'goalId' in focusRequest ? focusRequest.goalId : null))
   const [mode, setMode] = useState<TreeMode>('neighbors')
   const [arrangement, setArrangement] = useState<TreeArrangement>('rarity')
   const arrangementName = useId()
-  const treeBox = useRef<HTMLDivElement>(null)
-  const availableWidth = useContentWidth(treeBox)
+  const [treeBox, availableWidth] = useContentWidth()
   const dialog = useMutationDialog()
   const dialogOpen = dialog.dialog !== null
+  const closeDialog = dialog.close
+
+  // Demande arrivée alors que l'Encyclopédie est déjà ouverte : la mutation ou l'objectif est choisi.
+  const [handledRequest, setHandledRequest] = useState(focusRequest)
+  if (focusRequest && focusRequest !== handledRequest) {
+    setHandledRequest(focusRequest)
+    setSelectedId('mutationId' in focusRequest ? focusRequest.mutationId : null)
+    setGoalId('goalId' in focusRequest ? focusRequest.goalId : null)
+    setQuery('')
+  }
+  // Puis sa fiche se ferme (bouton « Calculer » d'une fiche) et la demande est effacée.
+  useEffect(() => {
+    if (!focusRequest) return
+    closeDialog()
+    clearEncyclopediaFocus()
+  }, [focusRequest, closeDialog])
 
   const specials = useMemo(() => data.mutations.filter((m) => isManualSpecial(data, m)), [data])
+  const analyzed = useMemo(() => new Set(analyzedList), [analyzedList])
+  const goalTargets = useMemo(() => (goalId ? goalTargetIds(data, goalId, analyzed) : null), [data, goalId, analyzed])
+  // Objectif dont aucune mutation n'est dans l'arbre (Sun's Grasp : Godseed) : pas d'arbre, ses
+  // mutations spéciales seulement.
+  const goalInTree = goalTargets?.some((id) => !specials.some((m) => m.id === id)) ?? false
   const model = useMemo(
     () =>
       availableWidth === null
         ? null
-        : buildTree(data, { arrangement, showBaseCrops, selection: selectedId ? { id: selectedId, mode } : null, availableWidth }),
-    [data, arrangement, showBaseCrops, selectedId, mode, availableWidth],
+        : buildTree(data, {
+            arrangement,
+            showBaseCrops,
+            selection: selectedId ? { id: selectedId, mode } : null,
+            goalTargets,
+            availableWidth,
+          }),
+    [data, arrangement, showBaseCrops, selectedId, mode, goalTargets, availableWidth],
   )
   const states = useMemo(
     () => new Map(data.mutations.map((m) => [m.id, mutationState(data, m, plan.needs.get(m.id), inventory)])),
@@ -83,8 +120,13 @@ export function EncyclopediaTab() {
   const matches = useMemo(() => (query.trim() ? new Set(results.map((m) => m.id)) : null), [query, results])
   const selectedInTree = selectedId !== null && shown.has(selectedId)
   const totals = useMemo(
-    () => (selectedId && selectedInTree && mode === 'chain' ? chainTotals(data, selectedId) : null),
-    [data, selectedId, selectedInTree, mode],
+    () =>
+      selectedId && selectedInTree && mode === 'chain'
+        ? chainTotals(data, selectedId)
+        : goalId && !selectedId
+          ? goalTotals(data, goalId, analyzed)
+          : null,
+    [data, selectedId, selectedInTree, mode, goalId, analyzed],
   )
 
   /** Choisit une mutation ; déjà choisie (ou sans recette, hors de l'arbre), ouvre sa fiche. */
@@ -92,45 +134,81 @@ export function EncyclopediaTab() {
     if (id === selectedId || specials.some((m) => m.id === id)) dialog.open(id)
     else {
       setSelectedId(id)
+      setGoalId(null)
       // La recherche n'est affichée que sur tout l'arbre : on la vide en entrant dans une branche.
       setQuery('')
     }
   }
-  /** Le Calculateur, avec cette seule mutation (autant que demandent les objectifs, au moins 1). */
-  const calculate = (id: string) => {
-    calculateOnly(id, Math.max(plan.needs.get(id)?.required ?? 0, 1))
-    goToTab('calculateur')
+  /** Calcule un objectif entier : son arbre et son calcul. */
+  const chooseGoal = (id: string) => {
+    setGoalId(id)
+    setSelectedId(null)
+    setQuery('')
   }
   /** Retour à tout l'arbre : le bouton disparaît, le focus passe à la carte qui était choisie. */
   const showAll = () => {
     if (selectedId) document.getElementById(`arbre-${selectedId}`)?.focus()
     setSelectedId(null)
+    setGoalId(null)
   }
 
   // Échap revient à tout l'arbre et retire la mise en avant (y compris celle du focus rendu à une
   // carte à la fermeture de la fiche) ; fiche ouverte, Échap ferme d'abord la fiche.
   useEffect(() => {
-    if ((!selectedId && !hoveredId) || dialogOpen) return
+    if ((!selectedId && !hoveredId && !goalId) || dialogOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       setSelectedId(null)
+      setGoalId(null)
       setHoveredId(null)
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [selectedId, hoveredId, dialogOpen])
+  }, [selectedId, hoveredId, goalId, dialogOpen])
+
+  // Mutations spéciales (hors de l'arbre) : toutes sur tout l'arbre, celles que demande l'objectif choisi.
+  const shownSpecials = goalTargets ? specials.filter((m) => goalTargets.includes(m.id)) : specials
 
   const columnsControl = (
     <SegmentedControl legend={tr('Colonnes', 'Columns')} name={arrangementName} options={arrangements()} value={arrangement} onChange={setArrangement} />
   )
 
   const selectedName = selectedId ? data.mutationsById.get(selectedId)?.name : undefined
-  const treeLabel = selectedName
-    ? tr(
-        `Arbre des recettes : ${selectedName}, ${mode === 'neighbors' ? 'avant et après' : 'tout le chemin'}`,
-        `Recipe tree: ${selectedName}, ${mode === 'neighbors' ? 'before and after' : 'whole path'}`,
-      )
-    : tr(`Arbre des recettes, ${arrangement === 'rarity' ? 'par rareté' : 'par étape'}`, `Recipe tree, ${arrangement === 'rarity' ? 'by rarity' : 'by step'}`)
+  const goalName = goalId ? data.goals.find((goal) => goal.id === goalId)?.name : undefined
+  const goalShown = goalName !== undefined && !selectedId
+  const treeLabel = goalShown
+    ? tr(`Arbre des recettes : tout ce que demande ${goalName}`, `Recipe tree: everything ${goalName} needs`)
+    : selectedName
+      ? tr(
+          `Arbre des recettes : ${selectedName}, ${mode === 'neighbors' ? 'avant et après' : 'tout le chemin'}`,
+          `Recipe tree: ${selectedName}, ${mode === 'neighbors' ? 'before and after' : 'whole path'}`,
+        )
+      : tr(`Arbre des recettes, ${arrangement === 'rarity' ? 'par rareté' : 'par étape'}`, `Recipe tree, ${arrangement === 'rarity' ? 'by rarity' : 'by step'}`)
+
+  // Bande à gauche de l'arbre : avant et après ↔ tout le chemin (mutation choisie), ou les crops de
+  // base (tout l'arbre) ; aucune pour un objectif, qui montre déjà tout.
+  const expander = goalShown
+    ? null
+    : selectedId
+      ? {
+          expanded: mode === 'chain',
+          onToggle: () => setMode((current) => (current === 'chain' ? 'neighbors' : 'chain')),
+          label:
+            mode === 'chain'
+              ? tr(
+                  "Revenir à « Avant et après » : ses ingrédients et ce qu'elle permet de faire",
+                  'Back to “Before and after”: its ingredients and what it is used for',
+                )
+              : tr(
+                  "Voir tout le chemin : tout ce qu'il faut avant elle, jusqu'aux crops de base",
+                  'See the whole path: everything needed before it, down to the base crops',
+                ),
+        }
+      : {
+          expanded: showBaseCrops,
+          onToggle: () => setShowBaseCrops((shown) => !shown),
+          label: showBaseCrops ? tr('Masquer les crops de base', 'Hide the base crops') : tr('Afficher les crops de base', 'Show the base crops'),
+        }
 
   return (
     <div className="space-y-4">
@@ -146,65 +224,63 @@ export function EncyclopediaTab() {
 
       {/* Tout l'arbre : la recherche et le choix des colonnes ; une mutation choisie : les colonnes
           passent dans la barre au-dessus de l'arbre, à côté de « Calculer ». */}
-      {!selectedId && (
+      {!selectedId && !goalId && (
         <div className="flex flex-wrap items-end gap-4">
           <MutationSearch query={query} results={results} states={states} onQueryChange={setQuery} onChoose={choose} />
           <div className="flex flex-col gap-1 text-xs text-ink-muted">
             <span aria-hidden="true">{tr('Colonnes', 'Columns')}</span>
             {columnsControl}
           </div>
+          <GoalPicker onChoose={chooseGoal} />
         </div>
       )}
 
+      {goalShown && goalId && goalTargets && (
+        <GoalBar
+          goalId={goalId}
+          targetIds={goalTargets}
+          showsTotals={goalInTree}
+          controls={goalInTree ? columnsControl : undefined}
+          onClear={showAll}
+        />
+      )}
       <FocusBar
         selectedId={selectedId}
         controls={columnsControl}
         states={states}
         showsTotals={totals !== null}
         onOpenSheet={dialog.open}
-        onCalculate={calculate}
         onClear={showAll}
       />
-      <RecipeTree
-        model={model}
-        viewKey={`${arrangement}:${selectedId ?? 'tout'}:${mode}:${showBaseCrops}`}
-        label={treeLabel}
-        boxRef={treeBox}
-        focus={focus}
-        matches={matches}
-        totals={totals}
-        selectedId={selectedId}
-        states={states}
-        plan={plan}
-        inventory={inventory}
-        triggerRef={dialog.triggerRef}
-        onActivate={setHoveredId}
-        onChoose={choose}
-        expander={
-          selectedId
-            ? {
-                expanded: mode === 'chain',
-                onToggle: () => setMode((current) => (current === 'chain' ? 'neighbors' : 'chain')),
-                label:
-                  mode === 'chain'
-                    ? tr(
-                        "Revenir à « Avant et après » : ses ingrédients et ce qu'elle permet de faire",
-                        'Back to “Before and after”: its ingredients and what it is used for',
-                      )
-                    : tr(
-                        "Voir tout le chemin : tout ce qu'il faut avant elle, jusqu'aux crops de base",
-                        'See the whole path: everything needed before it, down to the base crops',
-                      ),
-              }
-            : {
-                expanded: showBaseCrops,
-                onToggle: () => setShowBaseCrops((shown) => !shown),
-                label: showBaseCrops ? tr('Masquer les crops de base', 'Hide the base crops') : tr('Afficher les crops de base', 'Show the base crops'),
-              }
-        }
-      />
+      {(!goalShown || goalInTree) && (
+        <RecipeTree
+          model={model}
+          viewKey={`${arrangement}:${selectedId ?? goalId ?? 'tout'}:${mode}:${showBaseCrops}`}
+          label={treeLabel}
+          boxRef={treeBox}
+          focus={focus}
+          matches={matches}
+          totals={totals}
+          totalsFor={goalShown && goalName ? goalName : `1 ${selectedName ?? ''}`}
+          selectedId={selectedId}
+          states={states}
+          plan={plan}
+          inventory={inventory}
+          triggerRef={dialog.triggerRef}
+          onActivate={setHoveredId}
+          onChoose={choose}
+          expander={expander}
+        />
+      )}
 
-      {specials.length > 0 && (
+      {/* Le calcul de la mutation ou de l'objectif choisi, sous son arbre (l'ancien Calculateur). */}
+      {selectedId ? (
+        <MutationCalculation key={selectedId} mutationId={selectedId} initialQuantity={Math.max(plan.needs.get(selectedId)?.required ?? 0, 1)} />
+      ) : (
+        goalId && <GoalCalculation key={goalId} goalId={goalId} />
+      )}
+
+      {!selectedId && shownSpecials.length > 0 && (
         <section aria-labelledby="specials-title" className="space-y-2">
           <div>
             <h3 id="specials-title" className="text-sm font-semibold">
@@ -218,7 +294,7 @@ export function EncyclopediaTab() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            {specials.map((mutation) => (
+            {shownSpecials.map((mutation) => (
               <MutationTreeCard
                 key={mutation.id}
                 mutation={mutation}

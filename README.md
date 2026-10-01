@@ -14,10 +14,9 @@ toi-même (voir [Import depuis Hypixel](#import-depuis-hypixel)).
 | --- | --- |
 | Tableau de bord | Prochaine mutation à faire pousser, et les objectifs : ce que chacun demande (mutations, coûts), son avancement, à cocher pour guider les calculs |
 | Inventaire | Le Mutations Sack du jeu (fiche complète au clic) ou une liste : mutations possédées et analysées, besoins restants, recherche et filtres ; stock importable depuis ton profil Hypixel |
-| Encyclopédie | Arbre des recettes par étape : au survol, tout le chemin d'une mutation et ce qu'elle permet de faire ; fiche détaillée au clic |
-| Calculateur | Arbre des besoins, liste de courses dans l'ordre de farm, crops de base, temps estimé |
+| Encyclopédie | Arbre des recettes par rareté ou par étape. Une mutation choisie : ses ingrédients et ce qu'elle permet de faire, ou tout son chemin jusqu'aux crops de base, et dessous son calcul (quantité voulue, mutations à obtenir, temps estimé) ; ou un objectif entier (Rose Dragon, crafts…) avec tout ce qu'il demande ; fiche détaillée |
 | Grille | Les 3 greenhouses (10 × 10) : spawns possibles, conflits, effets reçus, eau, plans du guide AVRG |
-| Outils | Upgrades du Greenhouse (menu au style Minecraft), durée d'un growth stage, Ethereal Vines, Lonelily, aide-mémoire, sauvegarde |
+| Outils | Upgrades du Greenhouse (menu au style Minecraft), durée d'un growth stage, Ethereal Vines, aide-mémoire, sauvegarde |
 
 Les données incertaines ne sont jamais inventées : elles restent marquées dans `mutations.json`
 (valeur `null`, `verified: false`, conflits entre sources). L'interface ne leur met pas de badge.

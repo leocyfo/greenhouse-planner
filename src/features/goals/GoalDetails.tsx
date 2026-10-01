@@ -1,4 +1,3 @@
-import { goToTab } from '../../app/navigation'
 import { Badge } from '../../components/Badge'
 import { CropLabel } from '../../components/game/CropLabel'
 import { formatNumber } from '../../components/labels'
@@ -6,6 +5,7 @@ import { getGameData } from '../../data'
 import { tr } from '../../i18n/locale'
 import { useAppStore } from '../../store/appStore'
 import type { GoalStatus } from '../../store/useGoalStatuses'
+import { showGoalInEncyclopedia } from '../encyclopedia/encyclopediaFocus'
 
 const SUBTITLE = 'mb-1 text-xs font-medium text-ink-muted'
 
@@ -14,7 +14,6 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
   const data = getGameData()
   const inventory = useAppStore((s) => s.progress.inventory)
   const analyzed = useAppStore((s) => s.progress.analyzed)
-  const calculateGoal = useAppStore((s) => s.calculateGoal)
   const { goal, completion } = status
 
   const remainingAnalyses = data.mutations.filter((m) => !analyzed.includes(m.id)).length
@@ -53,7 +52,7 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
                 <li className="text-ink-muted">
                   {tr(
                     `${goal.eachMutation} exemplaire de chaque mutation pas encore analysée (${remainingAnalyses} restante${remainingAnalyses > 1 ? 's' : ''})`,
-                    `${goal.eachMutation} copy of each mutation not analyzed yet (${remainingAnalyses} left)`,
+                    `${goal.eachMutation} of each mutation not analyzed yet (${remainingAnalyses} left)`,
                   )}
                 </li>
               )}
@@ -97,15 +96,12 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
             ? tr(`${completion.done} / ${completion.total} analysées`, `${completion.done} / ${completion.total} analyzed`)
             : tr(
                 `${completion.done} / ${completion.total} exemplaire${completion.total > 1 ? 's' : ''} en stock, ingrédients compris`,
-                `${completion.done} / ${completion.total} cop${completion.total !== 1 ? 'ies' : 'y'} in stock, ingredients included`,
+                `${completion.done} / ${completion.total} mutations in stock, ingredients included`,
               )}
         </span>
         <button
           type="button"
-          onClick={() => {
-            calculateGoal(goal.id, goal.avrgRoute ? 'optimum' : undefined)
-            goToTab('calculateur')
-          }}
+          onClick={() => showGoalInEncyclopedia(goal.id)}
           className="text-sm text-accent-strong underline-offset-2 hover:underline"
         >
           {tr('Calculer cet objectif', 'Calculate this goal')}

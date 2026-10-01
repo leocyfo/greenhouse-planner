@@ -69,7 +69,7 @@
     },
     "rosewaterFlask": "Skips growth stages only in the plot you are standing in. Levels +1 to +4.",
     "analysis": "Analyzing a mutation (Crop Analyzer in the Underground Lab, or Jake on the Abiphone) gives Copper and advances the DNA Analysis Milestone.",
-    "analysisAvrg": "Analysis consumes one copy: AVRG plans '7 blastberrys (+1 for analyzing)'.",
+    "analysisAvrg": "Analysis consumes one mutation: AVRG plans '7 blastberrys (+1 for analyzing)'.",
     "bazaarUnlockAfterAnalysis": {
       "text": "Analyzing a mutation unlocks buying it at the bazaar (AVRG, said for Dustgrain and Gloomgourd)."
     },
@@ -269,7 +269,7 @@
     "analyze_all": {
       "name": "Analyze the 40 mutations",
       "description": "Each first analysis gives Copper and advances the DNA Analysis Milestone (unlocks the Mutations Sacks at tiers I, III and V).",
-      "notes": "AVRG: analysis consumes one copy ('+1 for analyzing'), not counted in the guide's Rose Dragon totals."
+      "notes": "AVRG: analysis consumes one mutation ('+1 for analyzing'), not counted in the guide's Rose Dragon totals."
     }
   },
   "unmappedUsages": {

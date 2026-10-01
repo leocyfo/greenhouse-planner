@@ -1,5 +1,4 @@
 /** Arbre des recettes : colonnes par rareté ou par étape, liens en SVG, cartes par-dessus. */
-import type { RefObject } from 'react'
 import { plural } from '../../components/labels'
 import { getGameData } from '../../data'
 import { tr } from '../../i18n/locale'
@@ -27,12 +26,14 @@ interface RecipeTreeProps {
   readonly viewKey: string
   readonly label: string
   /** Zone mesurée : l'espace entre les colonnes suit sa largeur. */
-  readonly boxRef: RefObject<HTMLDivElement | null>
+  readonly boxRef: (element: HTMLElement | null) => void
   readonly focus: TreeFocus | null
   /** Recherche en cours : seules ces mutations restent en pleine lumière. */
   readonly matches: ReadonlySet<string> | null
-  /** « Tout le chemin » : quantité totale de chaque nœud pour 1 exemplaire de la mutation choisie. */
+  /** « Tout le chemin » ou objectif choisi : quantité totale de chaque nœud. */
   readonly totals: ReadonlyMap<string, number> | null
+  /** Pour quoi sont ces totaux, dans leur infobulle (« 1 Blastberry », « Rose Dragon Pet »). */
+  readonly totalsFor: string
   readonly selectedId: string | null
   readonly states: ReadonlyMap<string, MutationState>
   readonly plan: Plan
@@ -46,7 +47,7 @@ interface RecipeTreeProps {
    * Bande à gauche de l'arbre, avec une flèche : ▶ agrandit (crops de base, ou tout le chemin de la
    * mutation choisie), ◀ revient à la vue réduite.
    */
-  readonly expander: { readonly expanded: boolean; readonly onToggle: () => void; readonly label: string }
+  readonly expander: { readonly expanded: boolean; readonly onToggle: () => void; readonly label: string } | null
 }
 
 export function RecipeTree({
@@ -57,6 +58,7 @@ export function RecipeTree({
   focus,
   matches,
   totals,
+  totalsFor,
   selectedId,
   states,
   plan,
@@ -72,12 +74,11 @@ export function RecipeTree({
   const edges = model ? [...model.edges].sort((a, b) => ROLE_ORDER[roleOf(a)] - ROLE_ORDER[roleOf(b)]) : []
   // Quantités : le total pour la mutation choisie (« Tout le chemin »), sinon celles de la recette
   // de la mutation mise en avant.
-  const selectedName = selectedId ? data.mutationsById.get(selectedId)?.name : undefined
   const amounts = new Map<string, { readonly text: string; readonly title?: string }>(
     totals
       ? [...totals].map(([id, total]) => [
           id,
-          { text: `×${total}`, title: tr(`${total} au total pour 1 ${selectedName ?? ''}`, `${total} in total for 1 ${selectedName ?? ''}`) },
+          { text: `×${total}`, title: tr(`${total} au total pour ${totalsFor}`, `${total} in total for ${totalsFor}`) },
         ])
       : focus && model
         ? model.edges.filter((edge) => edge.target === focus.id).map((edge) => [edge.source, { text: amountText(edge) }])
@@ -87,18 +88,20 @@ export function RecipeTree({
 
   return (
     <div className="flex rounded-xl border border-line bg-panel">
-      <button
-        type="button"
-        aria-expanded={expander.expanded}
-        aria-label={expander.label}
-        title={expander.label}
-        onClick={expander.onToggle}
-        className="flex w-8 shrink-0 items-center justify-center rounded-l-xl border-r border-line bg-white/5 text-ink/80 transition-colors hover:bg-panel-raised hover:text-ink"
-      >
-        <svg aria-hidden="true" viewBox="0 0 10 12" className={`size-3.5 transition-transform duration-200 ${expander.expanded ? 'rotate-180' : ''}`}>
-          <path d="M1 0.5 9.5 6 1 11.5Z" fill="currentColor" />
-        </svg>
-      </button>
+      {expander && (
+        <button
+          type="button"
+          aria-expanded={expander.expanded}
+          aria-label={expander.label}
+          title={expander.label}
+          onClick={expander.onToggle}
+          className="flex w-8 shrink-0 items-center justify-center rounded-l-xl border-r border-line bg-white/5 text-ink/80 transition-colors hover:bg-panel-raised hover:text-ink"
+        >
+          <svg aria-hidden="true" viewBox="0 0 10 12" className={`size-3.5 transition-transform duration-200 ${expander.expanded ? 'rotate-180' : ''}`}>
+            <path d="M1 0.5 9.5 6 1 11.5Z" fill="currentColor" />
+          </svg>
+        </button>
+      )}
       <div ref={boxRef} className="min-w-0 flex-1 overflow-x-auto p-3">
         {model && (
           <div

@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { tabElementId, tabPanelId } from '../components/tabIds'
 import { Tabs } from '../components/Tabs'
-import { CalculatorTab } from '../features/calculator/CalculatorTab'
 import { DashboardTab } from '../features/dashboard/DashboardTab'
 import { GridTab } from '../features/grid/GridTab'
 import { InventoryTab } from '../features/inventory/InventoryTab'
@@ -34,8 +33,6 @@ function TabContent({ tabId }: { readonly tabId: TabId }) {
           <EncyclopediaTab />
         </Suspense>
       )
-    case 'calculateur':
-      return <CalculatorTab />
     case 'grille':
       return <GridTab />
     case 'outils':

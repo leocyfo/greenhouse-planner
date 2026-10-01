@@ -15,13 +15,12 @@ import { STATE_INFO } from './stateInfo'
 
 interface FocusBarProps {
   readonly selectedId: string | null
-  /** Placé avant « Calculer » : le choix des colonnes (par rareté ou par étape). */
+  /** Placé avant « Fiche » : le choix des colonnes (par rareté ou par étape). */
   readonly controls?: ReactNode
   readonly states: ReadonlyMap<string, MutationState>
   /** L'arbre affiche le total de chaque mutation pour en faire 1 (« Tout le chemin »). */
   readonly showsTotals: boolean
   readonly onOpenSheet: (mutationId: string) => void
-  readonly onCalculate: (mutationId: string) => void
   /** Retour à tout l'arbre. */
   readonly onClear: () => void
 }
@@ -32,7 +31,6 @@ export function FocusBar({
   states,
   showsTotals,
   onOpenSheet,
-  onCalculate,
   onClear,
 }: FocusBarProps) {
   const data = getGameData()
@@ -74,14 +72,6 @@ export function FocusBar({
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {controls}
-          <button
-            type="button"
-            onClick={() => onCalculate(selectedId)}
-            className="h-8 rounded-lg bg-accent px-3 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
-          >
-            {tr('Calculer', 'Calculate')}
-            <span className="sr-only"> {mutation.name}</span>
-          </button>
           <button
             type="button"
             onClick={() => onOpenSheet(selectedId)}

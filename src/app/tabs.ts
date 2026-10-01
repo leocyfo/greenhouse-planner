@@ -5,8 +5,8 @@ export const TABS = [
   // Le tableau de bord regroupe les objectifs (un ancien lien #/objectifs y mène aussi).
   { id: 'tableau-de-bord' },
   { id: 'inventaire' },
+  // L'Encyclopédie contient le calcul de la mutation choisie (l'ancien onglet Calculateur).
   { id: 'encyclopedie' },
-  { id: 'calculateur' },
   { id: 'grille' },
   { id: 'outils' },
 ] as const
@@ -26,8 +26,6 @@ export function tabLabel(id: TabId): string {
       return tr('Inventaire', 'Inventory')
     case 'encyclopedie':
       return tr('Encyclopédie', 'Encyclopedia')
-    case 'calculateur':
-      return tr('Calculateur', 'Calculator')
     case 'grille':
       return tr('Grille', 'Grid')
     case 'outils':
