@@ -121,7 +121,7 @@ describe('store : actions', () => {
     store.getState().setOwned('glasscorn', 2)
     store.getState().setPlayer({ name: 'Notch', profileId: 'profil-1' })
     store.getState().importInventory({ choconut: 12 }, false)
-    expect(store.getState().settings.player).toEqual({ name: 'Notch', profileId: 'profil-1', promptDismissed: false })
+    expect(store.getState().settings.player).toEqual({ name: 'Notch', profileId: 'profil-1' })
     expect(store.getState().progress.inventory).toEqual({ choconut: 12 })
   })
 

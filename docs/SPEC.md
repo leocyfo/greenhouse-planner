@@ -437,8 +437,8 @@ recrée tout »)
   infobulles s'affichent dans le body (portail) pour ne pas suivre un élément animé.
 
 ### Import depuis Hypixel (demande du joueur)
-- Comme SkyCrypt : le joueur donne son pseudo (invitation au premier lancement sur le tableau de
-  bord, bouton dans l'en-tête), le site lit son profil et compte ses mutations. Choix du joueur :
+- Comme SkyCrypt : le joueur donne son pseudo (champ de l'accueil, bouton dans l'en-tête, menu
+  Réglages), le site lit son profil et compte ses mutations. Choix du joueur :
   un petit serveur (Cloudflare Worker, dossier worker/) garde la clé Hypixel secrète ; le site reste
   statique. Sans serveur configuré (VITE_PROFILE_API_URL), l'import est masqué sur le site publié.
 - Le serveur : pseudo → UUID, puis /v2/skyblock/profiles. Mojang refuse les appels venus de
@@ -477,16 +477,14 @@ recrée tout »)
   trouvées passent à 0, sauf option « garder ». Import bloqué si Hypixel ne montre pas l'inventaire
   (Inventory API désactivée), pour ne pas vider le stock à tort. Les coffres de l'île et la grille
   du greenhouse ne sont pas visibles par l'API.
-- Sauvegarde v9 : `settings.player` (pseudo, profil choisi, invitation écartée).
+- Sauvegarde v9 : `settings.player` (pseudo, profil choisi). L'ancien champ « invitation écartée »
+  a disparu avec l'invitation (01/10/2026) : ignoré à la lecture d'une ancienne sauvegarde.
 
 ### Interface allégée (demande du joueur, 30/09/2026)
 - Plus d'en-tête visible (titre et phrase) en haut des onglets : chaque onglet garde un titre h2
   masqué pour les lecteurs d'écran (et, pour l'Encyclopédie, l'indication « Entrée choisit une mutation, Entrée à nouveau ouvre sa
   fiche »).
-- Barre du haut à la manière de SkyCrypt : flottante, centrée, de la largeur de son contenu, sur une
-  ligne en grand écran (titre, onglets en pastilles, import), en verre dépoli sur le fond ; deux
-  lignes sous 1280 px. Les côtés vides laissent passer les clics ; opaque si le système demande
-  moins de transparence ou plus de contraste. Le sous-titre « Hypixel SkyBlock » est retiré.
+- Barre du haut : remplacée le 01/10/2026 par l'en-tête de SkyCrypt (voir « En-tête et accueil »).
 - Retirés de l'Inventaire : le choix Minimum / Optimum et la case « les mutations analysées
   s'achètent au bazar » ; la légende sous les filtres (la case « ? » du sac l'explique toujours).
 - Retiré du Calculateur : le panneau Options (mode, inventaire ignoré, bazar, emplacements par
@@ -609,9 +607,10 @@ recrée tout »)
   de 179 Ko chargé au premier calcul) : la page reste fluide ; « Calcul… » sur le bouton.
 
 ### Version anglaise (demande du joueur, 01/10/2026)
-- Boutons FR / EN dans la barre du haut (`app/LanguageSwitch.tsx`), à côté de l'import. Sans choix,
-  la langue suit le navigateur (français si sa première langue commence par « fr », anglais
-  sinon). Le choix est gardé : sauvegarde v10, `settings.locale` (`'fr'`, `'en'` ou `null`).
+- Choix Français / English dans le menu Réglages de l'en-tête (`app/LanguageSwitch.tsx`). Sans choix,
+  le site est en anglais, quelle que soit la langue du navigateur (demande du joueur, 01/10/2026 :
+  « la langue de base est l'anglais »). Le choix est gardé : sauvegarde v10, `settings.locale`
+  (`'fr'`, `'en'` ou `null`).
 - Sans bibliothèque : `tr('français', 'English')` à côté de chaque texte (`i18n/locale.ts`). Au
   changement de langue, toute l'interface est redessinée (`AppShell` a la langue pour clé) ;
   `<html lang>`, titre de l'onglet, nombres (`formatDecimal`) et pluriels (« 0 stage » en
@@ -626,6 +625,30 @@ recrée tout »)
   du serveur d'import (en français) sont traduits côté site (`profileApi.ts`, `serverErrorText`).
 - Restent en français : les messages de validation de mutations.json (pour qui modifie le
   fichier) et le code.
+
+### En-tête et accueil (demande du joueur, 01/10/2026 : « le même accueil et header que SkyCrypt »)
+- Le site s'appelle **Sky-Helper** (en-tête, titre de l'onglet, accueil, README). La clé du
+  localStorage et l'identifiant des fichiers exportés gardent l'ancien nom `greenhouse-planner` :
+  la progression enregistrée et les anciens fichiers restent lus. Fichier d'export :
+  `sky-helper-AAAA-MM-JJ.json`.
+- En-tête sur toute la largeur, en verre dépoli, comme SkyCrypt : à gauche le logo (pousse blanche
+  sur carré vert, aussi en favicon), le nom et la version (« v1.8 », lue dans package.json au
+  build : `__APP_VERSION__`), lien vers l'accueil ; au centre les onglets en pastilles bordées ; à
+  droite le bouton du profil Hypixel et « Réglages ⚙ ». Sous 1280 px les onglets passent sur une
+  deuxième ligne (centrée, défilante sur mobile) ; sur mobile, « Réglages » ne garde que la roue.
+- Menu Réglages : langue (Français / English) et profil Hypixel (importer, actualiser, changer de
+  joueur). Fermé par Échap ou un clic en dehors ; il reste ouvert quand on change de langue.
+- Accueil (haut du tableau de bord), comme celui de SkyCrypt : grand encadré en verre dépoli, nom
+  du site, phrase « Planifie et calcule les mutations du Greenhouse de SkyBlock » avec l'image du
+  Rose Dragon Pet, champ du pseudo (import Hypixel) et, dessous, une carte de lien vers le code sur
+  GitHub (à la place de la carte Patreon de SkyCrypt). Toujours affiché ; l'ancienne invitation
+  « Plus tard : je remplis mon stock à la main » est retirée.
+- Chaque push monte la version de package.json avec le tag (1.8.0 pour v1.8).
+- Valeurs de départ à 0 (demande du joueur, 01/10/2026 : « tous les paramètres à 0 ») : upgrades
+  du Greenhouse (Growth Speed était maxé), stages du calcul de durée, cases « à la main », stages et
+  Lonelily voulues de l'estimation des Lonelily. Restent à 1 les champs où 0 n'a pas de sens
+  (quantité ajoutée au calculateur, emplacements du plan automatique). Les sauvegardes existantes
+  gardent leurs valeurs ; « Réinitialiser » (Outils) repart de ces valeurs.
 
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,

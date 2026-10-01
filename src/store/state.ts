@@ -30,7 +30,7 @@ export interface SettingsState {
   readonly analyzedBuyable: boolean
   /** Joueur Hypixel dont on importe le stock (pseudo, profil choisi) ; invitation au 1er lancement. */
   readonly player: PlayerSettings
-  /** Langue de l'interface ; null : celle du navigateur (voir browserLocale). */
+  /** Langue de l'interface ; null : pas encore choisie, le site est en anglais (DEFAULT_LOCALE). */
   readonly locale: Locale | null
 }
 
@@ -39,8 +39,6 @@ export interface PlayerSettings {
   readonly name: string
   /** Profil SkyBlock choisi à la dernière importation (null : le profil actif du joueur). */
   readonly profileId: string | null
-  /** L'invitation « importe ton profil » du tableau de bord a été écartée. */
-  readonly promptDismissed: boolean
 }
 
 export interface CalculatorState {
@@ -109,7 +107,7 @@ export function defaultLayoutId(greenhouse: number): string {
 
 /**
  * Valeurs de départ : l'objectif de la route AVRG (Rose Dragon) est coché, le mode Optimum
- * est celui que recommande AVRG, la croissance est réglée « tout maxé ». Le calculateur part
+ * est celui que recommande AVRG, les upgrades du Greenhouse sont à 0 (demande du joueur). Le calculateur part
  * vide, en mode Minimum, avec un greenhouse vide pour les Lonelily.
  * `data` peut être null si mutations.json est invalide (l'app affiche alors l'écran d'erreur).
  */
@@ -123,9 +121,9 @@ export function defaultPersistedState(data: GameData | null): PersistedState {
     },
     settings: {
       planMode: 'optimum',
-      growth: { upgrades: data ? data.mechanics.growthStage.formula.upgradesMax : 0 },
+      growth: { upgrades: 0 },
       analyzedBuyable: false,
-      player: { name: '', profileId: null, promptDismissed: false },
+      player: { name: '', profileId: null },
       locale: null,
     },
     calculator: {

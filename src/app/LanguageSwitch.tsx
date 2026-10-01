@@ -3,24 +3,26 @@ import { useAppStore } from '../store/appStore'
 
 const NAMES: Readonly<Record<Locale, string>> = { fr: 'Français', en: 'English' }
 
-/** Choix de la langue dans l'en-tête : FR ou EN, gardé dans la sauvegarde. */
-export function LanguageSwitch() {
+/** Choix de la langue (menu Réglages) : français ou anglais, gardé dans la sauvegarde. */
+export function LanguageSwitch({ onChange }: { readonly onChange?: () => void }) {
   const setLocale = useAppStore((s) => s.setLocale)
   const current = getLocale()
   return (
-    <div role="group" aria-label={tr('Langue', 'Language')} className="flex shrink-0 rounded-full border border-line p-0.5 text-xs">
+    <div role="group" aria-label={tr('Langue', 'Language')} className="grid grid-cols-2 gap-1 rounded-xl border border-line p-1 text-sm">
       {LOCALES.map((locale) => (
         <button
           key={locale}
           type="button"
           lang={locale}
           aria-pressed={locale === current}
-          aria-label={NAMES[locale]}
-          title={NAMES[locale]}
-          onClick={() => setLocale(locale)}
-          className="rounded-full px-2 py-1 font-semibold uppercase text-ink-muted transition-colors hover:text-ink aria-pressed:bg-panel-raised aria-pressed:text-ink"
+          onClick={() => {
+            if (locale === current) return
+            onChange?.()
+            setLocale(locale)
+          }}
+          className="rounded-lg px-3 py-1.5 font-medium text-ink-muted transition-colors hover:text-ink aria-pressed:bg-accent/15 aria-pressed:text-accent-strong"
         >
-          {locale}
+          {NAMES[locale]}
         </button>
       ))}
     </div>

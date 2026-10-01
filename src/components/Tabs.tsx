@@ -15,8 +15,8 @@ interface TabsProps<T extends string> {
   /** Nom accessible de la liste d'onglets. */
   readonly label: string
   readonly className?: string
-  /** Onglets soulignés (par défaut) ou en pastilles (barre du haut). */
-  readonly variant?: 'underline' | 'pills'
+  /** Onglets soulignés (par défaut), en pastilles, ou en pastilles bordées (en-tête du site). */
+  readonly variant?: 'underline' | 'pills' | 'nav'
 }
 
 const TAB_CLASSES = {
@@ -29,6 +29,11 @@ const TAB_CLASSES = {
     base: 'rounded-lg px-3 py-1.5',
     selected: 'bg-accent/15 font-semibold text-accent-strong',
     idle: 'text-ink-muted hover:bg-white/5 hover:text-ink',
+  },
+  nav: {
+    base: 'app-nav-pill',
+    selected: 'border-accent/60 bg-accent/15 text-accent-strong hover:border-accent/60 hover:bg-accent/20',
+    idle: '',
   },
 } as const
 
@@ -84,7 +89,7 @@ export function Tabs<T extends string>({
   }
 
   return (
-    <div ref={list} role="tablist" aria-label={label} className={`flex gap-1 overflow-x-auto ${className}`}>
+    <div ref={list} role="tablist" aria-label={label} className={`flex overflow-x-auto ${variant === 'nav' ? 'gap-2' : 'gap-1'} ${className}`}>
       {tabs.map((tab, index) => {
         const isSelected = tab.id === selected
         return (

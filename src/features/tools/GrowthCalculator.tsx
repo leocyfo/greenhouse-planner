@@ -16,7 +16,7 @@ export function GrowthCalculator() {
   const data = getGameData()
   const { formula } = data.mechanics.growthStage
   const upgrades = useAppStore((s) => s.settings.growth.upgrades)
-  const [stages, setStages] = useState(20)
+  const [stages, setStages] = useState(0)
   const [mutationId, setMutationId] = useState('')
 
   const seconds = stageDurationSeconds(growthWithUpgrades(upgrades, formula), formula)
@@ -60,7 +60,7 @@ export function GrowthCalculator() {
             {!mutation && (
               <div className="flex flex-col gap-1 text-xs text-ink-muted">
                 <span aria-hidden="true">Stages</span>
-                <NumberStepper value={stages} onChange={setStages} name="Stages" inputLabel={tr('Nombre de stages', 'Number of stages')} min={1} max={999} />
+                <NumberStepper value={stages} onChange={setStages} name="Stages" inputLabel={tr('Nombre de stages', 'Number of stages')} min={0} max={999} />
               </div>
             )}
           </div>

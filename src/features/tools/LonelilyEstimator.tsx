@@ -35,10 +35,10 @@ export function LonelilyEstimator() {
   const missing = lonelily ? (plan.needs.get(lonelily.id)?.missing ?? 0) : 0
 
   const [source, setSource] = useState<Source>('grids')
-  const [manualCells, setManualCells] = useState(width * height)
-  const [stages, setStages] = useState(10)
-  // Par défaut : ce que demandent encore les objectifs, sinon le total AVRG de la route.
-  const [wanted, setWanted] = useState(missing > 0 ? missing : Math.max(1, lonelily?.roseDragonOptimum ?? 1))
+  const [manualCells, setManualCells] = useState(0)
+  const [stages, setStages] = useState(0)
+  // Tout part de 0 : le joueur entre ses propres valeurs.
+  const [wanted, setWanted] = useState(0)
 
   // Seuls les greenhouses débloqués comptent : le 1er, plus ceux achetés au NPC.
   const { unlocked, gridCells } = useMemo(() => {
@@ -112,7 +112,7 @@ export function LonelilyEstimator() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-start">
             <span className="text-xs text-ink-muted">{tr('Sur combien de stages', 'Over how many stages')}</span>
-            <NumberStepper value={stages} onChange={setStages} name="Stages" inputLabel={tr('Nombre de stages', 'Number of stages')} min={1} max={999} />
+            <NumberStepper value={stages} onChange={setStages} name="Stages" inputLabel={tr('Nombre de stages', 'Number of stages')} min={0} max={999} />
           </div>
           <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-start">
             <span className="text-xs text-ink-muted">{tr(`${rate.mutation} voulues`, `${rate.mutation} wanted`)}</span>
@@ -121,7 +121,7 @@ export function LonelilyEstimator() {
               onChange={setWanted}
               name={tr(`${rate.mutation} voulues`, `${rate.mutation} wanted`)}
               inputLabel={tr(`${rate.mutation} voulues`, `${rate.mutation} wanted`)}
-              min={1}
+              min={0}
               max={999}
             />
           </div>

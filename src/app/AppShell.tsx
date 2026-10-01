@@ -10,11 +10,11 @@ import { PlayerButton } from '../features/profile/PlayerButton'
 import { PlayerImportDialog } from '../features/profile/PlayerImportDialog'
 import { tr } from '../i18n/locale'
 import { AppFooter } from './AppFooter'
-import { LanguageSwitch } from './LanguageSwitch'
+import { APP_NAME, APP_VERSION, Logo } from './brand'
+import { SettingsMenu } from './SettingsMenu'
 import { DEFAULT_TAB, FULL_WIDTH_TABS, TAB_IDS, TABS, tabLabel, type TabId } from './tabs'
 import { useHashTab } from './useHashTab'
 
-const APP_NAME = 'Greenhouse Planner'
 const TAB_PREFIX = 'main'
 
 // L'Encyclopédie n'est téléchargée qu'à son ouverture.
@@ -77,24 +77,35 @@ export function AppShell() {
       <div aria-hidden="true" className="app-background" />
       <SkipToContent targetId={panelId} />
       {/*
-        Barre flottante à la manière de SkyCrypt : étroite (largeur du contenu), sur une ligne en
-        grand écran, en verre dépoli sur le fond. Les côtés vides laissent passer les clics.
+        En-tête à la manière de SkyCrypt : toute la largeur, en verre dépoli. Le nom et la version à
+        gauche (lien vers l'accueil), les onglets au centre, le profil et les réglages à droite.
+        Plus étroit : les onglets passent sur une deuxième ligne, qui défile.
       */}
-      <header className="pointer-events-none sticky top-0 z-10 px-2 pt-2 sm:px-4 sm:pt-3">
-        <div className="app-header-bar pointer-events-auto mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-white/10 px-3 py-2 shadow-lg shadow-black/30 xl:w-fit xl:flex-nowrap">
-          <h1 className="whitespace-nowrap px-1 text-base font-semibold tracking-tight">{APP_NAME}</h1>
+      <header className="app-header-bar sticky top-0 z-20 border-b border-white/10 shadow-lg shadow-black/20">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2 sm:px-4 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+          <a
+            href={`#/${DEFAULT_TAB}`}
+            title={tr('Accueil', 'Home')}
+            className="col-start-1 row-start-1 flex min-w-0 items-center gap-2.5 justify-self-start rounded-lg pr-2"
+          >
+            <Logo className="size-8 shrink-0" />
+            <div className="min-w-0 leading-tight">
+              <h1 className="truncate text-lg font-bold tracking-tight">{APP_NAME}</h1>
+              <p className="text-[11px] text-ink-muted">{APP_VERSION}</p>
+            </div>
+          </a>
           <Tabs
             tabs={tabs}
             selected={tab.id}
             onSelect={selectTab}
             idPrefix={TAB_PREFIX}
             label={tr("Sections de l'application", 'App sections')}
-            variant="pills"
-            className="order-last w-full xl:order-none xl:w-auto xl:min-w-0"
+            variant="nav"
+            className="col-span-2 row-start-2 p-0.5 md:justify-center xl:col-span-1 xl:col-start-2 xl:row-start-1"
           />
-          <div className="ml-auto flex items-center gap-2 xl:ml-1">
-            <LanguageSwitch />
+          <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 xl:col-start-3">
             <PlayerButton />
+            <SettingsMenu />
           </div>
         </div>
       </header>

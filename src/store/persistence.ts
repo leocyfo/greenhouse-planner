@@ -16,6 +16,7 @@ import type {
   ToolsState,
 } from './state'
 
+/** Clé du localStorage : l'ancien nom du site, gardé pour que la progression déjà enregistrée reste lue. */
 export const STORAGE_KEY = 'greenhouse-planner'
 
 /** Pseudo Minecraft : lettres, chiffres et _, 16 caractères au plus (vide : aucun joueur). */
@@ -250,7 +251,6 @@ export function sanitizePersistedState(raw: unknown, defaults: PersistedState): 
             .object({
               name: z.string().regex(PLAYER_NAME).catch(''),
               profileId: z.string().min(1).nullable().catch(null),
-              promptDismissed: z.boolean().catch(false),
             })
             .catch(() => ({ ...defaultSettings.player })),
           locale: z.enum(['fr', 'en']).nullable().catch(null),
@@ -285,6 +285,7 @@ export function sanitizePersistedState(raw: unknown, defaults: PersistedState): 
 // Fichier d'export / import de la progression
 // ---------------------------------------------------------------------------
 
+/** Identifiant écrit dans les fichiers exportés : l'ancien nom du site, gardé pour relire les anciens fichiers. */
 const APP_ID = 'greenhouse-planner'
 
 export interface ProgressFile {
@@ -294,10 +295,10 @@ export interface ProgressFile {
   readonly state: PersistedState
 }
 
-/** Nom du fichier d'export, daté : greenhouse-planner-2026-09-29.json. */
+/** Nom du fichier d'export, daté : sky-helper-2026-09-29.json. */
 export function exportFileName(now: Date = new Date()): string {
   const pad = (value: number) => String(value).padStart(2, '0')
-  return `${APP_ID}-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.json`
+  return `sky-helper-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.json`
 }
 
 export function serializeProgressFile(state: PersistedState, now: Date = new Date()): string {
@@ -320,7 +321,7 @@ export function parseProgressFile(text: string, defaults: PersistedState): Impor
     .object({ app: z.literal(APP_ID), schemaVersion: z.number().int().positive(), state: z.unknown() })
     .safeParse(json)
   if (!envelope.success) {
-    return { ok: false, error: tr("Ce fichier n'est pas une sauvegarde de Greenhouse Planner.", 'This file is not a Greenhouse Planner save.') }
+    return { ok: false, error: tr("Ce fichier n'est pas une sauvegarde de Sky-Helper.", 'This file is not a Sky-Helper save.') }
   }
   if (envelope.data.schemaVersion > SCHEMA_VERSION) {
     return { ok: false, error: tr("Cette sauvegarde vient d'une version plus récente de l'application.", 'This save comes from a newer version of the app.') }

@@ -18,7 +18,7 @@ const SAVED: PersistedState = {
     planMode: 'minimum',
     growth: { upgrades: 0.25 },
     analyzedBuyable: true,
-    player: { name: 'Notch', profileId: 'profil-1', promptDismissed: true },
+    player: { name: 'Notch', profileId: 'profil-1' },
     locale: 'en',
   },
   calculator: {
@@ -34,13 +34,13 @@ const SAVED: PersistedState = {
 }
 
 describe('sauvegarde : valeurs par défaut', () => {
-  it("coche l'objectif de la route AVRG, en mode Optimum, croissance maxée, sans achat au bazar ni joueur lié", () => {
+  it("coche l'objectif de la route AVRG, en mode Optimum, upgrades à 0, sans achat au bazar ni joueur lié", () => {
     expect(defaults.progress).toEqual({ inventory: {}, analyzed: [], activeGoals: ['rose_dragon'] })
     expect(defaults.settings).toEqual({
       planMode: 'optimum',
-      growth: { upgrades: 0.5 },
+      growth: { upgrades: 0 },
       analyzedBuyable: false,
-      player: { name: '', profileId: null, promptDismissed: false },
+      player: { name: '', profileId: null },
       locale: null,
     })
   })
@@ -80,7 +80,7 @@ describe('sauvegarde : nettoyage', () => {
           planMode: 'maximum',
           growth: { upgrades: 0.1, uniqueCrops: 'douze', cropGrowth: 50 },
           analyzedBuyable: 'oui',
-          player: { name: 'pas un pseudo !', profileId: 42, promptDismissed: 'oui' },
+          player: { name: 'pas un pseudo !', profileId: 42 },
         },
       },
       defaults,
@@ -91,7 +91,7 @@ describe('sauvegarde : nettoyage', () => {
         planMode: 'optimum',
         growth: { upgrades: 0.1 },
         analyzedBuyable: false,
-        player: { name: '', profileId: null, promptDismissed: false },
+        player: { name: '', profileId: null },
         locale: null,
       },
       calculator: defaults.calculator,
@@ -286,7 +286,7 @@ describe('sauvegarde : migrations', () => {
 
 describe("sauvegarde : fichier d'export", () => {
   it('nomme le fichier avec la date du jour', () => {
-    expect(exportFileName(new Date(2026, 8, 29, 23, 59))).toBe('greenhouse-planner-2026-09-29.json')
+    expect(exportFileName(new Date(2026, 8, 29, 23, 59))).toBe('sky-helper-2026-09-29.json')
   })
 
   it("relit exactement ce qu'il a exporté", () => {

@@ -11,6 +11,11 @@ export type Locale = 'fr' | 'en'
 
 export const LOCALES: readonly Locale[] = ['fr', 'en']
 
+/** Langue du site tant que le joueur n'en a pas choisi une (menu Réglages). */
+export const DEFAULT_LOCALE: Locale = 'en'
+
+// Langue des modules avant le premier rendu, et celle des tests (écrits en français) ; l'application
+// règle la sienne au démarrage (voir App).
 let current: Locale = 'fr'
 
 export function getLocale(): Locale {
@@ -26,12 +31,6 @@ export function setLocale(locale: Locale): void {
 /** Texte dans la langue courante. */
 export function tr(fr: string, en: string): string {
   return current === 'en' ? en : fr
-}
-
-/** Langue du navigateur, au premier lancement : le français pour un navigateur en français, sinon l'anglais. */
-export function browserLocale(languages: readonly string[] = typeof navigator === 'undefined' ? [] : navigator.languages): Locale {
-  const first = languages[0] ?? 'fr'
-  return first.toLowerCase().startsWith('fr') ? 'fr' : 'en'
 }
 
 /** Nombre dans le format de la langue : « 500 000 000 » en français, « 500,000,000 » en anglais. */

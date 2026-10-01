@@ -1,4 +1,4 @@
-# Greenhouse Planner — Hypixel SkyBlock
+# Sky-Helper — Hypixel SkyBlock
 
 Planifie, suis et calcule les 40 mutations du Greenhouse de Hypixel SkyBlock, et tout ce qui en
 dépend : le pet Rose Dragon, les crafts, les shards, les Mutations Sacks, les paliers d'analyse

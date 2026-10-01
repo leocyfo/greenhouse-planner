@@ -10,8 +10,7 @@ export function PlayerButton() {
   const search = useImportDialog((s) => s.search)
   if (!PROFILE_IMPORT_VISIBLE) return null
 
-  const className =
-    'flex shrink-0 items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm transition hover:border-accent/60 hover:bg-panel-raised motion-safe:active:scale-[0.97]'
+  const className = 'app-nav-pill flex shrink-0 items-center gap-2 motion-safe:active:scale-[0.97]'
   if (!name) {
     return (
       <button type="button" onClick={show} className={className}>
@@ -27,12 +26,12 @@ export function PlayerButton() {
     <button type="button" onClick={() => search(name)} title={tr('Relire ton profil sur Hypixel', 'Read your profile on Hypixel again')} className={className}>
       <span
         aria-hidden="true"
-        className="flex size-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent-strong"
+        className="-my-1 -ml-2 flex size-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent-strong"
       >
         {name.charAt(0).toUpperCase()}
       </span>
-      <span className="font-medium">{name}</span>
-      <span className="hidden text-ink-muted sm:inline">{tr('· Actualiser', '· Refresh')}</span>
+      <span>{name}</span>
+      <span className="hidden font-normal text-ink-muted sm:inline">{tr('· Actualiser', '· Refresh')}</span>
     </button>
   )
 }
