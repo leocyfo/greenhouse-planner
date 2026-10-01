@@ -1,4 +1,5 @@
 import { DataPanel } from './DataPanel'
+import { tr } from '../../i18n/locale'
 import { GreenhouseUpgrades } from './GreenhouseUpgrades'
 import { GrowthCalculator } from './GrowthCalculator'
 import { LonelilyEstimator } from './LonelilyEstimator'
@@ -9,7 +10,7 @@ import { VinesTracker } from './VinesTracker'
 export function ToolsTab() {
   return (
     <div className="space-y-6">
-      <h2 className="sr-only">Outils</h2>
+      <h2 className="sr-only">{tr('Outils', 'Tools')}</h2>
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <div className="space-y-4">
           <GreenhouseUpgrades />

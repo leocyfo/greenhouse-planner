@@ -19,6 +19,7 @@ const SAVED: PersistedState = {
     growth: { upgrades: 0.25 },
     analyzedBuyable: true,
     player: { name: 'Notch', profileId: 'profil-1', promptDismissed: true },
+    locale: 'en',
   },
   calculator: {
     targets: [{ mutationId: 'glasscorn', quantity: 2 }],
@@ -40,6 +41,7 @@ describe('sauvegarde : valeurs par défaut', () => {
       growth: { upgrades: 0.5 },
       analyzedBuyable: false,
       player: { name: '', profileId: null, promptDismissed: false },
+      locale: null,
     })
   })
 
@@ -90,6 +92,7 @@ describe('sauvegarde : nettoyage', () => {
         growth: { upgrades: 0.1 },
         analyzedBuyable: false,
         player: { name: '', profileId: null, promptDismissed: false },
+        locale: null,
       },
       calculator: defaults.calculator,
       grids: defaults.grids,
@@ -212,7 +215,7 @@ describe('sauvegarde : migrations', () => {
     const v4 = { ...SAVED, settings: v4Settings }
     expect(sanitizePersistedState(migratePersistedState(v4, 4), defaults)).toEqual({
       ...SAVED,
-      settings: { ...v4Settings, analyzedBuyable: false, player: defaults.settings.player },
+      settings: { ...v4Settings, analyzedBuyable: false, player: defaults.settings.player, locale: null },
     })
   })
 
@@ -252,8 +255,14 @@ describe('sauvegarde : migrations', () => {
     const v8 = { ...SAVED, settings: { planMode, growth, analyzedBuyable } }
     expect(sanitizePersistedState(migratePersistedState(v8, 8), defaults)).toEqual({
       ...SAVED,
-      settings: { ...v8.settings, player: defaults.settings.player },
+      settings: { ...v8.settings, player: defaults.settings.player, locale: null },
     })
+  })
+
+  it('migre une sauvegarde v9 : tout est gardé, la langue suit le navigateur', () => {
+    const { locale: _locale, ...v9Settings } = SAVED.settings
+    const v9 = { ...SAVED, settings: v9Settings }
+    expect(sanitizePersistedState(migratePersistedState(v9, 9), defaults)).toEqual({ ...SAVED, settings: { ...v9Settings, locale: null } })
   })
 
   it("nettoie le suivi des vines et les tiers d'upgrades : entiers positifs", () => {

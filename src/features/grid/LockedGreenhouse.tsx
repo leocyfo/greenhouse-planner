@@ -1,5 +1,6 @@
 import { tabHref } from '../../app/navigation'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { upgradeByEffect } from '../../logic/upgrades'
 
 interface LockedGreenhouseProps {
@@ -19,17 +20,18 @@ export function LockedGreenhouse({ index, price, previousLocked }: LockedGreenho
       <p aria-hidden="true" className="text-3xl">
         🔒
       </p>
-      <h3 className="mt-2 text-lg font-semibold">Greenhouse {index + 1} verrouillé</h3>
+      <h3 className="mt-2 text-lg font-semibold">{tr(`Greenhouse ${index + 1} verrouillé`, `Greenhouse ${index + 1} locked`)}</h3>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
-        Débloque-le dans l&apos;onglet Outils{upgrade ? `, avec l'upgrade ${upgrade.name} au tier ${index}` : ''}
-        {price ? ` (${price} Ethereal Vines)` : ''}.{previousLocked ? ` Il faut d'abord le greenhouse ${index}.` : ''} Tu
-        pourras alors y poser tes crops.
+        {tr(
+          `Débloque-le dans l'onglet Outils${upgrade ? `, avec l'upgrade ${upgrade.name} au tier ${index}` : ''}${price ? ` (${price} Ethereal Vines)` : ''}.${previousLocked ? ` Il faut d'abord le greenhouse ${index}.` : ''} Tu pourras alors y poser tes crops.`,
+          `Unlock it in the Tools tab${upgrade ? `, with the ${upgrade.name} upgrade at tier ${index}` : ''}${price ? ` (${price} Ethereal Vines)` : ''}.${previousLocked ? ` Greenhouse ${index} comes first.` : ''} You can then place your crops there.`,
+        )}
       </p>
       <a
         href={tabHref('outils')}
         className="mt-5 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
       >
-        Aller aux Upgrades du Greenhouse
+        {tr('Aller aux Upgrades du Greenhouse', 'Go to the Greenhouse Upgrades')}
       </a>
     </div>
   )

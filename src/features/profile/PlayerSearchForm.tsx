@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { tr } from '../../i18n/locale'
 import { isPlayerName } from './importText'
 
 interface PlayerSearchFormProps {
@@ -27,7 +28,7 @@ export function PlayerSearchForm({ initialName = '', onSearch, disabled = false,
         event.preventDefault()
         const trimmed = name.trim()
         if (!isPlayerName(trimmed)) {
-          setError('Pseudo invalide : lettres, chiffres et _, 16 caractères au plus.')
+          setError(tr('Pseudo invalide : lettres, chiffres et _, 16 caractères au plus.', 'Invalid name: letters, digits and _, 16 characters at most.'))
           return
         }
         setError(null)
@@ -35,7 +36,7 @@ export function PlayerSearchForm({ initialName = '', onSearch, disabled = false,
       }}
     >
       <label htmlFor={inputId} className="sr-only">
-        Pseudo Minecraft
+        {tr('Pseudo Minecraft', 'Minecraft name')}
       </label>
       <div className="flex items-center gap-2 rounded-2xl border border-line bg-canvas/80 p-1.5 transition-colors focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30">
         <input
@@ -43,7 +44,7 @@ export function PlayerSearchForm({ initialName = '', onSearch, disabled = false,
           id={inputId}
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Ton pseudo Minecraft"
+          placeholder={tr('Ton pseudo Minecraft', 'Your Minecraft name')}
           maxLength={16}
           autoComplete="off"
           spellCheck={false}
@@ -55,7 +56,7 @@ export function PlayerSearchForm({ initialName = '', onSearch, disabled = false,
         <button
           type="submit"
           disabled={disabled}
-          aria-label="Chercher ce joueur"
+          aria-label={tr('Chercher ce joueur', 'Search this player')}
           className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-canvas transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-40 motion-safe:active:scale-95"
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2.5}>

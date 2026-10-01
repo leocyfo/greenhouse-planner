@@ -8,6 +8,7 @@ import { formatRarity } from '../../components/labels'
 import { NumberStepper } from '../../components/NumberStepper'
 import { Panel } from '../../components/Panel'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { autofillTargets, type AutofillResult } from '../../logic/autofill'
 import { isUsableGround } from '../../logic/ground'
 import { nextActions } from '../../logic/nextAction'
@@ -62,16 +63,18 @@ export function AutofillPanel({ greenhouse, layout }: AutofillPanelProps) {
     const ground = layout.ground.map((value) => (isUsableGround(value) ? surface : value))
     const outcome = await run({ targetId: target.id, spots, width, height, ground, stock })
     if (!outcome.ok) return setStatus({ kind: 'error', text: outcome.reason })
-    const name = `Auto : ${target.name} (${outcome.result.spots})`
+    const name = tr(`Auto : ${target.name} (${outcome.result.spots})`, `Auto: ${target.name} (${outcome.result.spots})`)
     addGeneratedLayout(greenhouse, name, outcome.result.ground, outcome.result.placements)
     setStatus({ kind: 'done', name, wanted: spots, result: outcome.result })
   }
 
   return (
-    <Panel title="Plan automatique">
+    <Panel title={tr('Plan automatique', 'Automatic plan')}>
       <p className="mb-3 text-xs text-ink-muted">
-        Le site cherche un plan qui donne ces emplacements avec le moins de mutations possible, sur les cases libres de ce plan
-        (les cases verrouillées ou cassées sont évitées). Il est ajouté comme nouveau plan.
+        {tr(
+          'Le site cherche un plan qui donne ces emplacements avec le moins de mutations possible, sur les cases libres de ce plan (les cases verrouillées ou cassées sont évitées). Il est ajouté comme nouveau plan.',
+          'The site looks for a plan that gives these spots with as few mutations as possible, on the free cells of this plan (locked or broken cells are avoided). It is added as a new plan.',
+        )}
       </p>
       <form
         className="flex flex-wrap items-end gap-2"
@@ -81,7 +84,7 @@ export function AutofillPanel({ greenhouse, layout }: AutofillPanelProps) {
         }}
       >
         <label htmlFor={selectId} className="flex min-w-40 flex-1 flex-col gap-1 text-xs text-ink-muted">
-          Mutation
+          {tr('Mutation', 'Mutation')}
           <select
             id={selectId}
             value={targetId}
@@ -107,8 +110,15 @@ export function AutofillPanel({ greenhouse, layout }: AutofillPanelProps) {
           </select>
         </label>
         <div className="flex flex-col gap-1 text-xs text-ink-muted">
-          <span aria-hidden="true">Emplacements</span>
-          <NumberStepper value={spots} onChange={setSpots} name="Emplacements" inputLabel="Emplacements voulus" min={1} max={MAX_SPOTS} />
+          <span aria-hidden="true">{tr('Emplacements', 'Spots')}</span>
+          <NumberStepper
+            value={spots}
+            onChange={setSpots}
+            name={tr('Emplacements', 'Spots')}
+            inputLabel={tr('Emplacements voulus', 'Wanted spots')}
+            min={1}
+            max={MAX_SPOTS}
+          />
         </div>
         <button
           type="submit"
@@ -116,7 +126,7 @@ export function AutofillPanel({ greenhouse, layout }: AutofillPanelProps) {
           aria-busy={status.kind === 'busy'}
           className="h-9 rounded-lg bg-accent px-3 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong disabled:opacity-60"
         >
-          {status.kind === 'busy' ? 'Calcul…' : 'Créer le plan'}
+          {status.kind === 'busy' ? tr('Calcul…', 'Working…') : tr('Créer le plan', 'Create the plan')}
         </button>
       </form>
       <label className="mt-2 flex items-center gap-2 text-sm">
@@ -126,7 +136,7 @@ export function AutofillPanel({ greenhouse, layout }: AutofillPanelProps) {
           onChange={(event) => setOnlyStock(event.target.checked)}
           className="size-4 accent-accent"
         />
-        Seulement avec les mutations de mon stock
+        {tr('Seulement avec les mutations de mon stock', 'Only with the mutations in my stock')}
       </label>
       <AutofillStatus status={status} />
     </Panel>
@@ -152,14 +162,17 @@ function AutofillStatus({ status }: { readonly status: Status }) {
   return (
     <div role="status" className="mt-3 animate-fade-in space-y-1 text-sm">
       <p>
-        Plan « {name} » ajouté : <strong>{result.spots}</strong> emplacement{result.spots > 1 ? 's' : ''}
-        {result.spots < wanted ? ` sur ${wanted} voulus (pas plus de place ou de stock)` : ''}.
+        {tr(`Plan « ${name} » ajouté : `, `Plan “${name}” added: `)}
+        <strong>{result.spots}</strong> {tr(`emplacement${result.spots > 1 ? 's' : ''}`, `spot${result.spots !== 1 ? 's' : ''}`)}
+        {result.spots < wanted ? tr(` sur ${wanted} voulus (pas plus de place ou de stock)`, ` out of ${wanted} wanted (no more room or stock)`) : ''}.
       </p>
       <p className="text-ink-muted">{crops.join(' · ')}</p>
       {result.conflicts > 0 && (
         <p className="text-warning">
-          ⚠ {result.conflicts} case{result.conflicts > 1 ? 's' : ''} d&apos;emplacement où une autre mutation peut aussi apparaître
-          (le plan évite les conflits qu&apos;il peut ; ceux-ci viennent des ingrédients mêmes).
+          {tr(
+            `⚠ ${result.conflicts} case${result.conflicts > 1 ? 's' : ''} d'emplacement où une autre mutation peut aussi apparaître (le plan évite les conflits qu'il peut ; ceux-ci viennent des ingrédients mêmes).`,
+            `⚠ ${result.conflicts} spot cell${result.conflicts !== 1 ? 's' : ''} where another mutation can also appear (the plan avoids the conflicts it can; these come from the ingredients themselves).`,
+          )}
         </p>
       )}
     </div>

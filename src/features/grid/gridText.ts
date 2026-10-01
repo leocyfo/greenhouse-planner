@@ -1,5 +1,6 @@
 /** Textes de la grille : abréviations des crops, coordonnées des cases, libellés des sols. */
 import { BROKEN_GROUND, LOCKED_GROUND } from '../../logic/ground'
+import { tr } from '../../i18n/locale'
 
 /**
  * Abréviations uniques pour afficher un crop dans une case de 44 px :
@@ -41,7 +42,7 @@ export function cellName(x: number, y: number): string {
 }
 
 export function groundLabel(ground: string): string {
-  if (ground === BROKEN_GROUND) return 'Bloc cassé'
-  if (ground === LOCKED_GROUND) return 'Case verrouillée'
+  if (ground === BROKEN_GROUND) return tr('Bloc cassé', 'Broken block')
+  if (ground === LOCKED_GROUND) return tr('Case verrouillée', 'Locked cell')
   return ground
 }

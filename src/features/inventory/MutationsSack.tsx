@@ -3,6 +3,7 @@ import { McItem } from '../../components/minecraft/McItem'
 import { McSlot } from '../../components/minecraft/McSlot'
 import { MC_COLUMNS, McWindow } from '../../components/minecraft/McWindow'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { useAppStore } from '../../store/appStore'
 import { useGoalPlan } from '../../store/useGoalPlan'
 import { sackHelpTooltip, sackLabel, sackTooltip, untrackedTooltip } from './sackText'
@@ -32,7 +33,7 @@ export function MutationsSack({ matches }: MutationsSackProps) {
     if (!mutation) {
       slots.set(
         index,
-        <McSlot icon={<McItem name={item.name} />} tooltip={untrackedTooltip(item.name)} label={`${item.name} : objet du sac, pas suivi`} />,
+        <McSlot icon={<McItem name={item.name} />} tooltip={untrackedTooltip(item.name)} label={tr(`${item.name} : objet du sac, pas suivi`, `${item.name}: sack item, not tracked`)} />,
       )
       return
     }
@@ -61,7 +62,7 @@ export function MutationsSack({ matches }: MutationsSackProps) {
   // Rangée du bas : le « ? » d'aide, au centre comme dans le jeu.
   slots.set(
     itemRows * MC_COLUMNS + 4,
-    <McSlot icon={<span className="mc-glyph mc-c-d">?</span>} tooltip={sackHelpTooltip(sack)} label={`Aide du ${sack.name}`} />,
+    <McSlot icon={<span className="mc-glyph mc-c-d">?</span>} tooltip={sackHelpTooltip(sack)} label={tr(`Aide du ${sack.name}`, `${sack.name} help`)} />,
   )
 
   return (

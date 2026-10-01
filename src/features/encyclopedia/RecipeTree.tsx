@@ -1,6 +1,8 @@
 /** Arbre des recettes : colonnes par rareté ou par étape, liens en SVG, cartes par-dessus. */
 import type { RefObject } from 'react'
+import { plural } from '../../components/labels'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import type { Inventory, Plan } from '../../logic/recipes'
 import { rarityColor, TREE_COLORS } from '../../theme/palette'
 import { amountText, edgeRole, isDimmed, type MutationState, type TreeEdge, type TreeFocus, type TreeModel } from './graphModel'
@@ -67,7 +69,10 @@ export function RecipeTree({
   const selectedName = selectedId ? data.mutationsById.get(selectedId)?.name : undefined
   const amounts = new Map<string, { readonly text: string; readonly title?: string }>(
     totals
-      ? [...totals].map(([id, total]) => [id, { text: `×${total}`, title: `${total} au total pour 1 ${selectedName ?? ''}` }])
+      ? [...totals].map(([id, total]) => [
+          id,
+          { text: `×${total}`, title: tr(`${total} au total pour 1 ${selectedName ?? ''}`, `${total} in total for 1 ${selectedName ?? ''}`) },
+        ])
       : focus && model
         ? model.edges.filter((edge) => edge.target === focus.id).map((edge) => [edge.source, { text: amountText(edge) }])
         : [],
@@ -114,7 +119,7 @@ export function RecipeTree({
                 {header.title}
               </p>
               <p className="text-[11px] text-ink-muted">
-                {header.count} {header.key === 'base' ? 'crops' : `mutation${header.count > 1 ? 's' : ''}`}
+                {header.key === 'base' ? `${header.count} crops` : plural(header.count, 'mutation')}
               </p>
             </div>
           ))}
@@ -134,12 +139,14 @@ export function RecipeTree({
                     state={states.get(node.id) ?? 'locked'}
                     owned={inventory[node.id] ?? 0}
                     required={plan.needs.get(node.id)?.required ?? 0}
-                    step={`Étape ${node.step}`}
+                    step={tr(`Étape ${node.step}`, `Step ${node.step}`)}
                     selected={selected}
                     active={focus?.id === node.id}
                     dimmed={dimmedNode(node.id)}
                     amount={amounts.get(node.id) ?? null}
-                    actionLabel={selected ? 'Choisie. Ouvrir la fiche' : "Ne garder que ce qu'il faut pour la faire"}
+                    actionLabel={
+                      selected ? tr('Choisie. Ouvrir la fiche', 'Chosen. Open the sheet') : tr("Ne garder que ce qu'il faut pour la faire", 'Keep only what it takes to make it')
+                    }
                     style={FILL}
                     buttonRef={triggerRef(node.id)}
                     onOpen={() => onChoose(node.id)}

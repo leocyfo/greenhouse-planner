@@ -4,6 +4,7 @@
  * gauche à droite. Une mutation choisie ne garde que ce qu'il faut pour la faire (TreeSelection).
  */
 import { formatRarity } from '../../components/labels'
+import { tr } from '../../i18n/locale'
 import { recipeInputs, recipeLevels, type InputRelation } from '../../logic/graph'
 import { isManualSpecial, missingInputs } from '../../logic/nextAction'
 import { computePlan, type Inventory, type MutationNeed } from '../../logic/recipes'
@@ -255,7 +256,7 @@ export function buildTree(data: GameData, options: TreeOptions): TreeModel {
           ...cards,
           key: `step-${step}`,
           group: `step-${step}`,
-          title: `Étape ${step}`,
+          title: tr(`Étape ${step}`, `Step ${step}`),
           rarity: null,
           ids: shown
             .filter((m) => stepOf(m.id) === step)
@@ -265,7 +266,7 @@ export function buildTree(data: GameData, options: TreeOptions): TreeModel {
   const baseColumn = {
     key: 'base',
     group: 'base',
-    title: 'Crops de base',
+    title: tr('Crops de base', 'Base crops'),
     rarity: null,
     kind: 'base' as const,
     ids: baseIds,
@@ -358,8 +359,8 @@ export function edgeRole(edge: TreeEdge, focus: TreeFocus): 'path' | 'use' | 'no
 
 /** Quantité d'un ingrédient dans une recette : « ×6 », « 1 consommé », « 2 catalyseur ». */
 export function amountText(edge: Pick<TreeEdge, 'relation' | 'units'>): string {
-  if (edge.relation === 'consumed') return `${edge.units} consommé`
-  if (edge.relation === 'catalyst') return `${edge.units} catalyseur`
+  if (edge.relation === 'consumed') return tr(`${edge.units} consommé`, `${edge.units} consumed`)
+  if (edge.relation === 'catalyst') return tr(`${edge.units} catalyseur`, `${edge.units} catalyst`)
   return `×${edge.units}`
 }
 

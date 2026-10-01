@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { getLocale, tr } from '../../i18n/locale'
 import type { AutofillOutcome, AutofillRequest } from '../../logic/autofill'
 import type { AutofillMessage, AutofillReply } from './autofill.worker'
 
@@ -27,7 +28,7 @@ export function useAutofill(): (request: AutofillRequest) => Promise<AutofillOut
         pending.current.delete(event.data.id)
       }
       created.onerror = () => {
-        for (const resolve of pending.current.values()) resolve({ ok: false, reason: 'Le calcul a échoué : réessaie.' })
+        for (const resolve of pending.current.values()) resolve({ ok: false, reason: tr('Le calcul a échoué : réessaie.', 'The calculation failed: try again.') })
         pending.current.clear()
         created.terminate()
         worker.current = null
@@ -36,7 +37,8 @@ export function useAutofill(): (request: AutofillRequest) => Promise<AutofillOut
     }
     lastId.current += 1
     const id = lastId.current
-    const message: AutofillMessage = { id, request }
+    // La langue va avec la demande : le worker a son propre état (raisons d'un refus).
+    const message: AutofillMessage = { id, request, locale: getLocale() }
     return new Promise<AutofillOutcome>((resolve) => {
       pending.current.set(id, resolve)
       worker.current?.postMessage(message)

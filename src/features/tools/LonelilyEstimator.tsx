@@ -4,6 +4,7 @@ import { NumberStepper } from '../../components/NumberStepper'
 import { Panel } from '../../components/Panel'
 import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
+import { formatDecimal, tr } from '../../i18n/locale'
 import { formatDuration } from '../../logic/format'
 import { growthWithUpgrades, stageDurationSeconds } from '../../logic/growth'
 import { lonelilyCellsIn, lonelilyEstimate, vineProgress } from '../../logic/tools'
@@ -13,12 +14,12 @@ import { useGoalPlan } from '../../store/useGoalPlan'
 
 type Source = 'grids' | 'manual'
 
-const decimal = (value: number) => value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+const decimal = (value: number) => formatDecimal(value, 2)
 
 /** « 1 », « 1 et 2 », « 1, 2 et 3 ». */
 function numberList(numbers: readonly number[]): string {
   if (numbers.length <= 1) return numbers.join('')
-  return `${numbers.slice(0, -1).join(', ')} et ${numbers[numbers.length - 1]}`
+  return `${numbers.slice(0, -1).join(', ')} ${tr('et', 'and')} ${numbers[numbers.length - 1]}`
 }
 
 /** Combien de Lonelily attendre, et en combien de temps. */
@@ -57,42 +58,52 @@ export function LonelilyEstimator() {
   const stageSeconds = stageDurationSeconds(growthWithUpgrades(upgrades, formula), formula)
 
   return (
-    <Panel title={`Estimation des ${rate.mutation}`}>
+    <Panel title={tr(`Estimation des ${rate.mutation}`, `${rate.mutation} estimate`)}>
       <div className="space-y-4 text-sm">
         <p className="text-xs text-ink-muted">{rate.note}</p>
         <SegmentedControl
-          legend="Cases prises en compte"
+          legend={tr('Cases prises en compte', 'Cells taken into account')}
           name="lonelily-source"
           value={source}
           onChange={setSource}
           options={[
-            { value: 'grids', label: 'Depuis mes grilles' },
-            { value: 'manual', label: 'À la main' },
+            { value: 'grids', label: tr('Depuis mes grilles', 'From my grids') },
+            { value: 'manual', label: tr('À la main', 'By hand') },
           ]}
         />
         {source === 'grids' ? (
           <p>
-            <strong className="tabular-nums">{gridCells}</strong> case{gridCells > 1 ? 's' : ''} de Dirt vides et sans voisin
+            <strong className="tabular-nums">{gridCells}</strong>{' '}
+            {tr(`case${gridCells > 1 ? 's' : ''} de Dirt vides et sans voisin`, `empty Dirt cell${gridCells !== 1 ? 's' : ''} with no neighbor`)}
             {unlocked.length > 1
-              ? ` dans les plans actifs des greenhouses ${numberList(unlocked.map((index) => index + 1))}.`
-              : ' dans le plan actif du greenhouse 1.'}{' '}
+              ? tr(
+                  ` dans les plans actifs des greenhouses ${numberList(unlocked.map((index) => index + 1))}.`,
+                  ` in the active plans of greenhouses ${numberList(unlocked.map((index) => index + 1))}.`,
+                )
+              : tr(' dans le plan actif du greenhouse 1.', ' in the active plan of greenhouse 1.')}{' '}
             <span className="text-xs text-ink-muted">
-              Les cases peintes comme verrouillées ou cassées dans la{' '}
+              {tr('Les cases peintes comme verrouillées ou cassées dans la ', 'Cells painted as locked or broken in the ')}
               <a href={tabHref('grille')} className="text-accent-strong underline-offset-2 hover:underline">
-                Grille
+                {tr('Grille', 'Grid')}
               </a>{' '}
-              ne comptent pas
-              {unlocked.length < count ? ', ni les greenhouses pas encore achetés (Plot Limit, dans les Upgrades du Greenhouse)' : ''}.
+              {tr('ne comptent pas', "don't count")}
+              {unlocked.length < count
+                ? tr(
+                    ', ni les greenhouses pas encore achetés (Plot Limit, dans les Upgrades du Greenhouse)',
+                    ', nor the greenhouses not bought yet (Plot Limit, in the Greenhouse Upgrades)',
+                  )
+                : ''}
+              .
             </span>
           </p>
         ) : (
           <div className="flex items-center justify-between gap-3">
-            <span>Cases de Dirt vides</span>
+            <span>{tr('Cases de Dirt vides', 'Empty Dirt cells')}</span>
             <NumberStepper
               value={manualCells}
               onChange={setManualCells}
-              name="Cases vides"
-              inputLabel="Cases de Dirt vides"
+              name={tr('Cases vides', 'Empty cells')}
+              inputLabel={tr('Cases de Dirt vides', 'Empty Dirt cells')}
               min={0}
               max={count * width * height}
             />
@@ -100,40 +111,51 @@ export function LonelilyEstimator() {
         )}
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-start">
-            <span className="text-xs text-ink-muted">Sur combien de stages</span>
-            <NumberStepper value={stages} onChange={setStages} name="Stages" inputLabel="Nombre de stages" min={1} max={999} />
+            <span className="text-xs text-ink-muted">{tr('Sur combien de stages', 'Over how many stages')}</span>
+            <NumberStepper value={stages} onChange={setStages} name="Stages" inputLabel={tr('Nombre de stages', 'Number of stages')} min={1} max={999} />
           </div>
           <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-start">
-            <span className="text-xs text-ink-muted">{rate.mutation} voulues</span>
-            <NumberStepper value={wanted} onChange={setWanted} name={`${rate.mutation} voulues`} inputLabel={`${rate.mutation} voulues`} min={1} max={999} />
+            <span className="text-xs text-ink-muted">{tr(`${rate.mutation} voulues`, `${rate.mutation} wanted`)}</span>
+            <NumberStepper
+              value={wanted}
+              onChange={setWanted}
+              name={tr(`${rate.mutation} voulues`, `${rate.mutation} wanted`)}
+              inputLabel={tr(`${rate.mutation} voulues`, `${rate.mutation} wanted`)}
+              min={1}
+              max={999}
+            />
           </div>
         </div>
 
         <dl className="space-y-2 rounded-lg border border-line bg-canvas/40 p-3">
           <div>
-            <dt className="text-xs text-ink-muted">Par growth stage</dt>
+            <dt className="text-xs text-ink-muted">{tr('Par growth stage', 'Per growth stage')}</dt>
+            <dd>{tr(`${decimal(estimate.perStage.min)} à ${decimal(estimate.perStage.max)}`, `${decimal(estimate.perStage.min)} to ${decimal(estimate.perStage.max)}`)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-ink-muted">{tr(`En ${stages} stages`, `In ${stages} stages`)}</dt>
             <dd>
-              {decimal(estimate.perStage.min)} à {decimal(estimate.perStage.max)}
+              {tr(
+                `${decimal(estimate.expected.min)} à ${decimal(estimate.expected.max)} ${rate.mutation}`,
+                `${decimal(estimate.expected.min)} to ${decimal(estimate.expected.max)} ${rate.mutation}`,
+              )}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-ink-muted">En {stages} stages</dt>
-            <dd>
-              {decimal(estimate.expected.min)} à {decimal(estimate.expected.max)} {rate.mutation}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-ink-muted">Pour en avoir {wanted}</dt>
+            <dt className="text-xs text-ink-muted">{tr(`Pour en avoir ${wanted}`, `To get ${wanted}`)}</dt>
             <dd>
               {estimate.stagesFor
-                ? `${estimate.stagesFor.min} à ${estimate.stagesFor.max} stages, soit ${formatDuration(estimate.stagesFor.min * stageSeconds)} à ${formatDuration(estimate.stagesFor.max * stageSeconds)}`
-                : 'Impossible sans case vide.'}
+                ? tr(
+                    `${estimate.stagesFor.min} à ${estimate.stagesFor.max} stages, soit ${formatDuration(estimate.stagesFor.min * stageSeconds)} à ${formatDuration(estimate.stagesFor.max * stageSeconds)}`,
+                    `${estimate.stagesFor.min} to ${estimate.stagesFor.max} stages, that is ${formatDuration(estimate.stagesFor.min * stageSeconds)} to ${formatDuration(estimate.stagesFor.max * stageSeconds)}`,
+                  )
+                : tr('Impossible sans case vide.', 'Impossible without an empty cell.')}
             </dd>
           </div>
         </dl>
         {missing > 0 && (
           <p className="text-xs text-ink-muted">
-            Tes objectifs suivis demandent encore {missing} {rate.mutation}.
+            {tr(`Tes objectifs suivis demandent encore ${missing} ${rate.mutation}.`, `Your followed goals still need ${missing} ${rate.mutation}.`)}
           </p>
         )}
       </div>

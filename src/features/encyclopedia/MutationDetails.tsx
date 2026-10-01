@@ -7,6 +7,7 @@ import { WikiIcon } from '../../components/game/WikiIcon'
 import { formatNumber, formatRarity } from '../../components/labels'
 import { NumberStepper } from '../../components/NumberStepper'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { recipeInputs, recipesUsing, type RecipeUse } from '../../logic/graph'
 import type { MutationNeed } from '../../logic/recipes'
 import { useAppStore } from '../../store/appStore'
@@ -33,11 +34,11 @@ const DIALOG_CLASS =
 function recipeUseText(use: RecipeUse): string {
   switch (use.relation) {
     case 'condition':
-      return `${use.units} à poser${use.cells !== use.units ? ` (${use.cells} cases)` : ''}`
+      return tr(`${use.units} à poser`, `${use.units} to place`) + (use.cells !== use.units ? tr(` (${use.cells} cases)`, ` (${use.cells} cells)`) : '')
     case 'consumed':
-      return `${use.units} consommé`
+      return tr(`${use.units} consommé`, `${use.units} consumed`)
     case 'catalyst':
-      return `${use.units} en catalyseur`
+      return tr(`${use.units} en catalyseur`, `${use.units} as catalyst`)
   }
 }
 
@@ -116,7 +117,7 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fermer la fiche"
+          aria-label={tr('Fermer la fiche', 'Close the sheet')}
           className="flex size-8 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-panel-raised hover:text-ink"
         >
           <span aria-hidden="true">✕</span>
@@ -126,8 +127,8 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
       {/* Une clé par mutation : en passant à une autre fiche, le contenu repart du haut, en fondu. */}
       <div key={mutationId} className="flex-1 animate-fade-in overflow-y-auto p-4 text-sm">
         <div className="flex flex-wrap items-center gap-2">
-          <StatChip label="Taille">{mutation.size}</StatChip>
-          <StatChip label="Sol">
+          <StatChip label={tr('Taille', 'Size')}>{mutation.size}</StatChip>
+          <StatChip label={tr('Sol', 'Soil')}>
             <span
               aria-hidden="true"
               className="size-3 rounded-sm ring-1 ring-white/25"
@@ -137,10 +138,10 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
           </StatChip>
           <StatChip label="Stages">{mutation.growthStages ?? '?'}</StatChip>
           <HarvestBadge mutation={mutation} />
-          <FieldChip label="En stock">
+          <FieldChip label={tr('En stock', 'In stock')}>
             <NumberStepper value={owned} onChange={(count) => setOwned(mutationId, count)} name={mutation.name} />
           </FieldChip>
-          <FieldChip label="Besoin">
+          <FieldChip label={tr('Besoin', 'Need')}>
             {need ? (
               <>
                 <span className={`font-mono text-xs font-bold tabular-nums ${complete ? 'text-accent-strong' : 'text-warning'}`}>
@@ -148,15 +149,15 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
                   {owned} / {need.required}
                 </span>
                 <span className={`text-[10px] font-bold tracking-wide uppercase ${complete ? 'text-accent-strong' : 'text-danger'}`}>
-                  {complete ? 'complété' : `manque ${need.missing}`}
-                  {need.buy ? ' · au bazar' : ''}
+                  {complete ? tr('complété', 'complete') : tr(`manque ${need.missing}`, `${need.missing} missing`)}
+                  {need.buy ? tr(' · au bazar', ' · at the bazaar') : ''}
                 </span>
               </>
             ) : (
-              <span className="text-xs text-ink-muted">pas demandée</span>
+              <span className="text-xs text-ink-muted">{tr('pas demandée', 'not requested')}</span>
             )}
           </FieldChip>
-          <FieldChip as="label" label="Analysée">
+          <FieldChip as="label" label={tr('Analysée', 'Analyzed')}>
             <input
               type="checkbox"
               checked={analyzed}
@@ -172,13 +173,14 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
             }}
             className="ml-auto rounded-lg bg-accent px-4 py-2 text-sm font-bold text-canvas transition hover:bg-accent-strong motion-safe:active:scale-[0.97]"
           >
-            Calculer<span className="sr-only"> {mutation.name}</span>
+            {tr('Calculer', 'Calculate')}
+            <span className="sr-only"> {mutation.name}</span>
           </button>
         </div>
 
         {/* Colonnes équilibrées : chaque section reste entière (break-inside: avoid). */}
         <div className="mt-4 columns-[16rem] gap-5">
-          <Section title="Conditions de spawn">
+          <Section title={tr('Conditions de spawn', 'Spawn conditions')}>
             {mutation.specialCondition && mutation.conditions.length === 0 && (
               <p className="mb-2">{mutation.specialCondition}</p>
             )}
@@ -189,33 +191,33 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
                     {input.relation === 'condition' && (
                       <>
                         {input.units} × {ingredientLink(input.crop)}
-                        {input.cells !== input.units && <span className="text-ink-muted">({input.cells} cases)</span>}
-                        <span className="text-ink-muted">autour</span>
+                        {input.cells !== input.units && <span className="text-ink-muted">{tr(`(${input.cells} cases)`, `(${input.cells} cells)`)}</span>}
+                        <span className="text-ink-muted">{tr('autour', 'around')}</span>
                       </>
                     )}
                     {input.relation === 'consumed' && (
                       <>
-                        Consomme {input.units} × {ingredientLink(input.crop)} par exemplaire
+                        {tr('Consomme', 'Consumes')} {input.units} × {ingredientLink(input.crop)} {tr('par exemplaire', 'per copy')}
                       </>
                     )}
                     {input.relation === 'catalyst' && (
                       <>
-                        Avec {input.units} × {ingredientLink(input.crop)}
-                        <span className="text-ink-muted">(catalyseur, non consommé)</span>
+                        {tr('Avec', 'With')} {input.units} × {ingredientLink(input.crop)}
+                        <span className="text-ink-muted">{tr('(catalyseur, non consommé)', '(catalyst, not consumed)')}</span>
                       </>
                     )}
                   </DetailRow>
                 ))}
               </ul>
             )}
-            <p className="mt-2 text-xs text-ink-muted">Sol de l&apos;emplacement : {mutation.surface}.</p>
+            <p className="mt-2 text-xs text-ink-muted">{tr(`Sol de l'emplacement : ${mutation.surface}.`, `Spot soil: ${mutation.surface}.`)}</p>
           </Section>
 
           <PlantingPreview mutation={mutation} />
 
-          <Section title="Effets sur les crops voisins">
+          <Section title={tr('Effets sur les crops voisins', 'Effects on neighboring crops')}>
             {mutation.effects.length === 0 ? (
-              <p className="text-ink-muted">Aucun effet listé.</p>
+              <p className="text-ink-muted">{tr('Aucun effet listé.', 'No effect listed.')}</p>
             ) : (
               <ul className="space-y-1">
                 {mutation.effects.map((name) => {
@@ -225,7 +227,10 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
                     <li key={name}>
                       <span className={positive ? 'text-accent-strong' : 'text-danger'}>
                         <span aria-hidden="true">{positive ? '＋' : '−'}</span>
-                        <span className="sr-only">{positive ? 'Effet positif : ' : 'Effet négatif : '}</span> {name}
+                        <span className="sr-only">
+                          {positive ? tr('Effet positif : ', 'Positive effect: ') : tr('Effet négatif : ', 'Negative effect: ')}
+                        </span>{' '}
+                        {name}
                       </span>
                       {effect && <span className="text-ink-muted"> — {effect.value}</span>}
                     </li>
@@ -237,7 +242,7 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
 
           <Section title="Drops">
             {drops.length === 0 ? (
-              <p className="text-ink-muted">Aucun drop listé.</p>
+              <p className="text-ink-muted">{tr('Aucun drop listé.', 'No drop listed.')}</p>
             ) : (
               <ul className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                 {drops.map(([item, amount]) => (
@@ -251,11 +256,11 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
           </Section>
 
           {(mutation.notes || mutation.avrgNotes) && (
-            <Section title="Mécanique spéciale">
+            <Section title={tr('Mécanique spéciale', 'Special mechanic')}>
               {mutation.notes && <p>{mutation.notes}</p>}
               {mutation.avrgNotes && (
                 <p className="mt-1.5 text-ink-muted">
-                  <span className="font-medium text-ink">Guide AVRG : </span>
+                  <span className="font-medium text-ink">{tr('Guide AVRG : ', 'AVRG guide: ')}</span>
                   {mutation.avrgNotes}
                 </p>
               )}
@@ -274,9 +279,9 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
             </Section>
           )}
 
-          <Section title="Sert à">
+          <Section title={tr('Sert à', 'Used for')}>
             {usedIn.length === 0 && mutation.usages.length === 0 && goals.length === 0 ? (
-              <p className="text-ink-muted">Aucune recette ni aucun usage connu.</p>
+              <p className="text-ink-muted">{tr('Aucune recette ni aucun usage connu.', 'No known recipe or use.')}</p>
             ) : (
               <div className="space-y-1.5">
                 {usedIn.length > 0 && (
@@ -302,12 +307,12 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
                         {usage.target}
                         <span className="text-ink-muted">
                           ({usage.type}
-                          {usage.quantity !== null ? ` × ${usage.quantity}` : ', quantité inconnue'})
+                          {usage.quantity !== null ? ` × ${usage.quantity}` : tr(', quantité inconnue', ', unknown quantity')})
                         </span>
                       </DetailRow>
                     ))}
                     {goals.map((goal) => (
-                      <DetailRow key={`goal-${goal.id}`}>Objectif : {goal.name}</DetailRow>
+                      <DetailRow key={`goal-${goal.id}`}>{tr(`Objectif : ${goal.name}`, `Goal: ${goal.name}`)}</DetailRow>
                     ))}
                   </ul>
                 )}
@@ -315,7 +320,7 @@ export function MutationDetails({ mutationId, state, need, onClose, onSelect }: 
             )}
           </Section>
 
-          <Section title="Route Rose Dragon (guide AVRG)">
+          <Section title={tr('Route Rose Dragon (guide AVRG)', 'Rose Dragon route (AVRG guide)')}>
             <p>
               Optimum : <span className="font-mono tabular-nums">{mutation.roseDragonOptimum}</span>
               {' · '}Minimum : <span className="font-mono tabular-nums">{mutation.roseDragonMinimum ?? '—'}</span>

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { useAppStore } from '../../store/appStore'
 import type { GridLayoutState } from '../../store/state'
 
@@ -39,7 +40,7 @@ export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProp
       <div className="flex flex-wrap items-end gap-2">
         {renaming === null ? (
           <label className="flex min-w-48 flex-col gap-1 text-xs text-ink-muted">
-            Plan
+            {tr('Plan', 'Plan')}
             <select
               value={active.id}
               onChange={(event) => setActiveLayout(greenhouse, event.target.value)}
@@ -55,7 +56,7 @@ export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProp
         ) : (
           <form onSubmit={submitRename} className="flex items-end gap-2">
             <label className="flex min-w-48 flex-col gap-1 text-xs text-ink-muted">
-              Nouveau nom
+              {tr('Nouveau nom', 'New name')}
               <input
                 autoFocus
                 value={renaming}
@@ -68,43 +69,43 @@ export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProp
               />
             </label>
             <button type="submit" className={BUTTON}>
-              Valider
+              {tr('Valider', 'Save')}
             </button>
             <button type="button" onClick={() => setRenaming(null)} className={BUTTON}>
-              Annuler
+              {tr('Annuler', 'Cancel')}
             </button>
           </form>
         )}
         {renaming === null && (
           <>
             <button type="button" onClick={() => addLayout(greenhouse)} className={BUTTON}>
-              Nouveau
+              {tr('Nouveau', 'New')}
             </button>
             <button type="button" onClick={() => duplicateLayout(greenhouse, active.id)} className={BUTTON}>
-              Dupliquer
+              {tr('Dupliquer', 'Duplicate')}
             </button>
             <button type="button" onClick={() => setRenaming(active.name)} className={BUTTON}>
-              Renommer
+              {tr('Renommer', 'Rename')}
             </button>
             <button
               type="button"
               onClick={() => {
-                if (window.confirm(`Retirer tous les crops de « ${active.name} » ? Le sol est gardé.`)) {
+                if (window.confirm(tr(`Retirer tous les crops de « ${active.name} » ? Le sol est gardé.`, `Remove every crop from “${active.name}”? The soil is kept.`))) {
                   clearCrops(greenhouse, active.id)
                 }
               }}
               className={BUTTON}
             >
-              Vider
+              {tr('Vider', 'Clear')}
             </button>
             <button
               type="button"
               onClick={() => {
-                if (window.confirm(`Supprimer le plan « ${active.name} » ?`)) deleteLayout(greenhouse, active.id)
+                if (window.confirm(tr(`Supprimer le plan « ${active.name} » ?`, `Delete the plan “${active.name}”?`))) deleteLayout(greenhouse, active.id)
               }}
               className={`${BUTTON} hover:text-danger`}
             >
-              Supprimer
+              {tr('Supprimer', 'Delete')}
             </button>
           </>
         )}
@@ -112,7 +113,7 @@ export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProp
         {presets.length > 0 && (
           <div className="ml-auto flex flex-wrap items-end gap-2">
             <label className="flex min-w-56 flex-col gap-1 text-xs text-ink-muted">
-              Plan du guide AVRG
+              {tr('Plan du guide AVRG', 'AVRG guide layout')}
               <select
                 value={presetId}
                 onChange={(event) => setPresetId(event.target.value)}
@@ -130,7 +131,7 @@ export function LayoutToolbar({ greenhouse, layouts, active }: LayoutToolbarProp
               onClick={() => loadPreset(greenhouse, presetId)}
               className="h-9 rounded-lg bg-accent px-3 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
             >
-              Charger dans un nouveau plan
+              {tr('Charger dans un nouveau plan', 'Load into a new plan')}
             </button>
           </div>
         )}

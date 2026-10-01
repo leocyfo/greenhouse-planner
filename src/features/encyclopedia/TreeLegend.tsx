@@ -1,4 +1,5 @@
 import { TREE_COLORS } from '../../theme/palette'
+import { tr } from '../../i18n/locale'
 import type { MutationState } from './graphModel'
 import { STATE_INFO, STATE_ORDER } from './stateInfo'
 
@@ -13,7 +14,7 @@ function LineSample({ color, dashed = false }: { readonly color: string; readonl
 /** Légende toujours visible : états (icône + texte + couleur) et sens des liens. */
 export function TreeLegend({ counts }: { readonly counts: ReadonlyMap<MutationState, number> }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-muted" aria-label="Légende de l'arbre">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-muted" aria-label={tr("Légende de l'arbre", 'Tree legend')}>
       {STATE_ORDER.map((state) => {
         const info = STATE_INFO[state]
         return (
@@ -31,21 +32,21 @@ export function TreeLegend({ counts }: { readonly counts: ReadonlyMap<MutationSt
       })}
       <span className="inline-flex items-center gap-1.5">
         <LineSample color={TREE_COLORS.path} />
-        chemin
+        {tr('chemin', 'path')}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <LineSample color={TREE_COLORS.use} />
-        sert à
+        {tr('sert à', 'used for')}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <LineSample color="currentColor" />
-        à poser autour
+        {tr('à poser autour', 'placed around')}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <LineSample color="currentColor" dashed />
-        prérequis spécial (consommé ou catalyseur)
+        {tr('prérequis spécial (consommé ou catalyseur)', 'special prerequisite (consumed or catalyst)')}
       </span>
-      <span>Bord gauche coloré = rareté</span>
+      <span>{tr('Bord gauche coloré = rareté', 'Colored left edge = rarity')}</span>
     </div>
   )
 }

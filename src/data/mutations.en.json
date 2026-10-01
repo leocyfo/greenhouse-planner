@@ -1,0 +1,355 @@
+{
+  "_meta": {
+    "description": "Complete data for the Greenhouse mutations - Hypixel SkyBlock",
+    "sources": [
+      "Hypixel SkyBlock Wiki (Mutations and Greenhouse pages)",
+      "The Greenhouse Guide by AVRG (optimal Rose Dragon quantities, farm layouts, tips; changelog of April 22, 2026)",
+      "In-game screenshots of the Greenhouse Upgrades menu (September 29, 2026)",
+      "Hypixel public API, item list (/v2/resources/skyblock/items): mutation identifiers (itemId)"
+    ]
+  },
+  "effects": {
+    "XP Boost": {
+      "value": "+20% Farming XP for adjacent crops"
+    },
+    "Improved XP Boost": {
+      "value": "+30% Farming XP for adjacent crops"
+    },
+    "Water Retain": {
+      "value": "+50% water retention for adjacent crops"
+    },
+    "Improved Water Retain": {
+      "value": "+100% water retention for adjacent crops"
+    },
+    "Immunity": {
+      "value": "Immune to negative effects"
+    },
+    "Effect Spread": {
+      "value": "Spreads the crop's buffs and debuffs to adjacent crops"
+    },
+    "Bonus Drops": {
+      "value": "Rolls on an extra loot pool"
+    },
+    "XP Loss": {
+      "value": "-20% Farming XP for adjacent crops"
+    },
+    "Water Drain": {
+      "value": "-30% water for nearby crops"
+    }
+  },
+  "mechanics": {
+    "growthStage": {
+      "bonuses": [
+        "Greenhouse Growth Speed Upgrades: +5% to +50%",
+        "The 12 unique crop types planted in ANY greenhouse (affects all plots): +5% to +60%",
+        "Crop Growth stat: 0 to 200"
+      ],
+      "formulaGuess": "4h / (1 + upgrades(max 0.5) + uniqueCrops(max 0.6) + cropGrowth(max 200)/1000) = ~2.3x faster",
+      "avrgMeasurements": "AVRG measures 2h 00m per stage with no unique crop (everything else maxed) and 1h 44m 20s with all 12, about 75 s less per unique crop. The formula gives 2h 21m with no unique crop: it only matches the fully maxed case.",
+      "tick": "Every 2 to 4 h, all the crops in the greenhouse advance one growth stage at the same time. At each stage, every spot whose conditions are met attempts a spawn, even if the ingredients were placed a few minutes earlier (AVRG)."
+    },
+    "water": {
+      "lossPerStage": "2 to 3 Water Level per growth stage",
+      "range": "-100 to 100",
+      "rule": "If the Water Level is negative during a growth stage, the crop may not advance. Once fully grown, water no longer matters."
+    },
+    "decay": "Most mutations die about 3 real-life days after being fully grown (see the Plant Diagnostic Tool).",
+    "decayAvrg": "The decay timer starts when the crop is fully grown, or as soon as it is placed for a mutation with no growth stage, and it cannot be extended (AVRG).",
+    "lockIn": "A placed mutation becomes Uncollectable after its first growth stage: it can no longer be moved.",
+    "harvestBounty": {
+      "description": "Harvesting in the Greenhouse can give a Harvest Bounty"
+    },
+    "etherealVines": {
+      "description": "Chance to drop when harvesting a mutation (Harvest Bounty).",
+      "avrgNotes": "The 1st greenhouse starts with 12 open cells; the 88 vines open the other 88. Greenhouses 2 and 3 come fully open. 188 vines are enough for 2 full greenhouses, and AVRG considers 2 greenhouses almost essential for the Rose Dragon."
+    },
+    "lonelilySpawnRate": "~1 Lonelily per empty plot every 2 growth stages (0.004-0.005 per Dirt block)",
+    "lonelilyRatePerCell": {
+      "note": "Per viable Dirt cell and per growth stage. A plot = one greenhouse of 100 cells, so about 0.5 Lonelily per stage. The AVRG FAQ says '3 per stage for 3 plots', but its Lonelily section says 1.5, which matches this rate."
+    },
+    "rosewaterFlask": "Skips growth stages only in the plot you are standing in. Levels +1 to +4.",
+    "analysis": "Analyzing a mutation (Crop Analyzer in the Underground Lab, or Jake on the Abiphone) gives Copper and advances the DNA Analysis Milestone.",
+    "analysisAvrg": "Analysis consumes one copy: AVRG plans '7 blastberrys (+1 for analyzing)'.",
+    "bazaarUnlockAfterAnalysis": {
+      "text": "Analyzing a mutation unlocks buying it at the bazaar (AVRG, said for Dustgrain and Gloomgourd)."
+    },
+    "greenhouseUpgrades": {
+      "items": {
+        "growth_speed": {
+          "description": "Upgrade your §aGrowth Speed§7 tier to increase the §bgrowth speed§7 of the Greenhouse.",
+          "notes": "Menu screenshot: 50% at tier 9/9 and +10% for tier IX. Tiers I to VIII are deduced: +5% each (the wiki gives +5% for the first tier)."
+        },
+        "plant_yield": {
+          "description": "Upgrade your §aPlant Yield§7 tier to increase the §eplant yield§7 of the Greenhouse.",
+          "notes": "Menu screenshot: 8% at tier 4/9. +2% per tier assumed for tiers I to IV; tiers V to IX unknown."
+        },
+        "plot_limit": {
+          "description": "Upgrade your §aPlot Limit§7 tier to increase the §aplot limit§7 of the Greenhouse. New plots come with all their cells unlocked."
+        }
+      }
+    },
+    "tips": {
+      "growth-tick": {
+        "title": "Growth cycle",
+        "text": "Every 2 to 4 h, all the crops in the greenhouse advance one growth stage at the same time. At each stage, every spot whose conditions are met attempts a spawn, even if the ingredients were placed a few minutes earlier."
+      },
+      "no-replant": {
+        "title": "No need to replant",
+        "text": "Ingredients that have grown keep making mutations spawn: just wait."
+      },
+      "rosewater": {
+        "title": "Rosewater flasks",
+        "text": "They skip growth stages only in the plot you are standing in, independently of the Plant Diagnostic Tool timer. Use them as often as possible on the slowest plot (for example the Snoozling Complex), with levels +1 to +4: a +4 is wasted if the crops are 1 or 2 stages from the end. Don't use them on the First Big Farm if another plot has a more advanced farm."
+      },
+      "dead-crops": {
+        "title": "Dead crops",
+        "text": "Either the crop was not watered (hover over it with the watering can to see the water bar), or it reached its decay, about 3 days after maturity. Hence the point of making several mutations at the same time."
+      },
+      "fortune": {
+        "title": "Fortune",
+        "text": "Farming fortune does not increase the number of mutations you get. Mining fortune works on Chloronite. The yield bonus can give extra drops, but no double drop before 100%."
+      },
+      "adjacent-yield": {
+        "title": "Yield bonus from neighboring crops",
+        "text": "No point replacing your ingredients with Nether Wart to boost a harvest: you would have to redo many more mutations, which takes longer."
+      },
+      "unique-crops": {
+        "title": "Unique crops",
+        "text": "The bonus applies once for all greenhouses. The greenhouse Carpenter tells which crops count. Sunflower and Moonflower no longer count separately since January 13, 2026."
+      },
+      "getting-started": {
+        "title": "Getting started",
+        "text": "Unlock the 3 greenhouses, then max the Growth Speed upgrade (Desk, Greenhouse Upgrades section). The yield perk is not very useful. With about 10M coins, a maxed watering can (Aquamaster Hydromax) helps a lot."
+      },
+      "diagnostic-tool": {
+        "title": "Plant Diagnostic Tool",
+        "text": "The tree gives the growth stage and the decay date. The bucket gives the water (from -100 to 100) and says whether it lasts until maturity. The tag shows Growing, Harvestable or Uncollectable, and the number of mutations for those with multiple drops: check it before each harvest."
+      },
+      "space": {
+        "title": "Available space",
+        "text": "At least 2 greenhouses are almost essential to aim for the Rose Dragon in a reasonable time. Before that, Gloomgourds are a good way to farm Ethereal Vines (buying the vines with coins is faster)."
+      },
+      "optimum": {
+        "title": "Minimum or optimum",
+        "text": "AVRG advises against the minimum numbers: the guide's optimum layouts use as few hard mutations as possible and go much faster."
+      }
+    }
+  },
+  "baseCrops": {
+    "Cocoa Beans": {
+      "notes": "AVRG: a Cocoa Bean gives Immunity. In the Snoozling Complex, a single Cocoa Bean protects the mutations from the Water Drain of the Do-not-eat-shrooms."
+    },
+    "Nether Wart": {
+      "notes": "AVRG: gives a yield bonus to adjacent crops (level not specified)."
+    },
+    "Dead Plant": {
+      "notes": "At the bazaar, or place a crop that needs water and don't water it."
+    },
+    "Fire": {
+      "notes": "Not a crop: a fire lit with a Flint and Steel."
+    }
+  },
+  "mutations": {
+    "ashwreath": {
+      "notes": "Fire = use a Flint and Steel.",
+      "avrgNotes": "Along with Choconut, the common mutation you need the most."
+    },
+    "choconut": {
+      "avrgNotes": "Along with Ashwreath, the common mutation you need the most, especially for the Choconut + Duskbloom Superfarm."
+    },
+    "dustgrain": {
+      "notes": "Required to finish the Greenhouse tutorial.",
+      "avrgNotes": "Make at least one to analyze it and unlock buying it at the bazaar, then buy the rest or farm it."
+    },
+    "gloomgourd": {
+      "avrgNotes": "Make at least one to analyze it and unlock buying it at the bazaar. A good way to farm Ethereal Vines before having 2 greenhouses."
+    },
+    "lonelily": {
+      "specialCondition": "0 adjacent crops (spawns on empty plots)",
+      "notes": "Lower spawn weight than the other commons. Rosewater flasks can make them spawn."
+    },
+    "witherbloom": {
+      "notes": "Dead Plant: buy it at the bazaar or don't water a crop."
+    },
+    "thornshade": {
+      "notes": "Can damage players standing on its cell at a certain growth stage."
+    },
+    "blastberry": {
+      "notes": "Blows up the whole 3x3 when harvested. Wait until ALL the blastberries have spawned before breaking one. Used to make Shellfruit.",
+      "avrgNotes": "Read the Shellfruit section first and have at least 5 Turtellini: make the Shellfruit when harvesting the Blastberry farms. The optimum layout has 8 spots: 7 Blastberry + 1 for analysis."
+    },
+    "cheesebite": {
+      "notes": "Rats spawn and block growth: kill them with a pest vacuum.",
+      "avrgNotes": "Rats appear at growth stages 4 and 8."
+    },
+    "chloronite": {
+      "notes": "Mining fortune increases drops: 0-500 = 1, 500-1000 = 2, 1000-1500 = 3, 1500+ = 4 (according to AVRG)."
+    },
+    "do_not_eat_shroom": {
+      "notes": "Water Drain: place a Cocoa Bean nearby for immunity (Snoozling Complex trick)."
+    },
+    "fleshtrap": {
+      "notes": "Feed it Enchanted Raw Meat for more fleshtraps per growth."
+    },
+    "magic_jellybean": {
+      "notes": "Harvestable every 12 stages. The longer you wait, the more drops. AVRG harvests at 36+."
+    },
+    "noctilume": {
+      "notes": "Alternate day and night at each stage: blue = set the garden to day, yellow = to night."
+    },
+    "snoozling": {
+      "notes": "Falls asleep regularly (every 5 stages according to AVRG): hit it to wake it up.",
+      "avrgNotes": "Place 3 early and keep them for the Snoozling Complex."
+    },
+    "soggybud": {
+      "notes": "Takes water from neighboring crops: water the melons around it."
+    },
+    "chorus_fruit": {
+      "notes": "Teleports. Covers the plot with End Stone, which can block other mutations.",
+      "avrgNotes": "Can make End Stone appear in spawn spots that are still empty, which blocks those spawns: keep an eye on it."
+    },
+    "plantboy_advance": {
+      "notes": "Snake minigame when harvesting (depends on ping). Losing = -3 growth stages. A 3x3 Snoozling counts for several adjacent cells.",
+      "avrgNotes": "The last mutation to get before having all the legendaries."
+    },
+    "puffercloud": {
+      "notes": "Releases a toxic cloud that damages everything around it."
+    },
+    "shellfruit": {
+      "specialCondition": "Blow up a Turtlellini with Blastberries (2 explosions)",
+      "avrgNotes": "Grow a 2x2 Blastberry farm, break the Chocoberries (they would blow up anyway) and place 9 Turtellini in their place. Harvest 2 Blastberries: some Turtellini become Shellfruit, to harvest right away. Place the last Turtellini in the center, then harvest the last 2 Blastberries. The optimum farm can give up to 24 Shellfruit."
+    },
+    "startlevine": {
+      "notes": "Harvest it with Sorrow armor or the Invisibility effect.",
+      "avrgNotes": "The optimum (4 spots: 7 Blastberry + 14 Cheesebite) saves Blastberries, which are harder to get. Same logic for any '4 of each' layout where one mutation is much harder than the other."
+    },
+    "stoplight_petal": {
+      "notes": "Only break it when it is green, never on red. Depends on ping."
+    },
+    "thunderling": {
+      "notes": "+2000 charge per stage, self-destructs at the maximum. Drain the charge with an Empty Thunder Bottle (right click).",
+      "avrgNotes": "A charge close to the maximum is about 8k. In the Snoozling Complex, it takes at least 48 growth stages after placing them to have 6."
+    },
+    "turtlellini": {
+      "notes": "EPIC or RARE rarity depending on the source. Used to make Shellfruit.",
+      "avrgNotes": "You need 5 (up to 10 to sell the extra Shellfruit). The only non-common mutation without growth stages: you get a lot of them quickly."
+    },
+    "zombud": {
+      "notes": "Doesn't need water. Harvesting it turns the Dead Plants around into Zombuddy mobs (bestiary).",
+      "avrgNotes": "The optimum costs almost as much as the minimum: it is strongly recommended."
+    },
+    "all_in_aloe": {
+      "notes": "Gives fragments: 9 All-in Aloe Fragments = 1 All-in Aloe. Harvest at stage 6-8 (AVRG: stage 6 = 4 fragments). Resets if you wait too long. A 2x2 PlantBoy counts for 2 cells."
+    },
+    "devourer": {
+      "notes": "Grows roots that destroy the crops around it. Break the roots with left click or make a 'moat' around it."
+    },
+    "glasscorn": {
+      "notes": "Harvestable at stage 7 or 8. After stage 8, it drops back to stage 1: careful with rosewater flasks."
+    },
+    "godseed": {
+      "specialCondition": "All positive effects at their maximum level around it (Yield +30%, XP +30%, Water Retain +100%, Immunity, Effect Spread, Bonus Drops). At least 1 non-Godseed crop required.",
+      "notes": "Has PRIORITY over all other mutations when spawning. Gives all positive effects to adjacent crops. Analysis: 1,000,000 coins. Not required for the Rose Dragon."
+    },
+    "jerryflower": {
+      "specialCondition": "Plant a Fertilized Jerryseed. Quest: Jerryseed from a Jerry visitor → Xalx (Crystal Hollows) with a Mysterious Crop → Unripe Jerryseed → 'Dirty' reforge → Dirt Guy (Dwarven Mines) → Fertilized Jerryseed → plant it → at stage 5, give 10x Move Jerry.",
+      "notes": "Hidden mutation (doesn't appear in the list before being discovered). Doesn't need water. Doesn't go in the Mutations Sack. Not required for the Rose Dragon."
+    },
+    "phantomleaf": {
+      "notes": "Hides inside another crop of the greenhouse: find the right block thanks to the heartbeat (3 brackets around the heart on screen)."
+    },
+    "timestalk": {
+      "notes": "Starts fully grown and ages backwards. Spawns a Timestalk Clone to kill (bestiary max 10 kills). Go there without armor or while flying."
+    }
+  },
+  "goals": {
+    "rose_dragon": {
+      "notes": "AVRG strongly recommends the optimum quantities, which are much faster."
+    },
+    "analyze_all": {
+      "name": "Analyze the 40 mutations",
+      "description": "Each first analysis gives Copper and advances the DNA Analysis Milestone (unlocks the Mutations Sacks at tiers I, III and V).",
+      "notes": "AVRG: analysis consumes one copy ('+1 for analyzing'), not counted in the guide's Rose Dragon totals."
+    }
+  },
+  "unmappedUsages": {
+    "description": "Uses mentioned by the community, whose exact mutation and quantities are still to be confirmed on the wiki.",
+    "items": [
+      "Small Mutations Sack",
+      "Large Mutations Sack",
+      "Buzzybee's Fantabulous Disco Destination",
+      "Potted Cactus",
+      "Melon Juice Mixin",
+      "Crow Pet → Rare upgrade at Kat"
+    ]
+  },
+  "layouts": {
+    "avrg_first_steps_gloomgourd": {
+      "name": "First steps: Gloomgourd"
+    },
+    "avrg_first_steps_dustgrain": {
+      "name": "First steps: Dustgrain"
+    },
+    "avrg_first_big_farm": {
+      "notes": "Soggybud, Ashwreath, Witherbloom, Veilshroom, Scourroot, Choconut and Shadevine. Water the melons around the Soggybuds. Replace a crop with another once you have enough."
+    },
+    "avrg_merging_superfarm": {
+      "notes": "Each row of spots makes a different mutation: Cindershade, Coalroot, Do-not-eat-shroom and Thornshade."
+    },
+    "avrg_choconut_duskbloom_superfarm": {
+      "notes": "Duskbloom at the top, Turtellini on the left, Creambloom and Chocoberry at the bottom."
+    },
+    "avrg_blastberry_min": {
+      "name": "Blastberry: minimum",
+      "notes": "Each harvest blows up the 3x3: wait until the 4 Blastberries have spawned before breaking one."
+    },
+    "avrg_blastberry_opt": {
+      "name": "Blastberry: optimum",
+      "notes": "8 spots: 7 Blastberry + 1 for analysis. Wait until they have all spawned before harvesting."
+    },
+    "avrg_cheesebite": {
+      "notes": "Rats appear at growth stages 4 and 8: kill them with a pest vacuum."
+    },
+    "avrg_magic_jellybean": {
+      "notes": "Harvestable from stage 12; AVRG harvests at 36+."
+    },
+    "avrg_noctilume_fleshtrap": {
+      "notes": "Two 2x2 spots for the Noctilumes, two for the Fleshtraps. Noctilume: alternate day and night at each stage."
+    },
+    "avrg_snoozling": {
+      "notes": "Two 3x3 spots that share the middle column. The center cell of each area has no neighboring crop: a Lonelily can spawn there before the Snoozling and block it (conflict detected by the grid, not mentioned by AVRG)."
+    },
+    "avrg_chorus_fruit": {
+      "notes": "The plot gets covered with End Stone, which can block other spots that are still empty."
+    },
+    "avrg_startlevine": {
+      "notes": "Harvest with the Sorrow armor or under Invisibility."
+    },
+    "avrg_zombud": {
+      "notes": "Each spot also touches 4 Dead Plants, the Witherbloom recipe (Soul Sand): a Witherbloom can spawn there instead of the Zombud (conflict detected by the grid, to be checked in game)."
+    },
+    "avrg_snoozling_complex_1": {
+      "name": "Snoozling Complex: step 1",
+      "notes": "With the first 2 Snoozlings: Thunderling, Stoplight Petal and Puffercloud. The Cocoa Bean protects from the Water Drain of the Do-not-eat-shrooms."
+    },
+    "avrg_snoozling_complex_2": {
+      "name": "Snoozling Complex: step 2",
+      "notes": "Once the 6 Thunderlings are obtained: 3rd Snoozling, PlantBoy Advance on the left. Rows 2 to 4 carried over from step 1."
+    },
+    "avrg_devourer": {
+      "notes": "Break the marked blocks to make a moat: the Devourer's roots cannot cross it."
+    },
+    "avrg_glasscorn": {
+      "notes": "Harvestable at stage 7 or 8; after stage 8, it drops back to stage 1."
+    },
+    "avrg_all_in_aloe": {
+      "name": "All-in Aloe: optimum",
+      "notes": "Four spots around a single PlantBoy Advance (2x2, counts for 2 cells each). Harvest at stage 6: 4 fragments."
+    }
+  },
+  "bestiary": {
+    "Zombuddy": {
+      "source": "Zombud (transformed Dead Plants)"
+    }
+  }
+}

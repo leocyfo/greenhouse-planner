@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { tr } from '../../i18n/locale'
 import { useGoalStatuses } from '../../store/useGoalStatuses'
 import { GoalsSection } from '../goals/GoalsSection'
 import { ImportPrompt } from '../profile/ImportPrompt'
@@ -16,7 +17,7 @@ export function DashboardTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="sr-only">Tableau de bord</h2>
+      <h2 className="sr-only">{tr('Tableau de bord', 'Dashboard')}</h2>
       <ImportPrompt />
       <div className="grid items-start gap-4 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
         <NextActionCard statuses={statuses} onChooseGoals={() => goalsHeading.current?.focus()} />

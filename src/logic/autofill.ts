@@ -14,6 +14,7 @@
  * est revérifié par la logique de la grille (analyzeGrid), qui fait foi pour le résultat.
  */
 import type { CropRef, GameData, Mutation, Placement } from '../types/game'
+import { tr } from '../i18n/locale'
 import { analyzeGrid, cropSide, type GridInput } from './grid'
 import { computePlan } from './recipes'
 import { isUsableGround } from './ground'
@@ -1090,7 +1091,13 @@ function refineAssignment(
 export function autofill(data: GameData, request: AutofillRequest): AutofillOutcome {
   const target = data.mutationsById.get(request.targetId)
   if (!target || target.spawnRule !== 'conditions' || target.conditions.length === 0) {
-    return { ok: false, reason: 'Cette mutation n’apparaît pas par des conditions de voisinage : rien à remplir.' }
+    return {
+      ok: false,
+      reason: tr(
+        'Cette mutation n’apparaît pas par des conditions de voisinage : rien à remplir.',
+        'This mutation does not appear through neighbor conditions: nothing to fill.',
+      ),
+    }
   }
   const { width, height } = request
   const usable = Uint8Array.from(request.ground, (ground) => (isUsableGround(ground) ? 1 : 0))
@@ -1193,11 +1200,21 @@ function noSpotReason(data: GameData, target: Mutation, stock: ReadonlyMap<strin
         const needed = mutationsForCells(condition.count, ingredient?.side ?? 1)
         // Absente du stock : sans limite, comme pour la recherche.
         const owned = stock.get(condition.crop.id)
-        return owned !== undefined && owned < needed ? [`${needed} ${ingredient?.name ?? condition.crop.id} (tu en as ${owned})`] : []
+        return owned !== undefined && owned < needed
+          ? [tr(`${needed} ${ingredient?.name ?? condition.crop.id} (tu en as ${owned})`, `${needed} ${ingredient?.name ?? condition.crop.id} (you have ${owned})`)]
+          : []
       })
     : []
-  if (short.length > 0) return `Pas assez de stock pour un emplacement de ${target.name} : il faut au moins ${short.join(', ')}.`
-  return `Pas assez de place pour un emplacement de ${target.name} sur les cases libres de ce plan.`
+  if (short.length > 0) {
+    return tr(
+      `Pas assez de stock pour un emplacement de ${target.name} : il faut au moins ${short.join(', ')}.`,
+      `Not enough stock for a ${target.name} spot: you need at least ${short.join(', ')}.`,
+    )
+  }
+  return tr(
+    `Pas assez de place pour un emplacement de ${target.name} sur les cases libres de ce plan.`,
+    `Not enough room for a ${target.name} spot on the free cells of this plan.`,
+  )
 }
 
 /** Plan final : sols peints, puis vérification par la logique de la grille. */

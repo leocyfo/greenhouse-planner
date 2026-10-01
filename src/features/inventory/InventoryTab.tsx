@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { useGoalPlan } from '../../store/useGoalPlan'
 import { InventoryFiltersBar } from './InventoryFiltersBar'
 import { DEFAULT_FILTERS, filterMutations } from './inventoryFilters'
@@ -36,13 +37,13 @@ export function InventoryTab() {
       <div className="grid items-start gap-6 lg:grid-cols-[19rem_minmax(0,1fr)]">
         <div className="space-y-4">
           <SegmentedControl
-            legend="Affichage"
+            legend={tr('Affichage', 'View')}
             name="inventory-view"
             value={view}
             onChange={setView}
             options={[
               { value: 'sack', label: 'Mutations Sack' },
-              { value: 'list', label: 'Liste' },
+              { value: 'list', label: tr('Liste', 'List') },
             ]}
           />
           <InventoryStats goalPlan={goalPlan} />

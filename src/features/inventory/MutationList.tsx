@@ -1,5 +1,6 @@
 import { formatRarity } from '../../components/labels'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { useAppStore } from '../../store/appStore'
 import type { GoalPlan } from '../../store/useGoalPlan'
 import { rarityColor } from '../../theme/palette'
@@ -31,13 +32,13 @@ export function MutationList({ mutations, goalPlan, onResetFilters }: MutationLi
   if (groups.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center">
-        <p className="text-sm text-ink-muted">Aucune mutation ne correspond à ces filtres.</p>
+        <p className="text-sm text-ink-muted">{tr('Aucune mutation ne correspond à ces filtres.', 'No mutation matches these filters.')}</p>
         <button
           type="button"
           onClick={onResetFilters}
           className="mt-3 rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-panel-raised"
         >
-          Réinitialiser les filtres
+          {tr('Réinitialiser les filtres', 'Reset the filters')}
         </button>
       </div>
     )
@@ -46,7 +47,10 @@ export function MutationList({ mutations, goalPlan, onResetFilters }: MutationLi
   return (
     <div className="space-y-8">
       <p className="text-xs text-ink-muted">
-        Clique sur une carte pour sa fiche complète · grande case : analysée · « Tout cocher » marque toutes les mutations affichées de la rareté.
+        {tr(
+          'Clique sur une carte pour sa fiche complète · grande case : analysée · « Tout cocher » marque toutes les mutations affichées de la rareté.',
+          'Click a card for its full sheet · big box: analyzed · “Tick all” marks every shown mutation of that rarity.',
+        )}
       </p>
       {groups.map((group) => {
         const ids = group.mutations.map((mutation) => mutation.id)
@@ -68,10 +72,13 @@ export function MutationList({ mutations, goalPlan, onResetFilters }: MutationLi
               <button
                 type="button"
                 onClick={() => setAnalyzedMany(ids, !allAnalyzed)}
-                aria-label={`${allAnalyzed ? 'Décocher' : 'Cocher'} « analysée » pour les ${ids.length} mutations ${label} affichées`}
+                aria-label={tr(
+                  `${allAnalyzed ? 'Décocher' : 'Cocher'} « analysée » pour les ${ids.length} mutations ${label} affichées`,
+                  `${allAnalyzed ? 'Untick' : 'Tick'} “analyzed” for the ${ids.length} ${label} mutations shown`,
+                )}
                 className={`rounded border px-2 py-1 text-[10px] font-bold tracking-wide uppercase transition-colors ${allAnalyzed ? 'border-danger/60 text-danger hover:bg-danger/10' : 'border-accent/60 text-accent-strong hover:bg-accent/10'}`}
               >
-                {allAnalyzed ? 'Tout décocher' : 'Tout cocher'}
+                {allAnalyzed ? tr('Tout décocher', 'Untick all') : tr('Tout cocher', 'Tick all')}
               </button>
             </div>
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

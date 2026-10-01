@@ -1,4 +1,5 @@
 import { useState, type KeyboardEvent } from 'react'
+import { tr } from '../i18n/locale'
 
 interface NumberStepperProps {
   readonly value: number
@@ -45,7 +46,7 @@ export function NumberStepper({
     <div className="inline-flex h-8 w-fit items-stretch overflow-hidden rounded-lg border border-line bg-canvas">
       <button
         type="button"
-        aria-label={`${name} : retirer 1`}
+        aria-label={tr(`${name} : retirer 1`, `${name}: remove 1`)}
         disabled={value <= min}
         onClick={() => change(value - 1)}
         className={BUTTON}
@@ -56,7 +57,7 @@ export function NumberStepper({
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
-        aria-label={inputLabel ?? `${name} : nombre possédé`}
+        aria-label={inputLabel ?? tr(`${name} : nombre possédé`, `${name}: number owned`)}
         value={draft ?? String(value)}
         onChange={(event) => {
           const digits = event.target.value.replace(/\D/g, '')
@@ -69,7 +70,7 @@ export function NumberStepper({
       />
       <button
         type="button"
-        aria-label={`${name} : ajouter 1`}
+        aria-label={tr(`${name} : ajouter 1`, `${name}: add 1`)}
         disabled={value >= max}
         onClick={() => change(value + 1)}
         className={BUTTON}

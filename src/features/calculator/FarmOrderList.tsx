@@ -1,6 +1,7 @@
 import { CropLabel } from '../../components/game/CropLabel'
 import { SizeBadge, SoilBadge, StagesBadge } from '../../components/game/MutationBadges'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { formatDuration } from '../../logic/format'
 import type { CalculatorResult } from './calculatorResult'
 import { recipeLines, scheduleText } from '../../components/game/recipeText'
@@ -11,7 +12,7 @@ export function FarmOrderList({ result }: { readonly result: CalculatorResult })
   const { plan, estimate, decay } = result
 
   if (plan.farmOrder.length === 0) {
-    return <p className="text-sm text-accent-strong">✓ Tout est déjà en stock.</p>
+    return <p className="text-sm text-accent-strong">{tr('✓ Tout est déjà en stock.', '✓ Everything is already in stock.')}</p>
   }
 
   return (
@@ -28,11 +29,11 @@ export function FarmOrderList({ result }: { readonly result: CalculatorResult })
               <span className="w-6 shrink-0 text-right text-sm tabular-nums text-ink-muted">{index + 1}.</span>
               <CropLabel crop={{ kind: 'mutation', id }} />
               <span className="text-sm">
-                à obtenir <strong className="tabular-nums">{need.missing}</strong>
+                {tr('à obtenir', 'to get')} <strong className="tabular-nums">{need.missing}</strong>
               </span>
               <span className="text-xs text-ink-muted">
-                (besoin {need.required}, en stock {need.owned}
-                {need.basis === 'avrg-optimum' ? ', total AVRG' : ''})
+                {tr(`(besoin ${need.required}, en stock ${need.owned}`, `(need ${need.required}, in stock ${need.owned}`)}
+                {need.basis === 'avrg-optimum' ? tr(', total AVRG', ', AVRG total') : ''})
               </span>
             </div>
             <div className="mt-2 space-y-1.5 pl-8">
@@ -49,8 +50,10 @@ export function FarmOrderList({ result }: { readonly result: CalculatorResult })
               {entry && <p className="text-xs text-ink-muted">{scheduleText(entry)}</p>}
               {warning && (
                 <p className="text-xs text-warning">
-                  ⚠ Production ≈ {formatDuration(warning.productionSeconds)} : les mutations posées autour meurent
-                  après ~{formatDuration(warning.limitSeconds)}. Prévois de les remplacer, ou ajoute des emplacements.
+                  {tr(
+                    `⚠ Production ≈ ${formatDuration(warning.productionSeconds)} : les mutations posées autour meurent après ~${formatDuration(warning.limitSeconds)}. Prévois de les remplacer, ou ajoute des emplacements.`,
+                    `⚠ Production ≈ ${formatDuration(warning.productionSeconds)}: the mutations placed around die after ~${formatDuration(warning.limitSeconds)}. Plan to replace them, or add spots.`,
+                  )}
                 </p>
               )}
             </div>

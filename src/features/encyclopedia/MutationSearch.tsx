@@ -4,6 +4,7 @@
  */
 import { useEffect, useId, useState, type KeyboardEvent } from 'react'
 import { WikiIcon } from '../../components/game/WikiIcon'
+import { tr } from '../../i18n/locale'
 import { rarityColor } from '../../theme/palette'
 import type { Mutation } from '../../types/game'
 import type { MutationState } from './graphModel'
@@ -58,7 +59,7 @@ export function MutationSearch({ query, results, states, onQueryChange, onChoose
 
   return (
     <div className="relative flex w-64 flex-col gap-1 text-xs text-ink-muted">
-      <label htmlFor={inputId}>Rechercher une mutation</label>
+      <label htmlFor={inputId}>{tr('Rechercher une mutation', 'Search a mutation')}</label>
       <input
         id={inputId}
         type="search"
@@ -70,7 +71,7 @@ export function MutationSearch({ query, results, states, onQueryChange, onChoose
         autoComplete="off"
         spellCheck={false}
         value={query}
-        placeholder="Nom, ex. Snoozling"
+        placeholder={tr('Nom, ex. Snoozling', 'Name, e.g. Snoozling')}
         onChange={(event) => {
           onQueryChange(event.target.value)
           setOpen(true)
@@ -84,9 +85,9 @@ export function MutationSearch({ query, results, states, onQueryChange, onChoose
       {shown && (
         <div className="absolute top-full z-30 mt-1 w-72 rounded-lg border border-line bg-panel-solid p-1 shadow-lg shadow-black/40">
           {results.length === 0 ? (
-            <p className="px-2 py-1.5 text-sm">Aucune mutation ne s&apos;appelle ainsi.</p>
+            <p className="px-2 py-1.5 text-sm">{tr("Aucune mutation ne s'appelle ainsi.", 'No mutation has that name.')}</p>
           ) : (
-            <ul id={listId} role="listbox" aria-label="Suggestions" className="max-h-72 overflow-y-auto">
+            <ul id={listId} role="listbox" aria-label={tr('Suggestions', 'Suggestions')} className="max-h-72 overflow-y-auto">
               {results.map((mutation, index) => {
                 const info = STATE_INFO[states.get(mutation.id) ?? 'locked']
                 const selected = mutation.id === current?.id

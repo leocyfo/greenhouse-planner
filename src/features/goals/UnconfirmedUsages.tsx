@@ -1,5 +1,6 @@
 import { CropLabel } from '../../components/game/CropLabel'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 
 /**
  * Usages cités par la communauté, à confirmer (`unmappedUsages` et usages non vérifiés). Repliés
@@ -16,7 +17,7 @@ export function UnconfirmedUsages() {
     <details className="group rounded-xl border border-line bg-panel">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 hover:bg-panel-raised [&::-webkit-details-marker]:hidden">
         <h3 className="font-semibold">
-          Usages à confirmer <span className="text-sm font-normal text-ink-muted">· {count}</span>
+          {tr('Usages à confirmer', 'Uses to confirm')} <span className="text-sm font-normal text-ink-muted">· {count}</span>
         </h3>
         <span aria-hidden="true" className="inline-block text-ink-muted transition-transform group-open:rotate-180">
           ▾
@@ -35,7 +36,9 @@ export function UnconfirmedUsages() {
 
         {knownUnverified.length > 0 && (
           <div className="mt-4">
-            <h4 className="mb-2 text-xs font-medium text-ink-muted">Usages connus, dont la quantité reste à confirmer</h4>
+            <h4 className="mb-2 text-xs font-medium text-ink-muted">
+              {tr('Usages connus, dont la quantité reste à confirmer', 'Known uses whose quantity is still to confirm')}
+            </h4>
             <ul className="space-y-1 text-sm">
               {knownUnverified.map(({ mutation, usage }) => (
                 <li key={`${mutation.id}-${usage.target}`}>
@@ -43,7 +46,7 @@ export function UnconfirmedUsages() {
                   <span className="text-ink-muted"> → </span>
                   {usage.target}
                   <span className="text-ink-muted">
-                    {usage.quantity === null ? ' (quantité inconnue)' : ` × ${usage.quantity}`}
+                    {usage.quantity === null ? tr(' (quantité inconnue)', ' (unknown quantity)') : ` × ${usage.quantity}`}
                   </span>
                 </li>
               ))}

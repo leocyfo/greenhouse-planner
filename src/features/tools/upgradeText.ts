@@ -3,6 +3,7 @@
  * et noms accessibles. Les noms et bonus viennent des données, jamais d'ici.
  */
 import type { McColor } from '../../components/minecraft/mcFormat'
+import { formatDecimal, tr } from '../../i18n/locale'
 import { cumulativeBonus, romanNumeral, type TierState } from '../../logic/upgrades'
 import type { Upgrade, UpgradeEffect } from '../../types/game'
 
@@ -10,27 +11,45 @@ import type { Upgrade, UpgradeEffect } from '../../types/game'
 const VALUE_COLOR: Record<UpgradeEffect, McColor> = { growthSpeed: 'b', plantYield: 'e', plotLimit: 'a' }
 
 const STATE_COLOR: Record<TierState, McColor> = { unlocked: 'a', next: 'e', locked: 'c' }
-const STATE_LINE: Record<TierState, string> = {
-  unlocked: '§a§lDÉBLOQUÉ',
-  next: '§e§lPROCHAIN TIER',
-  locked: '§c§lVERROUILLÉ',
+/** Ligne d'état d'un tier, en capitales comme dans le jeu. */
+function stateLine(state: TierState): string {
+  switch (state) {
+    case 'unlocked':
+      return tr('§a§lDÉBLOQUÉ', '§a§lUNLOCKED')
+    case 'next':
+      return tr('§e§lPROCHAIN TIER', '§e§lNEXT TIER')
+    case 'locked':
+      return tr('§c§lVERROUILLÉ', '§c§lLOCKED')
+  }
 }
-const STATE_TEXT: Record<TierState, string> = { unlocked: 'débloqué', next: 'prochain tier', locked: 'verrouillé' }
 
-const number = (value: number) => value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+function stateText(state: TierState): string {
+  switch (state) {
+    case 'unlocked':
+      return tr('débloqué', 'unlocked')
+    case 'next':
+      return tr('prochain tier', 'next tier')
+    case 'locked':
+      return tr('verrouillé', 'locked')
+  }
+}
+
+const number = (value: number) => formatDecimal(value, 2)
+/** « 50 % » en français, « 50% » en anglais. */
+const percent = (value: number) => tr(`${number(value)} %`, `${number(value)}%`)
 
 /** Bonus total au tier donné : « 50 % », « au moins 8 % » (tiers inconnus), « +2 ». */
 export function upgradeValue(upgrade: Upgrade, tier: number): string {
   const total = cumulativeBonus(upgrade, tier)
-  const value = upgrade.unit === 'percent' ? `${number(total.value)} %` : `+${number(total.value)}`
-  return total.complete ? value : `au moins ${value}`
+  const value = upgrade.unit === 'percent' ? percent(total.value) : `+${number(total.value)}`
+  return total.complete ? value : tr(`au moins ${value}`, `at least ${value}`)
 }
 
 /** Bonus d'un seul tier : « +10 % Growth Speed », « +1 plot », ou null s'il est inconnu. */
 export function tierBonusText(upgrade: Upgrade, tier: number): string | null {
   const bonus = upgrade.tiers[tier - 1]
   if (bonus === null || bonus === undefined) return null
-  return upgrade.unit === 'percent' ? `+${number(bonus)} % ${upgrade.name}` : `+${number(bonus)} plot`
+  return upgrade.unit === 'percent' ? `+${percent(bonus)} ${upgrade.name}` : `+${number(bonus)} plot`
 }
 
 /** Infobulle d'un upgrade dans le menu principal. */
@@ -39,10 +58,10 @@ export function upgradeTooltip(upgrade: Upgrade, tier: number): string[] {
     `§a${upgrade.name}`,
     `§7${upgrade.description}`,
     '',
-    `§7Tier actuel : §a${tier}/${upgrade.tiers.length}`,
-    `§7${upgrade.name} : §${VALUE_COLOR[upgrade.effect]}${upgradeValue(upgrade, tier)}`,
+    tr(`§7Tier actuel : §a${tier}/${upgrade.tiers.length}`, `§7Current tier: §a${tier}/${upgrade.tiers.length}`),
+    tr(`§7${upgrade.name} : `, `§7${upgrade.name}: `) + `§${VALUE_COLOR[upgrade.effect]}${upgradeValue(upgrade, tier)}`,
   ]
-  lines.push('', '§eCliquer pour voir !')
+  lines.push('', tr('§eCliquer pour voir !', '§eClick to view!'))
   return lines
 }
 
@@ -57,26 +76,32 @@ export function tierTooltip(
   const bonus = tierBonusText(upgrade, tier)
   const action =
     tier === current
-      ? '§7Cliquer pour le retirer'
+      ? tr('§7Cliquer pour le retirer', '§7Click to remove it')
       : state === 'unlocked'
-        ? '§7Cliquer pour revenir à ce tier'
+        ? tr('§7Cliquer pour revenir à ce tier', '§7Click to go back to this tier')
         : state === 'next'
-          ? '§eCliquer pour le débloquer'
-          : "§eCliquer pour débloquer jusqu'ici"
+          ? tr('§eCliquer pour le débloquer', '§eClick to unlock')
+          : tr("§eCliquer pour débloquer jusqu'ici", '§eClick to unlock up to here')
   return [
     `§${STATE_COLOR[state]}${upgrade.name} ${romanNumeral(tier)}`,
-    bonus ? `§${VALUE_COLOR[upgrade.effect]}${bonus}` : '§8Bonus inconnu',
+    bonus ? `§${VALUE_COLOR[upgrade.effect]}${bonus}` : tr('§8Bonus inconnu', '§8Unknown bonus'),
     ...extra,
     '',
-    STATE_LINE[state],
+    stateLine(state),
     action,
   ]
 }
 
 export function upgradeLabel(upgrade: Upgrade, tier: number): string {
-  return `${upgrade.name} : tier ${tier} sur ${upgrade.tiers.length}, ${upgradeValue(upgrade, tier)}. Voir les tiers.`
+  return tr(
+    `${upgrade.name} : tier ${tier} sur ${upgrade.tiers.length}, ${upgradeValue(upgrade, tier)}. Voir les tiers.`,
+    `${upgrade.name}: tier ${tier} of ${upgrade.tiers.length}, ${upgradeValue(upgrade, tier)}. See the tiers.`,
+  )
 }
 
 export function tierLabel(upgrade: Upgrade, tier: number, state: TierState): string {
-  return `${upgrade.name} ${romanNumeral(tier)} : ${tierBonusText(upgrade, tier) ?? 'bonus inconnu'}, ${STATE_TEXT[state]}`
+  return tr(
+    `${upgrade.name} ${romanNumeral(tier)} : ${tierBonusText(upgrade, tier) ?? 'bonus inconnu'}, ${stateText(state)}`,
+    `${upgrade.name} ${romanNumeral(tier)}: ${tierBonusText(upgrade, tier) ?? 'unknown bonus'}, ${stateText(state)}`,
+  )
 }

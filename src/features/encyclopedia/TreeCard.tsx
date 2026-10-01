@@ -2,6 +2,7 @@
 import type { CSSProperties } from 'react'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { formatRarity } from '../../components/labels'
+import { tr } from '../../i18n/locale'
 import { rarityColor, TREE_COLORS } from '../../theme/palette'
 import type { Mutation } from '../../types/game'
 import type { MutationState } from './graphModel'
@@ -59,7 +60,7 @@ export function MutationTreeCard({
   active = false,
   selected = false,
   amount = null,
-  actionLabel = 'Ouvrir la fiche',
+  actionLabel = tr('Ouvrir la fiche', 'Open the sheet'),
   style,
   buttonRef,
   onOpen,
@@ -74,8 +75,8 @@ export function MutationTreeCard({
     formatRarity(mutation.rarity),
     step,
     info.label,
-    `${owned} en stock${required > 0 ? ` sur ${required} demandés` : ''}`,
-    amount ? (amount.title ?? `${amount.text} dans la recette`) : undefined,
+    tr(`${owned} en stock${required > 0 ? ` sur ${required} demandés` : ''}`, `${owned} in stock${required > 0 ? ` out of ${required} needed` : ''}`),
+    amount ? (amount.title ?? tr(`${amount.text} dans la recette`, `${amount.text} in the recipe`)) : undefined,
   ]
     .filter(Boolean)
     .join(', ')

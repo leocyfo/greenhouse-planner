@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { goToTab } from '../../app/navigation'
 import { Modal } from '../../components/Modal'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { readInventoryMutations } from '../../logic/hypixel/inventory'
 import { useAppStore } from '../../store/appStore'
 import { useImportDialog } from './importDialogStore'
@@ -77,7 +78,10 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
-        setStep({ kind: 'form', error: error instanceof ProfileApiError ? error.message : "L'import a échoué, réessaie plus tard." })
+        setStep({
+          kind: 'form',
+          error: error instanceof ProfileApiError ? error.message : tr("L'import a échoué, réessaie plus tard.", 'The import failed, try again later.'),
+        })
       })
     return () => controller.abort()
   }, [step, data])
@@ -91,12 +95,12 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
     >
       <header className="flex items-center gap-3 border-b border-line px-4 py-3">
         <h3 id={titleId} ref={heading} tabIndex={-1} className="flex-1 text-lg font-bold">
-          Importer depuis Hypixel
+          {tr('Importer depuis Hypixel', 'Import from Hypixel')}
         </h3>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fermer l'import"
+          aria-label={tr("Fermer l'import", 'Close the import')}
           className="flex size-8 items-center justify-center rounded-lg text-ink-muted hover:bg-panel-raised hover:text-ink"
         >
           <span aria-hidden="true">✕</span>
@@ -107,13 +111,17 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
         {step.kind === 'form' && (
           <div className="space-y-4">
             <p className="text-ink-muted">
-              Entre ton pseudo Minecraft : le site lit sur Hypixel tes sacs, ton inventaire, ton ender chest, tes sacs à dos et
-              ton coffre personnel, puis compte tes mutations. Tu vois le résultat avant de remplacer ton stock.
+              {tr(
+                'Entre ton pseudo Minecraft : le site lit sur Hypixel tes sacs, ton inventaire, ton ender chest, tes sacs à dos et ton coffre personnel, puis compte tes mutations. Tu vois le résultat avant de remplacer ton stock.',
+                'Enter your Minecraft name: the site reads your sacks, inventory, ender chest, backpacks and personal vault on Hypixel, then counts your mutations. You see the result before your stock is replaced.',
+              )}
             </p>
             {!PROFILE_IMPORT_ENABLED && (
               <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-warning">
-                Le serveur de l&apos;import n&apos;est pas configuré : définis VITE_PROFILE_API_URL (voir le README, section
-                « Import depuis Hypixel »).
+                {tr(
+                  "Le serveur de l'import n'est pas configuré : définis VITE_PROFILE_API_URL (voir le README, section « Import depuis Hypixel »).",
+                  'The import server is not configured: set VITE_PROFILE_API_URL (see the README, “Import depuis Hypixel” section).',
+                )}
               </p>
             )}
             <PlayerSearchForm
@@ -128,7 +136,10 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
               </p>
             )}
             <p className="text-xs text-ink-muted">
-              Dans SkyBlock, l&apos;« Inventory API » doit être activée (réglages API) pour que Hypixel partage ton inventaire.
+              {tr(
+                "Dans SkyBlock, l'« Inventory API » doit être activée (réglages API) pour que Hypixel partage ton inventaire.",
+                'In SkyBlock, the “Inventory API” must be turned on (API settings) for Hypixel to share your inventory.',
+              )}
             </p>
           </div>
         )}
@@ -137,7 +148,9 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
           <p role="status" className="flex items-center gap-3 py-6">
             <span aria-hidden="true" className="size-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
             <span>
-              Recherche de <strong>{step.name}</strong> sur Hypixel…
+              {tr('Recherche de ', 'Looking for ')}
+              <strong>{step.name}</strong>
+              {tr(' sur Hypixel…', ' on Hypixel…')}
             </span>
           </p>
         )}
@@ -169,10 +182,10 @@ function ImportFlow({ initialName, onClose }: ImportFlowProps) {
                 }}
                 className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-canvas transition hover:bg-accent-strong motion-safe:active:scale-[0.97]"
               >
-                Voir mon inventaire
+                {tr('Voir mon inventaire', 'See my inventory')}
               </button>
               <button type="button" onClick={onClose} className="rounded-lg border border-line px-3 py-2 text-sm hover:bg-panel-raised">
-                Fermer
+                {tr('Fermer', 'Close')}
               </button>
             </div>
           </div>

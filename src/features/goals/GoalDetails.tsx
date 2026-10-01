@@ -3,6 +3,7 @@ import { Badge } from '../../components/Badge'
 import { CropLabel } from '../../components/game/CropLabel'
 import { formatNumber } from '../../components/labels'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { useAppStore } from '../../store/appStore'
 import type { GoalStatus } from '../../store/useGoalStatuses'
 
@@ -23,7 +24,7 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
     <div className="space-y-3 text-sm">
       {(goal.npc || goal.description) && (
         <p className="text-ink-muted">
-          {goal.npc && `PNJ : ${goal.npc}. `}
+          {goal.npc && tr(`PNJ : ${goal.npc}. `, `NPC: ${goal.npc}. `)}
           {goal.description}
         </p>
       )}
@@ -31,7 +32,7 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
       <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
         {(goal.mutations.length > 0 || goal.eachMutation !== null) && (
           <section>
-            <h5 className={SUBTITLE}>Demande</h5>
+            <h5 className={SUBTITLE}>{tr('Demande', 'Requires')}</h5>
             <ul className="space-y-1">
               {goal.mutations.map((requirement) => {
                 const quantity = requirement.quantity ?? 1
@@ -40,18 +41,20 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
                   <li key={requirement.mutationId} className="flex items-baseline justify-between gap-3">
                     <span>
                       <CropLabel crop={{ kind: 'mutation', id: requirement.mutationId }} />{' '}
-                      <span className="text-ink-muted">× {requirement.quantity ?? '? (compté 1)'}</span>
+                      <span className="text-ink-muted">× {requirement.quantity ?? tr('? (compté 1)', '? (counted as 1)')}</span>
                     </span>
                     <span className={`text-xs tabular-nums ${owned >= quantity ? 'text-accent-strong' : 'text-ink-muted'}`}>
-                      {owned >= quantity ? '✓ en stock' : `${owned} / ${quantity}`}
+                      {owned >= quantity ? tr('✓ en stock', '✓ in stock') : `${owned} / ${quantity}`}
                     </span>
                   </li>
                 )
               })}
               {goal.eachMutation !== null && (
                 <li className="text-ink-muted">
-                  {goal.eachMutation} exemplaire de chaque mutation pas encore analysée ({remainingAnalyses} restante
-                  {remainingAnalyses > 1 ? 's' : ''})
+                  {tr(
+                    `${goal.eachMutation} exemplaire de chaque mutation pas encore analysée (${remainingAnalyses} restante${remainingAnalyses > 1 ? 's' : ''})`,
+                    `${goal.eachMutation} copy of each mutation not analyzed yet (${remainingAnalyses} left)`,
+                  )}
                 </li>
               )}
             </ul>
@@ -60,7 +63,7 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
 
         {costs.length > 0 && (
           <section>
-            <h5 className={SUBTITLE}>Coûts</h5>
+            <h5 className={SUBTITLE}>{tr('Coûts', 'Costs')}</h5>
             <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
               {costs.map(([resource, amount]) => (
                 <div key={resource} className="contents">
@@ -74,7 +77,7 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
 
         {goal.milestones.length > 0 && (
           <section>
-            <h5 className={SUBTITLE}>Paliers requis</h5>
+            <h5 className={SUBTITLE}>{tr('Paliers requis', 'Required milestones')}</h5>
             <ul className="flex flex-wrap gap-1.5">
               {goal.milestones.map((milestone) => (
                 <li key={milestone}>
@@ -91,8 +94,11 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <span className="text-xs text-ink-muted">
           {completion.measure === 'analyses'
-            ? `${completion.done} / ${completion.total} analysées`
-            : `${completion.done} / ${completion.total} exemplaire${completion.total > 1 ? 's' : ''} en stock, ingrédients compris`}
+            ? tr(`${completion.done} / ${completion.total} analysées`, `${completion.done} / ${completion.total} analyzed`)
+            : tr(
+                `${completion.done} / ${completion.total} exemplaire${completion.total > 1 ? 's' : ''} en stock, ingrédients compris`,
+                `${completion.done} / ${completion.total} cop${completion.total !== 1 ? 'ies' : 'y'} in stock, ingredients included`,
+              )}
         </span>
         <button
           type="button"
@@ -102,7 +108,7 @@ export function GoalDetails({ status }: { readonly status: GoalStatus }) {
           }}
           className="text-sm text-accent-strong underline-offset-2 hover:underline"
         >
-          Calculer cet objectif
+          {tr('Calculer cet objectif', 'Calculate this goal')}
         </button>
       </div>
     </div>

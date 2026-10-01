@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { tabElementId, tabPanelId } from '../../components/tabIds'
 import { Tabs } from '../../components/Tabs'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { analyzeGrid } from '../../logic/grid'
 import { vineProgress } from '../../logic/tools'
 import { stagesBeforeDry } from '../../logic/water'
@@ -106,7 +107,7 @@ export function GridTab() {
     switch (tool) {
       case 'place':
         if (crop) place(cell, crop)
-        else setMessage('Choisis d’abord un crop dans la palette.')
+        else setMessage(tr('Choisis d’abord un crop dans la palette.', 'Pick a crop in the palette first.'))
         break
       case 'ground':
         paintGround(greenhouseIndex, layout.id, x, y, brush)
@@ -155,7 +156,7 @@ export function GridTab() {
               onClick={() => setPaletteOpen(true)}
               className="rounded-lg border border-line px-3 py-1.5 text-sm lg:hidden"
             >
-              Palette
+              {tr('Palette', 'Palette')}
             </button>
           </div>
           <GridBoard
@@ -174,7 +175,10 @@ export function GridTab() {
               setTool('place')
               place(cell, dropped)
             }}
-            label={`Greenhouse ${greenhouseIndex + 1}, plan « ${layout.name} », ${size.width} x ${size.height} cases`}
+            label={tr(
+              `Greenhouse ${greenhouseIndex + 1}, plan « ${layout.name} », ${size.width} x ${size.height} cases`,
+              `Greenhouse ${greenhouseIndex + 1}, plan “${layout.name}”, ${size.width} x ${size.height} cells`,
+            )}
           />
           <p aria-live="polite" className="min-h-5 text-sm text-warning">
             <span key={message} className="inline-block animate-fade-in">
@@ -204,12 +208,12 @@ export function GridTab() {
   // hauteur (la place du personnage), la grille à droite (la place des stats).
   return (
     <div className="gap-5 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] xl:grid-cols-[minmax(22rem,28%)_minmax(0,1fr)]">
-      <h2 className="sr-only">Grille</h2>
+      <h2 className="sr-only">{tr('Grille', 'Grid')}</h2>
 
       <aside aria-labelledby={paletteTitleId} className="hidden lg:block">
         <div className="sticky top-32 flex h-[calc(100dvh-9rem)] flex-col rounded-2xl border border-line bg-panel p-4 shadow-lg shadow-black/20 xl:top-20 xl:h-[calc(100dvh-6rem)]">
           <h3 id={paletteTitleId} className="mb-3 text-base font-semibold">
-            Crops et mutations
+            {tr('Crops et mutations', 'Crops and mutations')}
           </h3>
           {palette}
         </div>
@@ -247,10 +251,10 @@ export function GridTab() {
       </div>
 
       {paletteOpen && !locked && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Palette">
+        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label={tr('Palette', 'Palette')}>
           <button
             type="button"
-            aria-label="Fermer la palette"
+            aria-label={tr('Fermer la palette', 'Close the palette')}
             className="absolute inset-0 bg-black/50"
             onClick={() => setPaletteOpen(false)}
           />
@@ -262,7 +266,7 @@ export function GridTab() {
                 onClick={() => setPaletteOpen(false)}
                 className="rounded-lg border border-line px-3 py-1 text-sm"
               >
-                Fermer
+                {tr('Fermer', 'Close')}
               </button>
             </div>
             {palette}

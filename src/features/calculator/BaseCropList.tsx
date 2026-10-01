@@ -1,25 +1,28 @@
 import { InfoTip } from '../../components/InfoTip'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import type { Plan } from '../../logic/recipes'
 import { cropName } from '../../components/game/recipeText'
 
 function Purchasable({ value }: { readonly value: boolean | null }) {
-  if (value === true) return <span>Oui</span>
-  if (value === false) return <span>Non</span>
-  return <span className="text-ink-muted">Inconnu</span>
+  if (value === true) return <span>{tr('Oui', 'Yes')}</span>
+  if (value === false) return <span>{tr('Non', 'No')}</span>
+  return <span className="text-ink-muted">{tr('Inconnu', 'Unknown')}</span>
 }
 
 /** Crops de base à placer autour des recettes lancées. */
 export function BaseCropList({ plan }: { readonly plan: Plan }) {
   const data = getGameData()
-  if (plan.baseCrops.length === 0) return <p className="text-sm text-ink-muted">Aucun crop de base nécessaire.</p>
+  if (plan.baseCrops.length === 0) return <p className="text-sm text-ink-muted">{tr('Aucun crop de base nécessaire.', 'No base crop needed.')}</p>
 
   return (
     <div className="space-y-2">
       {plan.optimumApplied && (
         <p className="text-xs text-ink-muted">
-          En mode Optimum, les crops de base restent comptés au minimum : les données n&apos;ont pas de totaux AVRG
-          pour eux.
+          {tr(
+            "En mode Optimum, les crops de base restent comptés au minimum : les données n'ont pas de totaux AVRG pour eux.",
+            'In Optimum mode, base crops are still counted at the minimum: the data has no AVRG totals for them.',
+          )}
         </p>
       )}
       <div className="overflow-x-auto">
@@ -27,9 +30,9 @@ export function BaseCropList({ plan }: { readonly plan: Plan }) {
           <thead className="text-xs text-ink-muted">
             <tr className="border-b border-line">
               <th scope="col" className="py-2 pr-3 font-medium">Crop</th>
-              <th scope="col" className="py-2 pr-3 text-right font-medium">Quantité</th>
-              <th scope="col" className="py-2 pr-3 font-medium">Achetable</th>
-              <th scope="col" className="py-2 font-medium">Pour</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{tr('Quantité', 'Quantity')}</th>
+              <th scope="col" className="py-2 pr-3 font-medium">{tr('Achetable', 'Buyable')}</th>
+              <th scope="col" className="py-2 font-medium">{tr('Pour', 'For')}</th>
             </tr>
           </thead>
           <tbody>

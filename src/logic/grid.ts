@@ -6,6 +6,7 @@
  * Le comptage des voisins passe par neighborRule.ts (LA règle, isolée là-bas).
  */
 import type { CropRef, GameData, Mutation, Placement } from '../types/game'
+import { tr } from '../i18n/locale'
 import { isUsableGround } from './ground'
 import { cropKey, ringCropCounts, ringPlacements, type RingArea } from './neighborRule'
 
@@ -64,11 +65,11 @@ export type GridChange = { readonly ok: true; readonly grid: GridInput } | { rea
  * ses cases à son sol (une Blastberry passe la case en Sand) ; un crop de base garde le sol.
  */
 export function withCrop(data: GameData, grid: GridInput, crop: CropRef, x: number, y: number): GridChange {
-  if (!cropExists(data, crop)) return { ok: false, reason: 'Crop inconnu.' }
+  if (!cropExists(data, crop)) return { ok: false, reason: tr('Crop inconnu.', 'Unknown crop.') }
   const cells = footprintCells(grid, x, y, cropSide(data, crop))
-  if (!cells) return { ok: false, reason: 'Le crop dépasse de la grille.' }
+  if (!cells) return { ok: false, reason: tr('Le crop dépasse de la grille.', 'The crop goes past the edge of the grid.') }
   if (cells.some((cell) => !isUsableGround(grid.ground[cell] ?? ''))) {
-    return { ok: false, reason: 'Case verrouillée ou bloc cassé.' }
+    return { ok: false, reason: tr('Case verrouillée ou bloc cassé.', 'Locked cell or broken block.') }
   }
   const occupancy = buildOccupancy(data, grid)
   const covered = new Set(cells.map((cell) => occupancy[cell]).filter((p): p is number => p !== null))

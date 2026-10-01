@@ -1,4 +1,5 @@
 import { useAppStore } from '../../store/appStore'
+import { tr } from '../../i18n/locale'
 import { useImportDialog } from './importDialogStore'
 import { PROFILE_IMPORT_VISIBLE } from './profileApi'
 
@@ -16,13 +17,14 @@ export function PlayerButton() {
       <button type="button" onClick={show} className={className}>
         {/* Un seul élément flex : l'espace reste une vraie espace (écran et lecteurs d'écran). */}
         <span>
-          Importer<span className="hidden sm:inline"> mon profil</span>
+          {tr('Importer', 'Import')}
+          <span className="hidden sm:inline">{tr(' mon profil', ' my profile')}</span>
         </span>
       </button>
     )
   }
   return (
-    <button type="button" onClick={() => search(name)} title="Relire ton profil sur Hypixel" className={className}>
+    <button type="button" onClick={() => search(name)} title={tr('Relire ton profil sur Hypixel', 'Read your profile on Hypixel again')} className={className}>
       <span
         aria-hidden="true"
         className="flex size-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent-strong"
@@ -30,7 +32,7 @@ export function PlayerButton() {
         {name.charAt(0).toUpperCase()}
       </span>
       <span className="font-medium">{name}</span>
-      <span className="hidden text-ink-muted sm:inline">· Actualiser</span>
+      <span className="hidden text-ink-muted sm:inline">{tr('· Actualiser', '· Refresh')}</span>
     </button>
   )
 }

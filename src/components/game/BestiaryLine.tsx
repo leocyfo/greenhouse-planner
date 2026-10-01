@@ -1,4 +1,5 @@
 import type { BestiaryEntry } from '../../types/game'
+import { tr } from '../../i18n/locale'
 
 interface BestiaryLineProps {
   readonly entry: BestiaryEntry
@@ -12,7 +13,10 @@ export function BestiaryLine({ entry, showSource = false }: BestiaryLineProps) {
     <div>
       <p className="flex flex-wrap items-center gap-1.5">
         <span className="text-ink">{entry.mob}</span>
-        <span>: {entry.maxKills === null ? 'kills max inconnus' : `${entry.maxKills} kills max`}</span>
+        <span>
+          {tr(' : ', ': ')}
+          {entry.maxKills === null ? tr('kills max inconnus', 'unknown max kills') : tr(`${entry.maxKills} kills max`, `${entry.maxKills} max kills`)}
+        </span>
       </p>
       {showSource && <p className="text-xs text-ink-muted">{entry.source}</p>}
     </div>

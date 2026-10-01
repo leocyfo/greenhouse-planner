@@ -1,4 +1,5 @@
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import type { GoalPlan } from '../../store/useGoalPlan'
 
 /** Chiffres clés : en ligne sur mobile, empilés dans la colonne à côté du sac sur grand écran. */
@@ -9,9 +10,9 @@ export function InventoryStats({ goalPlan }: { readonly goalPlan: GoalPlan }) {
   const needs = [...plan.needs.values()]
   const missing = needs.filter((need) => need.missing > 0).length
   const stats = [
-    { label: 'Analysées', value: `${data.mutations.filter((m) => analyzed.has(m.id)).length} / ${data.mutations.length}` },
-    { label: 'À obtenir', value: String(missing) },
-    { label: 'Complétées', value: `${needs.length - missing} / ${needs.length}` },
+    { label: tr('Analysées', 'Analyzed'), value: `${data.mutations.filter((m) => analyzed.has(m.id)).length} / ${data.mutations.length}` },
+    { label: tr('À obtenir', 'To get'), value: String(missing) },
+    { label: tr('Complétées', 'Completed'), value: `${needs.length - missing} / ${needs.length}` },
   ]
 
   return (

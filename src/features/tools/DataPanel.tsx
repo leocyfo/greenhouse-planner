@@ -2,6 +2,7 @@ import { useRef, useState, type ChangeEvent } from 'react'
 import { Panel } from '../../components/Panel'
 import { getGameData } from '../../data'
 import { wikiImageFiles } from '../../data/wikiImages'
+import { tr } from '../../i18n/locale'
 import { DEFAULT_STATE, useAppStore } from '../../store/appStore'
 import { exportFileName, parseProgressFile, SCHEMA_VERSION, serializeProgressFile } from '../../store/persistence'
 import type { PersistedState } from '../../store/state'
@@ -33,7 +34,7 @@ export function DataPanel() {
   function exportProgress() {
     const { progress, settings, calculator, grids, tools } = useAppStore.getState()
     download(exportFileName(), serializeProgressFile({ progress, settings, calculator, grids, tools }))
-    setStatus({ kind: 'success', text: 'Fichier de sauvegarde téléchargé.' })
+    setStatus({ kind: 'success', text: tr('Fichier de sauvegarde téléchargé.', 'Save file downloaded.') })
   }
 
   async function readFile(event: ChangeEvent<HTMLInputElement>) {
@@ -51,18 +52,20 @@ export function DataPanel() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Panel title="Sauvegarde">
+      <Panel title={tr('Sauvegarde', 'Save')}>
         <div className="space-y-3 text-sm">
           <p className="text-ink-muted">
-            Ta progression (inventaire, objectifs, calculateur, grilles, réglages) est enregistrée automatiquement dans ce
-            navigateur. Exporte-la pour la garder ou la passer sur un autre appareil.
+            {tr(
+              'Ta progression (inventaire, objectifs, calculateur, grilles, réglages) est enregistrée automatiquement dans ce navigateur. Exporte-la pour la garder ou la passer sur un autre appareil.',
+              'Your progress (inventory, goals, calculator, grids, settings) is saved automatically in this browser. Export it to keep it or move it to another device.',
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={exportProgress} className={BUTTON}>
-              Exporter ma progression
+              {tr('Exporter ma progression', 'Export my progress')}
             </button>
             <button type="button" onClick={() => fileInput.current?.click()} className={BUTTON}>
-              Importer un fichier
+              {tr('Importer un fichier', 'Import a file')}
             </button>
             <input
               ref={fileInput}
@@ -74,49 +77,58 @@ export function DataPanel() {
               aria-hidden="true"
             />
             <button type="button" onClick={() => setConfirmReset(true)} className={`${BUTTON} hover:text-danger`}>
-              Réinitialiser
+              {tr('Réinitialiser', 'Reset')}
             </button>
           </div>
 
           {pendingImport && (
-            <div role="alertdialog" aria-label="Confirmer l'import" className="rounded-lg border border-warning/50 bg-warning/10 p-3">
-              <p>Remplacer toute ta progression actuelle par celle de ce fichier ?</p>
+            <div role="alertdialog" aria-label={tr("Confirmer l'import", 'Confirm the import')} className="rounded-lg border border-warning/50 bg-warning/10 p-3">
+              <p>{tr('Remplacer toute ta progression actuelle par celle de ce fichier ?', 'Replace all your current progress with the one from this file?')}</p>
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     replaceState(pendingImport)
                     setPendingImport(null)
-                    setStatus({ kind: 'success', text: 'Progression importée.' })
+                    setStatus({ kind: 'success', text: tr('Progression importée.', 'Progress imported.') })
                   }}
                   className="h-9 rounded-lg bg-accent px-3 text-sm font-medium text-canvas hover:bg-accent-strong"
                 >
-                  Oui, importer
+                  {tr('Oui, importer', 'Yes, import')}
                 </button>
                 <button type="button" onClick={() => setPendingImport(null)} className={BUTTON}>
-                  Annuler
+                  {tr('Annuler', 'Cancel')}
                 </button>
               </div>
             </div>
           )}
 
           {confirmReset && (
-            <div role="alertdialog" aria-label="Confirmer la réinitialisation" className="animate-fade-up rounded-lg border border-danger/50 bg-danger/10 p-3">
-              <p>Tout effacer et revenir aux valeurs de départ ? Exporte d&apos;abord ta progression si tu veux la garder.</p>
+            <div
+              role="alertdialog"
+              aria-label={tr('Confirmer la réinitialisation', 'Confirm the reset')}
+              className="animate-fade-up rounded-lg border border-danger/50 bg-danger/10 p-3"
+            >
+              <p>
+                {tr(
+                  "Tout effacer et revenir aux valeurs de départ ? Exporte d'abord ta progression si tu veux la garder.",
+                  'Erase everything and go back to the starting values? Export your progress first if you want to keep it.',
+                )}
+              </p>
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     resetAll()
                     setConfirmReset(false)
-                    setStatus({ kind: 'success', text: 'Progression réinitialisée.' })
+                    setStatus({ kind: 'success', text: tr('Progression réinitialisée.', 'Progress reset.') })
                   }}
                   className="h-9 rounded-lg bg-danger px-3 text-sm font-medium text-canvas"
                 >
-                  Oui, tout effacer
+                  {tr('Oui, tout effacer', 'Yes, erase everything')}
                 </button>
                 <button type="button" onClick={() => setConfirmReset(false)} className={BUTTON}>
-                  Annuler
+                  {tr('Annuler', 'Cancel')}
                 </button>
               </div>
             </div>
@@ -127,22 +139,22 @@ export function DataPanel() {
               {status?.text}
             </span>
           </p>
-          <p className="text-xs text-ink-muted">Format de sauvegarde : version {SCHEMA_VERSION}.</p>
+          <p className="text-xs text-ink-muted">{tr(`Format de sauvegarde : version ${SCHEMA_VERSION}.`, `Save format: version ${SCHEMA_VERSION}.`)}</p>
         </div>
       </Panel>
 
-      <Panel title="À propos des données">
+      <Panel title={tr('À propos des données', 'About the data')}>
         <div className="space-y-3 text-sm">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
             <dt className="text-ink-muted">Mutations</dt>
             <dd className="tabular-nums">{data.mutations.length}</dd>
-            <dt className="text-ink-muted">Crops de base</dt>
+            <dt className="text-ink-muted">{tr('Crops de base', 'Base crops')}</dt>
             <dd className="tabular-nums">{data.baseCrops.length}</dd>
-            <dt className="text-ink-muted">Objectifs</dt>
+            <dt className="text-ink-muted">{tr('Objectifs', 'Goals')}</dt>
             <dd className="tabular-nums">{data.goals.length}</dd>
-            <dt className="text-ink-muted">Plans du guide AVRG</dt>
+            <dt className="text-ink-muted">{tr('Plans du guide AVRG', 'AVRG guide layouts')}</dt>
             <dd className="tabular-nums">{data.layouts.length}</dd>
-            <dt className="text-ink-muted">Images du wiki (crédits en bas de page)</dt>
+            <dt className="text-ink-muted">{tr('Images du wiki (crédits en bas de page)', 'Wiki images (credits at the bottom of the page)')}</dt>
             <dd className="tabular-nums">{wikiImageFiles().length}</dd>
           </dl>
           <div>
@@ -154,8 +166,12 @@ export function DataPanel() {
             </ul>
           </div>
           <p className="text-xs text-ink-muted">
-            Toutes les données viennent de <code className="rounded bg-panel-raised px-1">src/data/mutations.json</code> (version{' '}
-            {data.meta.dataVersion}) : il suffit de modifier ce fichier pour corriger une valeur.
+            {tr('Toutes les données viennent de ', 'All the data comes from ')}
+            <code className="rounded bg-panel-raised px-1">src/data/mutations.json</code>{' '}
+            {tr(
+              `(version ${data.meta.dataVersion}) : il suffit de modifier ce fichier pour corriger une valeur.`,
+              `(version ${data.meta.dataVersion}): editing this file is enough to fix a value.`,
+            )}
           </p>
         </div>
       </Panel>

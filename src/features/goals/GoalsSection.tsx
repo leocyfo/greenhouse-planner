@@ -1,5 +1,6 @@
 import { useId, type Ref } from 'react'
 import type { GoalStatus } from '../../store/useGoalStatuses'
+import { tr } from '../../i18n/locale'
 import { GoalRow } from './GoalRow'
 
 interface GoalsSectionProps {
@@ -16,13 +17,16 @@ export function GoalsSection({ statuses, headingRef }: GoalsSectionProps) {
   return (
     <section aria-labelledby={headingId} className="rounded-xl border border-line bg-panel p-4">
       <h3 id={headingId} ref={headingRef} tabIndex={-1} className="font-semibold">
-        Objectifs{' '}
+        {tr('Objectifs', 'Goals')}{' '}
         <span className="text-sm font-normal text-ink-muted">
-          · {followed} suivi{followed > 1 ? 's' : ''} sur {statuses.length}
+          · {tr(`${followed} suivi${followed > 1 ? 's' : ''} sur ${statuses.length}`, `${followed} followed out of ${statuses.length}`)}
         </span>
       </h3>
       <p className="mt-1 text-xs text-ink-muted">
-        Coche ceux à suivre : leurs besoins guident la prochaine action, l&apos;Inventaire et l&apos;Encyclopédie.
+        {tr(
+          "Coche ceux à suivre : leurs besoins guident la prochaine action, l'Inventaire et l'Encyclopédie.",
+          'Tick the ones to follow: their needs drive the next action, the Inventory and the Encyclopedia.',
+        )}
       </p>
       <ul className="mt-2 divide-y divide-line">
         {statuses.map((status) => (

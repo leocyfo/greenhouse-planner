@@ -4,6 +4,7 @@ import { MC_COLUMNS, McWindow } from '../../components/minecraft/McWindow'
 import { McItem } from '../../components/minecraft/McItem'
 import { Panel } from '../../components/Panel'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { plotLimitTier, vineProgress, withPlotLimitTier } from '../../logic/tools'
 import {
   clickedTier,
@@ -19,10 +20,16 @@ import type { Upgrade, UpgradeEffect } from '../../types/game'
 import { tierBonusText, tierLabel, tierTooltip, upgradeLabel, upgradeTooltip, upgradeValue } from './upgradeText'
 
 /** Ce que change chaque effet dans l'application. */
-const EFFECT_HINT: Record<UpgradeEffect, string> = {
-  growthSpeed: 'sert au calcul des growth stages',
-  plantYield: 'affiché seulement',
-  plotLimit: 'greenhouses 2 et 3, comptés dans les Ethereal Vines',
+/** Ce que l'application fait de chaque upgrade. */
+function effectHint(effect: UpgradeEffect): string {
+  switch (effect) {
+    case 'growthSpeed':
+      return tr('sert au calcul des growth stages', 'used to compute growth stages')
+    case 'plantYield':
+      return tr('affiché seulement', 'display only')
+    case 'plotLimit':
+      return tr('greenhouses 2 et 3, comptés dans les Ethereal Vines', 'greenhouses 2 and 3, counted in the Ethereal Vines')
+  }
 }
 
 /** Vitre de chaque état, comme dans le jeu : verte, jaune, rouge. */
@@ -86,7 +93,10 @@ export function GreenhouseUpgrades() {
   const extraLines = (upgrade: Upgrade, tier: number): string[] => {
     if (upgrade.effect !== 'plotLimit') return []
     const price = vineProgress(data, vines).purchases[tier - 1]?.price
-    return [`§7Débloque le greenhouse ${tier + 1}`, ...(price ? [`§7Prix : §d${price} Ethereal Vines`] : [])]
+    return [
+      tr(`§7Débloque le greenhouse ${tier + 1}`, `§7Unlocks greenhouse ${tier + 1}`),
+      ...(price ? [tr(`§7Prix : §d${price} Ethereal Vines`, `§7Price: §d${price} Ethereal Vines`)] : []),
+    ]
   }
 
   if (items.length === 0) return null
@@ -145,8 +155,8 @@ export function GreenhouseUpgrades() {
       at(4, 4),
       <McSlot
         icon={<McItem name="Arrow" />}
-        tooltip={['§aRetour', `§7Vers ${menu}`]}
-        label={`Retour au menu ${menu}`}
+        tooltip={[tr('§aRetour', '§aGo Back'), tr(`§7Vers ${menu}`, `§7To ${menu}`)]}
+        label={tr(`Retour au menu ${menu}`, `Back to the ${menu} menu`)}
         onClick={() => setOpenId(null)}
       />,
     )
@@ -154,7 +164,7 @@ export function GreenhouseUpgrades() {
   }
 
   return (
-    <Panel title="Upgrades du Greenhouse">
+    <Panel title={tr('Upgrades du Greenhouse', 'Greenhouse Upgrades')}>
       {/* Une fenêtre par menu (key) : ses cases repartent de zéro, comme un nouvel écran dans le jeu. */}
       <div className="overflow-x-auto pb-1">
         {open ? (
@@ -180,7 +190,7 @@ export function GreenhouseUpgrades() {
             {items.map((upgrade) => (
               <div key={upgrade.id} className="flex flex-wrap items-baseline justify-between gap-x-3">
                 <dt>
-                  {upgrade.name} <span className="text-xs text-ink-muted">({EFFECT_HINT[upgrade.effect]})</span>
+                  {upgrade.name} <span className="text-xs text-ink-muted">({effectHint(upgrade.effect)})</span>
                 </dt>
                 <dd className="ml-auto tabular-nums">
                   tier {tierOf(upgrade)}/{upgrade.tiers.length} · {upgradeValue(upgrade, tierOf(upgrade))}
@@ -188,7 +198,7 @@ export function GreenhouseUpgrades() {
               </div>
             ))}
           </dl>
-          <p className="mt-2 text-xs text-ink-muted">Clique sur un upgrade pour choisir ton tier.</p>
+          <p className="mt-2 text-xs text-ink-muted">{tr('Clique sur un upgrade pour choisir ton tier.', 'Click an upgrade to choose your tier.')}</p>
         </>
       )}
     </Panel>
@@ -202,13 +212,20 @@ function OpenUpgradeSummary({ upgrade, tier }: { readonly upgrade: Upgrade; read
   return (
     <div className="mt-3 space-y-1">
       <p aria-live="polite" className="text-sm">
-        {upgrade.name} : tier {tier}/{max} · {upgradeValue(upgrade, tier)}
+        {upgrade.name}
+        {tr(' : ', ': ')}tier {tier}/{max} · {upgradeValue(upgrade, tier)}
       </p>
       <p className="text-xs text-ink-muted">
         {next <= max
-          ? `Prochain tier (${romanNumeral(next)}) : ${tierBonusText(upgrade, next) ?? 'bonus inconnu'}. `
-          : 'Tous les tiers sont débloqués. '}
-        Clique sur un tier pour le régler ; recliquer le dernier le retire. Échap ou la flèche pour revenir.
+          ? tr(
+              `Prochain tier (${romanNumeral(next)}) : ${tierBonusText(upgrade, next) ?? 'bonus inconnu'}. `,
+              `Next tier (${romanNumeral(next)}): ${tierBonusText(upgrade, next) ?? 'unknown bonus'}. `,
+            )
+          : tr('Tous les tiers sont débloqués. ', 'All tiers are unlocked. ')}
+        {tr(
+          'Clique sur un tier pour le régler ; recliquer le dernier le retire. Échap ou la flèche pour revenir.',
+          'Click a tier to set it; clicking the last one again removes it. Esc or the arrow to go back.',
+        )}
       </p>
     </div>
   )

@@ -1,4 +1,6 @@
 import { formatDuration } from '../../logic/format'
+import { plural } from '../../components/labels'
+import { tr } from '../../i18n/locale'
 import { planProgress } from '../../logic/recipes'
 import type { CalculatorResult } from './calculatorResult'
 
@@ -11,20 +13,28 @@ export function ResultSummary({ result }: { readonly result: CalculatorResult })
   const progress = planProgress(plan)
   const percent = progress.total > 0 ? Math.floor((progress.done / progress.total) * 100) : 100
 
-  const bought = plan.toBuy.length > 0 ? ` · ${plan.toBuy.length} au bazar` : ''
+  const bought = plan.toBuy.length > 0 ? tr(` · ${plan.toBuy.length} au bazar`, ` · ${plan.toBuy.length} at the bazaar`) : ''
   const cards = [
     {
-      label: 'À obtenir',
-      value: `${missing.length} mutation${missing.length > 1 ? 's' : ''}`,
-      detail: `${copies} exemplaire${copies > 1 ? 's' : ''}${bought}`,
+      label: tr('À obtenir', 'To get'),
+      value: plural(missing.length, 'mutation'),
+      detail: plural(copies, tr('exemplaire', 'copy'), tr('exemplaires', 'copies')) + bought,
     },
-    { label: 'Crops de base', value: `${plan.baseCrops.length} types`, detail: `${baseTotal} au total` },
     {
-      label: 'Temps minimum',
-      value: formatDuration(estimate.criticalPathSeconds),
-      detail: `${estimate.criticalPathStages} stages${estimate.unknown.length > 0 ? ' · estimation partielle' : ''}`,
+      label: tr('Crops de base', 'Base crops'),
+      value: `${plan.baseCrops.length} types`,
+      detail: tr(`${baseTotal} au total`, `${baseTotal} in total`),
     },
-    { label: 'Déjà en stock', value: `${percent} %`, detail: `${progress.done} / ${progress.total} exemplaires` },
+    {
+      label: tr('Temps minimum', 'Minimum time'),
+      value: formatDuration(estimate.criticalPathSeconds),
+      detail: `${estimate.criticalPathStages} stages${estimate.unknown.length > 0 ? tr(' · estimation partielle', ' · partial estimate') : ''}`,
+    },
+    {
+      label: tr('Déjà en stock', 'Already in stock'),
+      value: tr(`${percent} %`, `${percent}%`),
+      detail: tr(`${progress.done} / ${progress.total} exemplaires`, `${progress.done} / ${progress.total} copies`),
+    },
   ]
 
   return (

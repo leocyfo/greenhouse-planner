@@ -8,8 +8,10 @@ import { InventoryTab } from '../features/inventory/InventoryTab'
 import { ToolsTab } from '../features/tools/ToolsTab'
 import { PlayerButton } from '../features/profile/PlayerButton'
 import { PlayerImportDialog } from '../features/profile/PlayerImportDialog'
+import { tr } from '../i18n/locale'
 import { AppFooter } from './AppFooter'
-import { DEFAULT_TAB, FULL_WIDTH_TABS, TAB_IDS, TABS, type TabId } from './tabs'
+import { LanguageSwitch } from './LanguageSwitch'
+import { DEFAULT_TAB, FULL_WIDTH_TABS, TAB_IDS, TABS, tabLabel, type TabId } from './tabs'
 import { useHashTab } from './useHashTab'
 
 const APP_NAME = 'Greenhouse Planner'
@@ -28,7 +30,7 @@ function TabContent({ tabId }: { readonly tabId: TabId }) {
       return <InventoryTab />
     case 'encyclopedie':
       return (
-        <Suspense fallback={<p className="animate-pulse text-sm text-ink-muted">Chargement de l&apos;arbre…</p>}>
+        <Suspense fallback={<p className="animate-pulse text-sm text-ink-muted">{tr("Chargement de l'arbre…", 'Loading the tree…')}</p>}>
           <EncyclopediaTab />
         </Suspense>
       )
@@ -52,7 +54,7 @@ function SkipToContent({ targetId }: { readonly targetId: string }) {
       onClick={() => document.getElementById(targetId)?.focus()}
       className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-canvas"
     >
-      Aller au contenu
+      {tr('Aller au contenu', 'Skip to content')}
     </button>
   )
 }
@@ -61,12 +63,14 @@ function SkipToContent({ targetId }: { readonly targetId: string }) {
 export function AppShell() {
   const [tabId, selectTab] = useHashTab(TAB_IDS, DEFAULT_TAB)
   const tab = TABS.find((t) => t.id === tabId) ?? TABS[0]
+  const label = tabLabel(tab.id)
+  const tabs = TABS.map((t) => ({ id: t.id, label: tabLabel(t.id) }))
   const panelId = tabPanelId(TAB_PREFIX, tab.id)
 
   // Le titre de la page suit l'onglet (historique du navigateur, onglets, lecteurs d'écran).
   useEffect(() => {
-    document.title = `${tab.label} · ${APP_NAME}`
-  }, [tab.label])
+    document.title = `${label} · ${APP_NAME}`
+  }, [label])
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -80,15 +84,16 @@ export function AppShell() {
         <div className="app-header-bar pointer-events-auto mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-white/10 px-3 py-2 shadow-lg shadow-black/30 xl:w-fit xl:flex-nowrap">
           <h1 className="whitespace-nowrap px-1 text-base font-semibold tracking-tight">{APP_NAME}</h1>
           <Tabs
-            tabs={TABS}
+            tabs={tabs}
             selected={tab.id}
             onSelect={selectTab}
             idPrefix={TAB_PREFIX}
-            label="Sections de l'application"
+            label={tr("Sections de l'application", 'App sections')}
             variant="pills"
             className="order-last w-full xl:order-none xl:w-auto xl:min-w-0"
           />
-          <div className="ml-auto xl:ml-1">
+          <div className="ml-auto flex items-center gap-2 xl:ml-1">
+            <LanguageSwitch />
             <PlayerButton />
           </div>
         </div>

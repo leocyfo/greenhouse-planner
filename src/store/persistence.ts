@@ -4,6 +4,7 @@
  * reprend sa valeur par défaut, le reste est conservé.
  */
 import { z } from 'zod'
+import { tr } from '../i18n/locale'
 import { normalizeLonelilyCells, normalizeSpots, normalizeTargetQuantity } from './calculator'
 import { normalizeCount } from './progress'
 import type {
@@ -21,7 +22,7 @@ export const STORAGE_KEY = 'greenhouse-planner'
 export const PLAYER_NAME = /^[A-Za-z0-9_]{0,16}$/
 
 /** À incrémenter à chaque changement de forme de PersistedState, avec une migration. */
-export const SCHEMA_VERSION = 9
+export const SCHEMA_VERSION = 10
 
 /**
  * Migrations successives : MIGRATIONS[n] transforme un état de version n en version n + 1.
@@ -47,6 +48,8 @@ const MIGRATIONS: Readonly<Record<number, (state: unknown) => unknown>> = {
   7: (state) => renameGround(state, 'Farmland', 'Dirt'),
   // v9 ajoute `settings.player` (import depuis Hypixel) : pseudo vide, invitation à afficher.
   8: (state) => state,
+  // v10 ajoute `settings.locale` (langue de l'interface) : null, celle du navigateur.
+  9: (state) => state,
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -250,6 +253,7 @@ export function sanitizePersistedState(raw: unknown, defaults: PersistedState): 
               promptDismissed: z.boolean().catch(false),
             })
             .catch(() => ({ ...defaultSettings.player })),
+          locale: z.enum(['fr', 'en']).nullable().catch(null),
         })
         .catch(() => ({ ...defaultSettings, growth: { ...defaultSettings.growth }, player: { ...defaultSettings.player } })),
     })
@@ -310,18 +314,18 @@ export function parseProgressFile(text: string, defaults: PersistedState): Impor
   try {
     json = JSON.parse(text)
   } catch {
-    return { ok: false, error: "Le fichier n'est pas du JSON valide." }
+    return { ok: false, error: tr("Le fichier n'est pas du JSON valide.", 'The file is not valid JSON.') }
   }
   const envelope = z
     .object({ app: z.literal(APP_ID), schemaVersion: z.number().int().positive(), state: z.unknown() })
     .safeParse(json)
   if (!envelope.success) {
-    return { ok: false, error: "Ce fichier n'est pas une sauvegarde de Greenhouse Planner." }
+    return { ok: false, error: tr("Ce fichier n'est pas une sauvegarde de Greenhouse Planner.", 'This file is not a Greenhouse Planner save.') }
   }
   if (envelope.data.schemaVersion > SCHEMA_VERSION) {
-    return { ok: false, error: "Cette sauvegarde vient d'une version plus récente de l'application." }
+    return { ok: false, error: tr("Cette sauvegarde vient d'une version plus récente de l'application.", 'This save comes from a newer version of the app.') }
   }
   const migrated = migratePersistedState(envelope.data.state, envelope.data.schemaVersion)
-  if (migrated === null) return { ok: false, error: 'Cette version de sauvegarde ne peut pas être relue.' }
+  if (migrated === null) return { ok: false, error: tr('Cette version de sauvegarde ne peut pas être relue.', 'This save version cannot be read.') }
   return { ok: true, state: sanitizePersistedState(migrated, defaults) }
 }

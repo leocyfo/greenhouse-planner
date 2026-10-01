@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { formatGoalType, formatPercent } from '../../components/labels'
 import { ProgressBar } from '../../components/ProgressBar'
+import { tr } from '../../i18n/locale'
 import { useAppStore } from '../../store/appStore'
 import type { GoalStatus } from '../../store/useGoalStatuses'
 import { GoalDetails } from './GoalDetails'
@@ -22,8 +23,8 @@ export function GoalRow({ status }: { readonly status: GoalStatus }) {
           type="checkbox"
           checked={active}
           onChange={(event) => setGoalActive(goal.id, event.target.checked)}
-          aria-label={`Suivre ${goal.name}`}
-          title="Suivre cet objectif"
+          aria-label={tr(`Suivre ${goal.name}`, `Follow ${goal.name}`)}
+          title={tr('Suivre cet objectif', 'Follow this goal')}
           className="size-4 shrink-0 cursor-pointer accent-accent"
         />
         {/* Place fixe : les noms restent alignés quand le wiki n'a pas d'image. */}
@@ -47,7 +48,7 @@ export function GoalRow({ status }: { readonly status: GoalStatus }) {
           onClick={() => setOpen((value) => !value)}
           className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-panel-raised hover:text-ink"
         >
-          <span className="sr-only">Détails : {goal.name}</span>
+          <span className="sr-only">{tr(`Détails : ${goal.name}`, `Details: ${goal.name}`)}</span>
           <span aria-hidden="true" className={`inline-block transition-transform ${open ? 'rotate-180' : ''}`}>
             ▾
           </span>

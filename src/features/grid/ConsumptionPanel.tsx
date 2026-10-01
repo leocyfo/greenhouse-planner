@@ -3,6 +3,7 @@ import { CropLabel } from '../../components/game/CropLabel'
 import { Panel } from '../../components/Panel'
 import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { buildOccupancy, gridConsumption } from '../../logic/grid'
 import { vineProgress } from '../../logic/tools'
 import { useAppStore } from '../../store/appStore'
@@ -45,19 +46,19 @@ export function ConsumptionPanel() {
   const baseCrops = [...totals.baseCrops].sort(([a], [b]) => a.localeCompare(b, 'fr'))
 
   return (
-    <Panel title="Ce que la grille consomme">
+    <Panel title={tr('Ce que la grille consomme', 'What the grid uses')}>
       <SegmentedControl
-        legend="Grilles comptées"
+        legend={tr('Grilles comptées', 'Grids counted')}
         name="consumption-scope"
         value={scope}
         onChange={setScope}
         options={[
-          { value: 'current', label: 'Ce greenhouse' },
-          { value: 'all', label: 'Tous les débloqués' },
+          { value: 'current', label: tr('Ce greenhouse', 'This greenhouse') },
+          { value: 'all', label: tr('Tous les débloqués', 'All unlocked') },
         ]}
       />
       {mutations.length === 0 && baseCrops.length === 0 ? (
-        <p className="mt-3 text-sm text-ink-muted">Aucun crop posé.</p>
+        <p className="mt-3 text-sm text-ink-muted">{tr('Aucun crop posé.', 'No crop placed.')}</p>
       ) : (
         <div className="mt-3 space-y-3 text-sm">
           {mutations.length > 0 && (
@@ -69,7 +70,8 @@ export function ConsumptionPanel() {
                   <li key={id} className="flex items-baseline justify-between gap-2">
                     <CropLabel crop={{ kind: 'mutation', id }} />
                     <span className={`text-xs tabular-nums ${missing > 0 ? 'text-warning' : 'text-ink-muted'}`}>
-                      {placed} posées / {owned} en stock{missing > 0 ? ` · manque ${missing}` : ' ✓'}
+                      {tr(`${placed} posées / ${owned} en stock`, `${placed} placed / ${owned} in stock`)}
+                      {missing > 0 ? tr(` · manque ${missing}`, ` · ${missing} missing`) : ' ✓'}
                     </span>
                   </li>
                 )
@@ -78,7 +80,7 @@ export function ConsumptionPanel() {
           )}
           {baseCrops.length > 0 && (
             <div>
-              <p className="mb-1 text-xs text-ink-muted">Crops de base</p>
+              <p className="mb-1 text-xs text-ink-muted">{tr('Crops de base', 'Base crops')}</p>
               <p className="text-xs">{baseCrops.map(([name, count]) => `${name} × ${count}`).join(' · ')}</p>
             </div>
           )}

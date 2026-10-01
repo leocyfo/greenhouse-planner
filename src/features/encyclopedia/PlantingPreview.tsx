@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { cropSide } from '../../logic/grid'
 import { plantingPreview } from '../../logic/plantingPreview'
 import { GRID_COLORS } from '../../theme/palette'
@@ -53,13 +54,13 @@ export function PlantingPreview({ mutation }: { readonly mutation: Mutation }) {
   const around = [...counts].map(([name, count]) => `${count} × ${name}`).join(', ')
   const label =
     placements.length === 0
-      ? `Exemple : ${mutation.name} seule, aucun crop dans les cases autour.`
-      : `Exemple de plantation : ${mutation.name} au centre, avec autour ${around}.`
+      ? tr(`Exemple : ${mutation.name} seule, aucun crop dans les cases autour.`, `Example: ${mutation.name} alone, no crop in the cells around it.`)
+      : tr(`Exemple de plantation : ${mutation.name} au centre, avec autour ${around}.`, `Planting example: ${mutation.name} in the center, with ${around} around it.`)
 
   return (
     <details open className="group mb-4 break-inside-avoid rounded-lg border border-line">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-3 py-2 text-[11px] font-bold tracking-wider text-ink-muted uppercase hover:text-ink [&::-webkit-details-marker]:hidden">
-        Aperçu de la plantation
+        {tr('Aperçu de la plantation', 'Planting preview')}
         <span aria-hidden="true" className="inline-block transition-transform group-open:rotate-180">
           ▾
         </span>
@@ -94,19 +95,19 @@ export function PlantingPreview({ mutation }: { readonly mutation: Mutation }) {
           <span className="flex flex-wrap justify-center gap-x-4 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <span aria-hidden="true" className="size-2.5 rounded-sm" style={{ background: GRID_COLORS.spawn }} />
-              Emplacement
+              {tr('Emplacement', 'Spot')}
             </span>
             {placements.length > 0 && (
               <span className="inline-flex items-center gap-1.5">
                 <span aria-hidden="true" className="size-2.5 rounded-sm" style={{ background: GRID_COLORS.placed }} />
-                Crop à poser
+                {tr('Crop à poser', 'Crop to place')}
               </span>
             )}
           </span>
           <span className="block">
             {placements.length === 0
-              ? 'Aucun crop dans les cases autour, diagonales comprises.'
-              : 'Diagonales comprises · un exemple vérifié parmi d’autres.'}
+              ? tr('Aucun crop dans les cases autour, diagonales comprises.', 'No crop in the cells around it, diagonals included.')
+              : tr('Diagonales comprises · un exemple vérifié parmi d’autres.', 'Diagonals included · one checked example among others.')}
           </span>
         </figcaption>
       </figure>

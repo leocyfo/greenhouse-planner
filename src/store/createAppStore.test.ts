@@ -112,6 +112,7 @@ describe('store : actions', () => {
       growth: { upgrades: 0.25 },
       analyzedBuyable: true,
       player: defaults.settings.player,
+      locale: null,
     })
   })
 
@@ -246,5 +247,15 @@ describe('store : grilles', () => {
     expect(active()).toMatchObject({ id: 'id-1', name: 'Blastberry : minimum' })
     expect(active()?.placements).toHaveLength(21) // 9 Chocoberry + 12 Ashwreath
     expect(active()?.ground[1 * 10 + 1]).toBe('Sand') // emplacement de spawn
+  })
+
+  it('prend le nom du plan AVRG dans la langue du moment', () => {
+    let data = projectData()
+    const english = { ...data, layouts: data.layouts.map((layout) => ({ ...layout, name: `${layout.id} (en)` })) }
+    const store = createAppStore(defaults, memoryStorage().storage, { data: () => data, makeId: () => 'id-1' })
+    data = english
+    store.getState().loadPreset(0, 'avrg_blastberry_min')
+    const greenhouse = store.getState().grids.greenhouses[0]
+    expect(greenhouse?.layouts.find((layout) => layout.id === 'id-1')?.name).toBe('avrg_blastberry_min (en)')
   })
 })

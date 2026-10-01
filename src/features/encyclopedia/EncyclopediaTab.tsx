@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { goToTab } from '../../app/navigation'
 import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { isManualSpecial } from '../../logic/nextAction'
 import { useAppStore } from '../../store/appStore'
 import { useGoalPlan } from '../../store/useGoalPlan'
@@ -23,10 +24,23 @@ import { MutationTreeCard } from './TreeCard'
 import { TreeLegend } from './TreeLegend'
 import { useContentWidth } from './useContentWidth'
 
-const ARRANGEMENTS = [
-  { value: 'rarity', label: 'Par rareté', description: 'Une colonne par rareté, de Common à Legendary.' },
-  { value: 'step', label: 'Par étape', description: "Dans l'ordre de fabrication : chaque mutation une colonne après son ingrédient le plus avancé." },
-] as const
+/** Rangements des colonnes de l'arbre. */
+const arrangements = () =>
+  [
+    {
+      value: 'rarity',
+      label: tr('Par rareté', 'By rarity'),
+      description: tr('Une colonne par rareté, de Common à Legendary.', 'One column per rarity, from Common to Legendary.'),
+    },
+    {
+      value: 'step',
+      label: tr('Par étape', 'By step'),
+      description: tr(
+        "Dans l'ordre de fabrication : chaque mutation une colonne après son ingrédient le plus avancé.",
+        'In crafting order: each mutation one column after its most advanced ingredient.',
+      ),
+    },
+  ] as const
 
 /**
  * Onglet Encyclopédie : l'arbre des recettes, colonnes par rareté (ou par étape), sur toute la
@@ -111,25 +125,29 @@ export function EncyclopediaTab() {
 
   const selectedName = selectedId ? data.mutationsById.get(selectedId)?.name : undefined
   const treeLabel = selectedName
-    ? `Arbre des recettes : ${selectedName}, ${mode === 'neighbors' ? 'avant et après' : 'tout le chemin'}`
-    : `Arbre des recettes, ${arrangement === 'rarity' ? 'par rareté' : 'par étape'}`
+    ? tr(
+        `Arbre des recettes : ${selectedName}, ${mode === 'neighbors' ? 'avant et après' : 'tout le chemin'}`,
+        `Recipe tree: ${selectedName}, ${mode === 'neighbors' ? 'before and after' : 'whole path'}`,
+      )
+    : tr(`Arbre des recettes, ${arrangement === 'rarity' ? 'par rareté' : 'par étape'}`, `Recipe tree, ${arrangement === 'rarity' ? 'by rarity' : 'by step'}`)
 
   return (
     <div className="space-y-4">
       <header className="sr-only">
-        <h2>Encyclopédie</h2>
+        <h2>{tr('Encyclopédie', 'Encyclopedia')}</h2>
         <p>
-          Arbre des recettes : chaque mutation dans la colonne de sa rareté (ou de son étape), reliée à ses ingrédients. Entrée sur une
-          mutation ne garde que ce qu&apos;il faut pour la faire ; Entrée à nouveau ouvre sa fiche ; Échap revient à tout l&apos;arbre.
-          La recherche propose les mutations dont le nom correspond.
+          {tr(
+            "Arbre des recettes : chaque mutation dans la colonne de sa rareté (ou de son étape), reliée à ses ingrédients. Entrée sur une mutation ne garde que ce qu'il faut pour la faire ; Entrée à nouveau ouvre sa fiche ; Échap revient à tout l'arbre. La recherche propose les mutations dont le nom correspond.",
+            'Recipe tree: each mutation in the column of its rarity (or step), linked to its ingredients. Enter on a mutation keeps only what it takes to make it; Enter again opens its sheet; Esc goes back to the whole tree. The search suggests the mutations whose name matches.',
+          )}
         </p>
       </header>
 
       <div className="flex flex-wrap items-end gap-4">
         <MutationSearch query={query} results={results} states={states} onQueryChange={setQuery} onChoose={choose} />
         <div className="flex flex-col gap-1 text-xs text-ink-muted">
-          <span aria-hidden="true">Colonnes</span>
-          <SegmentedControl legend="Colonnes" name={arrangementName} options={ARRANGEMENTS} value={arrangement} onChange={setArrangement} />
+          <span aria-hidden="true">{tr('Colonnes', 'Columns')}</span>
+          <SegmentedControl legend={tr('Colonnes', 'Columns')} name={arrangementName} options={arrangements()} value={arrangement} onChange={setArrangement} />
         </div>
         <label className="flex h-9 items-center gap-2 text-sm">
           <input
@@ -138,7 +156,7 @@ export function EncyclopediaTab() {
             onChange={(event) => setShowBaseCrops(event.target.checked)}
             className="size-4 accent-accent"
           />
-          Afficher les crops de base
+          {tr('Afficher les crops de base', 'Show base crops')}
         </label>
       </div>
 
@@ -175,9 +193,14 @@ export function EncyclopediaTab() {
         <section aria-labelledby="specials-title" className="space-y-2">
           <div>
             <h3 id="specials-title" className="text-sm font-semibold">
-              Conditions spéciales
+              {tr('Conditions spéciales', 'Special conditions')}
             </h3>
-            <p className="text-xs text-ink-muted">Hors de l&apos;arbre : aucune recette à poser, une condition à part (voir la fiche).</p>
+            <p className="text-xs text-ink-muted">
+              {tr(
+                "Hors de l'arbre : aucune recette à poser, une condition à part (voir la fiche).",
+                'Outside the tree: no recipe to lay out, a separate condition (see the sheet).',
+              )}
+            </p>
           </div>
           <div className="flex flex-wrap gap-3">
             {specials.map((mutation) => (

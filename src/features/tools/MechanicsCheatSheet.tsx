@@ -3,6 +3,7 @@ import { BestiaryLine } from '../../components/game/BestiaryLine'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { Panel } from '../../components/Panel'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 
 function Card({ title, children }: { readonly title: string; readonly children: ReactNode }) {
   return (
@@ -21,23 +22,26 @@ function Card({ title, children }: { readonly title: string; readonly children: 
 export function MechanicsCheatSheet() {
   const { mechanics: m, bestiary } = getGameData()
   return (
-    <Panel title="Aide-mémoire des mécaniques">
+    <Panel title={tr('Aide-mémoire des mécaniques', 'Mechanics cheat sheet')}>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <Card title="Lock-in">
           <p>{m.lockIn}</p>
         </Card>
-        <Card title={`Decay (~${m.decayDays} jours)`}>
+        <Card title={tr(`Decay (~${m.decayDays} jours)`, `Decay (~${m.decayDays} days)`)}>
           <p>{m.decay}</p>
           <p>{m.decayAvrg}</p>
         </Card>
-        <Card title="Eau">
-          <p>Perte : {m.water.lossPerStage}.</p>
-          <p>Niveau : de {m.water.range}.</p>
+        <Card title={tr('Eau', 'Water')}>
+          <p>{tr(`Perte : ${m.water.lossPerStage}.`, `Loss: ${m.water.lossPerStage}.`)}</p>
+          <p>{tr(`Niveau : de ${m.water.range}.`, `Level: from ${m.water.range}.`)}</p>
           <p>{m.water.rule}</p>
-          <p>Bonus : {m.water.modifiers}.</p>
+          <p>{tr(`Bonus : ${m.water.modifiers}.`, `Bonuses: ${m.water.modifiers}.`)}</p>
         </Card>
         <Card title="Harvest Bounty">
-          <p>{m.harvestBounty.description} :</p>
+          <p>
+            {m.harvestBounty.description}
+            {tr(' :', ':')}
+          </p>
           <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-ink">
             {m.harvestBounty.possibleDrops.map((drop) => (
               <li key={drop} className="flex items-center gap-1.5">
@@ -47,7 +51,7 @@ export function MechanicsCheatSheet() {
             ))}
           </ul>
         </Card>
-        <Card title="Analyse">
+        <Card title={tr('Analyse', 'Analysis')}>
           <p>{m.analysis}</p>
           <p>{m.analysisAvrg}</p>
           <p>
@@ -65,7 +69,7 @@ export function MechanicsCheatSheet() {
         </Card>
       </div>
 
-      <h4 className="mt-5 mb-2 text-sm font-semibold">Conseils du guide AVRG</h4>
+      <h4 className="mt-5 mb-2 text-sm font-semibold">{tr('Conseils du guide AVRG', 'Tips from the AVRG guide')}</h4>
       <dl className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {m.tips.map((tip) => (
           <div key={tip.id} className="rounded-lg border border-line bg-canvas/40 p-3">

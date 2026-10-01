@@ -4,6 +4,7 @@
  */
 import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
+import { tr } from '../i18n/locale'
 import { withCrop, withGround, withoutCropAt } from '../logic/grid'
 import type { PlanMode } from '../logic/recipes'
 import type { CropRef, GameData, Placement } from '../types/game'
@@ -46,6 +47,8 @@ export interface AppActions {
   setAnalyzedBuyable: (enabled: boolean) => void
   /** Joueur Hypixel lié : pseudo, profil choisi, invitation du tableau de bord écartée. */
   setPlayer: (player: Partial<PlayerSettings>) => void
+  /** Langue de l'interface (null : celle du navigateur). */
+  setLocale: (locale: SettingsState['locale']) => void
   /** Stock importé d'un profil Hypixel, en une seule mise à jour (voir withImportedInventory). */
   importInventory: (counts: Readonly<Record<string, number>>, keepMissing: boolean) => void
 
@@ -95,8 +98,11 @@ export interface AppActions {
 export type AppState = PersistedState & AppActions
 
 export interface StoreOptions {
-  /** Données du jeu, pour valider les poses sur la grille (null si mutations.json est invalide). */
-  readonly data?: GameData | null
+  /**
+   * Données du jeu, pour valider les poses sur la grille (null si mutations.json est invalide). Une
+   * fonction rend celles de la langue du moment : un plan du guide chargé prend le nom traduit.
+   */
+  readonly data?: GameData | null | (() => GameData)
   /** Générateur d'identifiants de plans (remplaçable dans les tests). */
   readonly makeId?: () => string
 }
@@ -108,7 +114,9 @@ function randomId(): string {
 
 /** Crée un store sauvegardé dans `storage` (le localStorage du navigateur par défaut). */
 export function createAppStore(defaults: PersistedState, storage?: StateStorage, options: StoreOptions = {}) {
-  const data = options.data ?? null
+  const source = options.data ?? null
+  const currentData = (): GameData | null => (typeof source === 'function' ? source() : source)
+  const data = currentData()
   const makeId = options.makeId ?? randomId
   const size = {
     width: data?.mechanics.greenhouse.width ?? 0,
@@ -137,6 +145,7 @@ export function createAppStore(defaults: PersistedState, storage?: StateStorage,
           set((s) => ({ settings: { ...s.settings, growth: { ...s.settings.growth, ...growth } } })),
         setAnalyzedBuyable: (analyzedBuyable) => set((s) => ({ settings: { ...s.settings, analyzedBuyable } })),
         setPlayer: (player) => set((s) => ({ settings: { ...s.settings, player: { ...s.settings.player, ...player } } })),
+        setLocale: (locale) => set((s) => ({ settings: { ...s.settings, locale } })),
         importInventory: (counts, keepMissing) =>
           set((s) => ({ progress: withImportedInventory(s.progress, counts, keepMissing) })),
 
@@ -179,7 +188,7 @@ export function createAppStore(defaults: PersistedState, storage?: StateStorage,
           set((s) => {
             const layout = findLayout(s.grids, greenhouse, layoutId)
             if (!layout) return {}
-            return { grids: withLayoutAdded(s.grids, greenhouse, { ...layout, id: makeId(), name: `${layout.name} (copie)` }) }
+            return { grids: withLayoutAdded(s.grids, greenhouse, { ...layout, id: makeId(), name: tr(`${layout.name} (copie)`, `${layout.name} (copy)`) }) }
           }),
         renameLayout: (greenhouse, layoutId, name) => {
           const trimmed = name.trim().slice(0, 60)
@@ -191,7 +200,7 @@ export function createAppStore(defaults: PersistedState, storage?: StateStorage,
             grids: withLayoutRemoved(s.grids, greenhouse, layoutId, emptyLayout(makeId(), 'Plan 1', size, defaultSurface)),
           })),
         loadPreset: (greenhouse, presetId) => {
-          const preset = data?.layouts.find((layout) => layout.id === presetId)
+          const preset = currentData()?.layouts.find((layout) => layout.id === presetId)
           if (!preset) return
           set((s) => ({
             grids: withLayoutAdded(s.grids, greenhouse, layoutFromPreset(makeId(), preset, size, defaultSurface)),
@@ -205,7 +214,7 @@ export function createAppStore(defaults: PersistedState, storage?: StateStorage,
         },
         placeCrop: (greenhouse, layoutId, crop, x, y) => {
           const layout = findLayout(get().grids, greenhouse, layoutId)
-          if (!data || !layout) return 'Plan introuvable.'
+          if (!data || !layout) return tr('Plan introuvable.', 'Plan not found.')
           const change = withCrop(data, toGridInput(layout, size), crop, x, y)
           if (!change.ok) return change.reason
           set((s) => ({

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { CropLabel } from '../../components/game/CropLabel'
 import { Tooltip } from '../../components/Tooltip'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { planTreeKeys, type PlanTreeNode } from '../../logic/recipes'
 import { cropName } from '../../components/game/recipeText'
 
@@ -9,18 +10,21 @@ import { cropName } from '../../components/game/recipeText'
 function relationText(node: PlanTreeNode): string {
   switch (node.relation) {
     case 'target':
-      return `cible × ${node.quantity}`
+      return tr(`cible × ${node.quantity}`, `target × ${node.quantity}`)
     case 'condition':
-      return `× ${node.quantity} à poser${node.cells > node.quantity ? ` (${node.cells} cases)` : ''}`
+      return (
+        tr(`× ${node.quantity} à poser`, `× ${node.quantity} to place`) +
+        (node.cells > node.quantity ? tr(` (${node.cells} cases)`, ` (${node.cells} cells)`) : '')
+      )
     case 'consumed':
-      return `× ${node.quantity} consommé${node.quantity > 1 ? 's' : ''}`
+      return tr(`× ${node.quantity} consommé${node.quantity > 1 ? 's' : ''}`, `× ${node.quantity} consumed`)
     case 'catalyst':
-      return `× ${node.quantity} (catalyseur)`
+      return tr(`× ${node.quantity} (catalyseur)`, `× ${node.quantity} (catalyst)`)
   }
 }
 
 function NodeStatus({ node }: { readonly node: PlanTreeNode }) {
-  if (node.crop.kind === 'base') return <span className="text-xs text-ink-muted">crop de base</span>
+  if (node.crop.kind === 'base') return <span className="text-xs text-ink-muted">{tr('crop de base', 'base crop')}</span>
   const need = node.need
   if (!need) return null
   const mutation = getGameData().mutationsById.get(node.crop.id)
@@ -29,14 +33,16 @@ function NodeStatus({ node }: { readonly node: PlanTreeNode }) {
     <>
       {need.missing > 0 ? (
         <span className="text-xs text-ink-muted">
-          {need.buy ? 'à acheter au bazar' : 'total à obtenir'} : <span className="tabular-nums text-ink">{need.missing}</span>
+          {need.buy ? tr('à acheter au bazar', 'to buy at the bazaar') : tr('total à obtenir', 'total to get')}
+          {tr(' : ', ': ')}
+          <span className="tabular-nums text-ink">{need.missing}</span>
         </span>
       ) : (
-        <span className="text-xs text-accent-strong">✓ en stock ({need.owned})</span>
+        <span className="text-xs text-accent-strong">{tr(`✓ en stock (${need.owned})`, `✓ in stock (${need.owned})`)}</span>
       )}
       {special && need.missing > 0 && !need.buy && (
         <Tooltip
-          label="condition spéciale"
+          label={tr('condition spéciale', 'special condition')}
           content={special}
           className="rounded-md border border-line px-1.5 text-xs text-ink-muted underline decoration-dotted underline-offset-2"
         />
@@ -70,7 +76,7 @@ function TreeItem({ node, depth, isOpen, onToggle }: TreeItemProps) {
               ▾
             </span>
             <span className="sr-only">
-              {open ? 'Replier' : 'Déplier'} {name}
+              {open ? tr('Replier', 'Collapse') : tr('Déplier', 'Expand')} {name}
             </span>
           </button>
         ) : (
@@ -131,7 +137,7 @@ export function PlanTreeView({ tree }: { readonly tree: readonly PlanTreeNode[] 
           }}
           className="rounded-lg border border-line px-2.5 py-1 text-xs text-ink-muted hover:text-ink"
         >
-          Tout déplier
+          {tr('Tout déplier', 'Expand all')}
         </button>
         <button
           type="button"
@@ -141,7 +147,7 @@ export function PlanTreeView({ tree }: { readonly tree: readonly PlanTreeNode[] 
           }}
           className="rounded-lg border border-line px-2.5 py-1 text-xs text-ink-muted hover:text-ink"
         >
-          Tout replier
+          {tr('Tout replier', 'Collapse all')}
         </button>
       </div>
       <ul className="text-sm">

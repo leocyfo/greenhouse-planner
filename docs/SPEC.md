@@ -608,6 +608,25 @@ recrée tout »)
 - Calcul d'une demi-seconde environ, dans un Web Worker (`grid/autofill.worker.ts`, fichier à part
   de 179 Ko chargé au premier calcul) : la page reste fluide ; « Calcul… » sur le bouton.
 
+### Version anglaise (demande du joueur, 01/10/2026)
+- Boutons FR / EN dans la barre du haut (`app/LanguageSwitch.tsx`), à côté de l'import. Sans choix,
+  la langue suit le navigateur (français si sa première langue commence par « fr », anglais
+  sinon). Le choix est gardé : sauvegarde v10, `settings.locale` (`'fr'`, `'en'` ou `null`).
+- Sans bibliothèque : `tr('français', 'English')` à côté de chaque texte (`i18n/locale.ts`). Au
+  changement de langue, toute l'interface est redessinée (`AppShell` a la langue pour clé) ;
+  `<html lang>`, titre de l'onglet, nombres (`formatDecimal`) et pluriels (« 0 stage » en
+  français, « 0 stages » en anglais) suivent.
+- Textes des données : `src/data/mutations.en.json` reprend la forme de mutations.json et ne
+  contient que les textes traduits (notes, conditions, mécaniques, astuces, objectifs, plans AVRG,
+  sources). Les listes sont reliées par `id`, `name` ou `mob`. Les nombres et noms du jeu restent
+  ceux de mutations.json : la version anglaise ne peut pas changer une valeur. Tests : chaque
+  entrée traduite existe dans mutations.json, les données anglaises se chargent avec les mêmes
+  nombres et aucun texte français n'y reste.
+- Le Web Worker du plan automatique reçoit la langue (raisons d'un refus traduites). Les messages
+  du serveur d'import (en français) sont traduits côté site (`profileApi.ts`, `serverErrorText`).
+- Restent en français : les messages de validation de mutations.json (pour qui modifie le
+  fichier) et le code.
+
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,
   30/09/2026) : cartes, fiches, objectifs, sac, arbre, outils, infobulles Minecraft. Les marques

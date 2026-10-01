@@ -2,6 +2,7 @@
  * État sauvegardé de l'application (progression, réglages, calculateur, grilles) et ses
  * valeurs par défaut.
  */
+import type { Locale } from '../i18n/locale'
 import type { Inventory, PlanMode, Target } from '../logic/recipes'
 import type { GameData, Placement } from '../types/game'
 
@@ -29,6 +30,8 @@ export interface SettingsState {
   readonly analyzedBuyable: boolean
   /** Joueur Hypixel dont on importe le stock (pseudo, profil choisi) ; invitation au 1er lancement. */
   readonly player: PlayerSettings
+  /** Langue de l'interface ; null : celle du navigateur (voir browserLocale). */
+  readonly locale: Locale | null
 }
 
 export interface PlayerSettings {
@@ -123,6 +126,7 @@ export function defaultPersistedState(data: GameData | null): PersistedState {
       growth: { upgrades: data ? data.mechanics.growthStage.formula.upgradesMax : 0 },
       analyzedBuyable: false,
       player: { name: '', profileId: null, promptDismissed: false },
+      locale: null,
     },
     calculator: {
       targets: [],

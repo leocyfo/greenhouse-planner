@@ -1,6 +1,7 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from 'react'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { wikiImage } from '../../data/wikiImages'
 import { cropSide, type GridAnalysis, type GridInput } from '../../logic/grid'
 import { BROKEN_GROUND, LOCKED_GROUND } from '../../logic/ground'
@@ -127,11 +128,11 @@ export function GridBoard({
 
   function describe(cell: number, x: number, y: number): string {
     const placement = placementAt(cell)
-    const parts = [`${cellName(x, y)} : ${groundLabel(grid.ground[cell] ?? '')}`]
-    parts.push(placement ? cropName(placement.crop) : 'vide')
+    const parts = [tr(`${cellName(x, y)} : ${groundLabel(grid.ground[cell] ?? '')}`, `${cellName(x, y)}: ${groundLabel(grid.ground[cell] ?? '')}`)]
+    parts.push(placement ? cropName(placement.crop) : tr('vide', 'empty'))
     const spawns = (analysis.cells[cell]?.mutationIds ?? []).map(mutationName)
-    if (spawns.length > 0) parts.push(`spawn possible : ${spawns.join(', ')}`)
-    if (analysis.cells[cell]?.conflict) parts.push('conflit')
+    if (spawns.length > 0) parts.push(tr(`spawn possible : ${spawns.join(', ')}`, `possible spawn: ${spawns.join(', ')}`))
+    if (analysis.cells[cell]?.conflict) parts.push(tr('conflit', 'conflict'))
     return parts.join(', ')
   }
 
@@ -193,7 +194,10 @@ export function GridBoard({
   return (
     <div className="@container overflow-x-auto pb-2" onPointerUp={() => (painting.current = false)} onPointerLeave={() => onHover(null)}>
       <p id={helpId} className="sr-only">
-        Flèches pour se déplacer, Entrée pour agir avec l&apos;outil choisi, Suppr pour effacer.
+        {tr(
+          "Flèches pour se déplacer, Entrée pour agir avec l'outil choisi, Suppr pour effacer.",
+          'Arrows to move, Enter to act with the chosen tool, Delete to erase.',
+        )}
       </p>
       <div
         ref={boardRef}

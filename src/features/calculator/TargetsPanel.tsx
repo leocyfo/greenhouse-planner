@@ -5,6 +5,7 @@ import { formatRarity } from '../../components/labels'
 import { NumberStepper } from '../../components/NumberStepper'
 import { Panel } from '../../components/Panel'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { useAppStore } from '../../store/appStore'
 import { MAX_TARGET_QUANTITY } from '../../store/calculator'
 
@@ -29,11 +30,11 @@ export function TargetsPanel() {
 
   return (
     <Panel
-      title="Cibles"
+      title={tr('Cibles', 'Targets')}
       actions={
         hasContent && (
           <button type="button" onClick={clear} className="text-xs text-ink-muted underline-offset-2 hover:text-ink hover:underline">
-            Tout effacer
+            {tr('Tout effacer', 'Clear all')}
           </button>
         )
       }
@@ -60,12 +61,12 @@ export function TargetsPanel() {
           </select>
         </label>
         <div className="flex flex-col gap-1 text-xs text-ink-muted">
-          <span aria-hidden="true">Quantité</span>
+          <span aria-hidden="true">{tr('Quantité', 'Quantity')}</span>
           <NumberStepper
             value={quantity}
             onChange={setQuantityToAdd}
-            name="Quantité à ajouter"
-            inputLabel="Quantité à ajouter"
+            name={tr('Quantité à ajouter', 'Quantity to add')}
+            inputLabel={tr('Quantité à ajouter', 'Quantity to add')}
             min={1}
             max={MAX_TARGET_QUANTITY}
           />
@@ -74,12 +75,12 @@ export function TargetsPanel() {
           type="submit"
           className="h-9 rounded-lg bg-accent px-4 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
         >
-          Ajouter
+          {tr('Ajouter', 'Add')}
         </button>
       </form>
 
       {calculator.targets.length > 0 && (
-        <ul className="mt-4 space-y-2" aria-label="Mutations ciblées">
+        <ul className="mt-4 space-y-2" aria-label={tr('Mutations ciblées', 'Targeted mutations')}>
           {calculator.targets.map((target) => {
             const name = data.mutationsById.get(target.mutationId)?.name ?? target.mutationId
             return (
@@ -91,13 +92,13 @@ export function TargetsPanel() {
                   value={target.quantity}
                   onChange={(value) => setQuantity(target.mutationId, value)}
                   name={name}
-                  inputLabel={`${name} : quantité voulue`}
+                  inputLabel={tr(`${name} : quantité voulue`, `${name}: wanted quantity`)}
                   min={1}
                   max={MAX_TARGET_QUANTITY}
                 />
                 <button
                   type="button"
-                  aria-label={`Retirer ${name} des cibles`}
+                  aria-label={tr(`Retirer ${name} des cibles`, `Remove ${name} from the targets`)}
                   onClick={() => removeTarget(target.mutationId)}
                   className="flex size-8 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-panel-raised hover:text-danger"
                 >
@@ -110,8 +111,8 @@ export function TargetsPanel() {
       )}
 
       <div className="mt-4 border-t border-line pt-4">
-        <p className="mb-2 text-xs text-ink-muted">Ou ajouter tout un objectif :</p>
-        <GoalToggleChips selected={calculator.goalIds} onToggle={setGoal} label="Objectifs ajoutés comme cibles" />
+        <p className="mb-2 text-xs text-ink-muted">{tr('Ou ajouter tout un objectif :', 'Or add a whole goal:')}</p>
+        <GoalToggleChips selected={calculator.goalIds} onToggle={setGoal} label={tr('Objectifs ajoutés comme cibles', 'Goals added as targets')} />
       </div>
     </Panel>
   )

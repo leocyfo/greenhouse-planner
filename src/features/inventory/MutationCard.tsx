@@ -1,6 +1,7 @@
 import { HarvestBadge, SizeBadge, SoilBadge, StagesBadge } from '../../components/game/MutationBadges'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { NumberStepper } from '../../components/NumberStepper'
+import { tr } from '../../i18n/locale'
 import type { MutationNeed } from '../../logic/recipes'
 import { useAppStore } from '../../store/appStore'
 import { rarityColor } from '../../theme/palette'
@@ -47,21 +48,21 @@ export function MutationCard({ mutation, need, owned, analyzed, onOpen, openRef 
                 ref={openRef}
                 type="button"
                 onClick={onOpen}
-                aria-label={`Fiche de ${mutation.name}`}
+                aria-label={tr(`Fiche de ${mutation.name}`, `${mutation.name} sheet`)}
                 className="card-open block max-w-full cursor-pointer truncate text-left text-base leading-tight font-bold after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
                 style={{ color: rarityColor(mutation.rarity) }}
               >
                 {mutation.name}
               </button>
-              {analyzed && <p className={`${MONO} mt-0.5 animate-fade-in text-[10px] text-accent-strong`}>Analysée</p>}
+              {analyzed && <p className={`${MONO} mt-0.5 animate-fade-in text-[10px] text-accent-strong`}>{tr('Analysée', 'Analyzed')}</p>}
             </div>
           </div>
-          <label title="Analysée" className="relative z-10 flex shrink-0 cursor-pointer">
+          <label title={tr('Analysée', 'Analyzed')} className="relative z-10 flex shrink-0 cursor-pointer">
             <input
               type="checkbox"
               checked={analyzed}
               onChange={(event) => setAnalyzed(mutation.id, event.target.checked)}
-              aria-label={`${mutation.name} analysée`}
+              aria-label={tr(`${mutation.name} analysée`, `${mutation.name} analyzed`)}
               className="peer sr-only"
             />
             <span
@@ -94,22 +95,26 @@ export function MutationCard({ mutation, need, owned, analyzed, onOpen, openRef 
 
 /** Besoin selon les objectifs cochés : « besoin 3 / 36 », puis ce qui manque (ou complété). */
 function NeedSummary({ need, owned }: { readonly need: MutationNeed | undefined; readonly owned: number }) {
-  if (!need) return <p className={`${MONO} text-right text-[10px] text-ink-muted`}>Non demandée</p>
+  if (!need) return <p className={`${MONO} text-right text-[10px] text-ink-muted`}>{tr('Non demandée', 'Not requested')}</p>
   const complete = need.missing === 0
   return (
     <div className={`${MONO} text-right`}>
       <p className="text-xs tabular-nums">
-        <span className="text-ink-muted">Besoin </span>
+        <span className="text-ink-muted">{tr('Besoin ', 'Need ')}</span>
         <span className={`font-bold ${complete ? 'text-accent-strong' : 'text-warning'}`}>
           {complete && '✓ '}
           {owned} / {need.required}
         </span>
       </p>
       <p className="mt-0.5 text-[10px] text-ink-muted">
-        {complete ? <span className="text-accent-strong">complété</span> : <span className="text-danger">manque {need.missing}</span>}
-        {need.buy ? ' · au bazar' : ''}
+        {complete ? (
+          <span className="text-accent-strong">{tr('complété', 'complete')}</span>
+        ) : (
+          <span className="text-danger">{tr(`manque ${need.missing}`, `${need.missing} missing`)}</span>
+        )}
+        {need.buy ? tr(' · au bazar', ' · at the bazaar') : ''}
         {need.basis === 'avrg-optimum' && (
-          <abbr title="Total recommandé par le guide AVRG (mode Optimum)" className="no-underline">
+          <abbr title={tr('Total recommandé par le guide AVRG (mode Optimum)', 'Total recommended by the AVRG guide (Optimum mode)')} className="no-underline">
             {' '}
             · AVRG
           </abbr>

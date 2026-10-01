@@ -1,6 +1,7 @@
 import { CropLabel } from '../../components/game/CropLabel'
 import { Panel } from '../../components/Panel'
 import { getGameData } from '../../data'
+import { formatDecimal, tr } from '../../i18n/locale'
 import { cropSide, type GridAnalysis, type GridInput } from '../../logic/grid'
 import { cellName, groundLabel } from './gridText'
 
@@ -20,8 +21,8 @@ export function CellInspector({ grid, analysis, cell, waterStages }: CellInspect
   const data = getGameData()
   if (cell === null) {
     return (
-      <Panel title="Case">
-        <p className="text-sm text-ink-muted">Survole ou sélectionne une case pour voir son détail.</p>
+      <Panel title={tr('Case', 'Cell')}>
+        <p className="text-sm text-ink-muted">{tr('Survole ou sélectionne une case pour voir son détail.', 'Hover or select a cell to see its details.')}</p>
       </Panel>
     )
   }
@@ -52,34 +53,34 @@ export function CellInspector({ grid, analysis, cell, waterStages }: CellInspect
   }
 
   return (
-    <Panel title={`Case ${cellName(x, y)}`}>
+    <Panel title={tr(`Case ${cellName(x, y)}`, `Cell ${cellName(x, y)}`)}>
       <div className="space-y-3 text-sm">
         <p>
-          <span className="text-ink-muted">Sol : </span>
+          <span className="text-ink-muted">{tr('Sol : ', 'Soil: ')}</span>
           {groundLabel(grid.ground[cell] ?? '')}
         </p>
         <p>
           {placement ? (
             <>
-              <span className="text-ink-muted">Occupée par </span>
+              <span className="text-ink-muted">{tr('Occupée par ', 'Taken by ')}</span>
               <CropLabel crop={placement.crop} />
               {cropSide(data, placement.crop) > 1 && (
                 <span className="text-ink-muted">
                   {' '}
-                  ({cropSide(data, placement.crop)}x{cropSide(data, placement.crop)}, ancre {cellName(placement.x, placement.y)})
+                  ({cropSide(data, placement.crop)}x{cropSide(data, placement.crop)}, {tr('ancre', 'anchor')} {cellName(placement.x, placement.y)})
                 </span>
               )}
             </>
           ) : (
-            <span className="text-ink-muted">Case vide</span>
+            <span className="text-ink-muted">{tr('Case vide', 'Empty cell')}</span>
           )}
         </p>
 
         {!placement && spawn && (
           <section>
-            <h4 className="mb-1 text-xs font-medium text-ink-muted">Spawns possibles</h4>
+            <h4 className="mb-1 text-xs font-medium text-ink-muted">{tr('Spawns possibles', 'Possible spawns')}</h4>
             {spawn.mutationIds.length === 0 ? (
-              <p className="text-ink-muted">Aucun pour l&apos;instant.</p>
+              <p className="text-ink-muted">{tr("Aucun pour l'instant.", 'None for now.')}</p>
             ) : (
               <ul className="space-y-0.5">
                 {spawn.mutationIds.map((id) => {
@@ -90,10 +91,10 @@ export function CellInspector({ grid, analysis, cell, waterStages }: CellInspect
                       {option && option.side > 1 && (
                         <span className="text-xs text-ink-muted">
                           {' '}
-                          zone {cellName(option.x, option.y)} → {cellName(option.x + option.side - 1, option.y + option.side - 1)}
+                          {tr('zone', 'area')} {cellName(option.x, option.y)} → {cellName(option.x + option.side - 1, option.y + option.side - 1)}
                         </span>
                       )}
-                      {spawn.winner === id && <span className="text-xs text-warning"> ★ prioritaire</span>}
+                      {spawn.winner === id && <span className="text-xs text-warning"> {tr('★ prioritaire', '★ priority')}</span>}
                     </li>
                   )
                 })}
@@ -101,8 +102,10 @@ export function CellInspector({ grid, analysis, cell, waterStages }: CellInspect
             )}
             {spawn.conflict && (
               <p className="mt-1.5 text-xs text-danger">
-                ⚠ Conflit : plusieurs mutations peuvent spawn ici.{' '}
-                {spawn.winner ? `${name(spawn.winner)} l'emporte (priorité).` : 'Une seule spawnera, au hasard.'}
+                {tr('⚠ Conflit : plusieurs mutations peuvent spawn ici. ', '⚠ Conflict: several mutations can spawn here. ')}
+                {spawn.winner
+                  ? tr(`${name(spawn.winner)} l'emporte (priorité).`, `${name(spawn.winner)} wins (priority).`)
+                  : tr('Une seule spawnera, au hasard.', 'Only one will spawn, at random.')}
               </p>
             )}
           </section>
@@ -110,9 +113,9 @@ export function CellInspector({ grid, analysis, cell, waterStages }: CellInspect
 
         {effects && (
           <section>
-            <h4 className="mb-1 text-xs font-medium text-ink-muted">Effets reçus</h4>
+            <h4 className="mb-1 text-xs font-medium text-ink-muted">{tr('Effets reçus', 'Received effects')}</h4>
             {grouped.size === 0 ? (
-              <p className="text-ink-muted">Aucun effet reçu.</p>
+              <p className="text-ink-muted">{tr('Aucun effet reçu.', 'No effect received.')}</p>
             ) : (
               <ul className="space-y-0.5">
                 {[...grouped].map(([key, line]) => {
@@ -124,19 +127,20 @@ export function CellInspector({ grid, analysis, cell, waterStages }: CellInspect
                       </span>
                       <span className="text-xs text-ink-muted">
                         {' '}
-                        de {line.from}
+                        {tr('de', 'from')} {line.from}
                         {line.count > 1 && ` × ${line.count}`}
                         {line.via !== null && ` (via ${line.via})`}
                       </span>
-                      {line.cancelled && <span className="sr-only"> (annulé par Immunity)</span>}
+                      {line.cancelled && <span className="sr-only">{tr(' (annulé par Immunity)', ' (cancelled by Immunity)')}</span>}
                     </li>
                   )
                 })}
               </ul>
             )}
             <p className="mt-1.5 text-xs text-ink-muted">
-              Total : yield {signed(effects.totals.yield)} · XP {signed(effects.totals.xp)} · eau {signed(effects.totals.water)}
-              {effects.immunity && ' · immunité'}
+              {tr('Total : ', 'Total: ')}yield {signed(effects.totals.yield)} · XP {signed(effects.totals.xp)} · {tr('eau', 'water')}{' '}
+              {signed(effects.totals.water)}
+              {effects.immunity && tr(' · immunité', ' · immunity')}
               {effects.bonusDrops && ' · bonus drops'}
             </p>
           </section>
@@ -144,15 +148,17 @@ export function CellInspector({ grid, analysis, cell, waterStages }: CellInspect
 
         {water !== null && (
           <section>
-            <h4 className="mb-1 text-xs font-medium text-ink-muted">Eau</h4>
+            <h4 className="mb-1 text-xs font-medium text-ink-muted">{tr('Eau', 'Water')}</h4>
             <p>
               {Number.isFinite(water)
-                ? `Environ ${water} stages avant d'être à sec`
-                : 'Ne sèche jamais (rétention d’au moins +100 %)'}
+                ? tr(`Environ ${water} stages avant d'être à sec`, `About ${water} stages before running dry`)
+                : tr('Ne sèche jamais (rétention d’au moins +100 %)', 'Never dries out (retention of at least +100%)')}
             </p>
             <p className="text-xs text-ink-muted">
-              Départ à {levelRange.max}, perte moyenne de {((lossPerStageRange.min + lossPerStageRange.max) / 2).toLocaleString('fr-FR')} par
-              stage.
+              {tr(
+                `Départ à ${levelRange.max}, perte moyenne de ${formatDecimal((lossPerStageRange.min + lossPerStageRange.max) / 2, 2)} par stage.`,
+                `Starts at ${levelRange.max}, average loss of ${formatDecimal((lossPerStageRange.min + lossPerStageRange.max) / 2, 2)} per stage.`,
+              )}
             </p>
           </section>
         )}

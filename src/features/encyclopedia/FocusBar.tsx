@@ -8,15 +8,26 @@ import { cropName } from '../../components/game/recipeText'
 import { WikiIcon } from '../../components/game/WikiIcon'
 import { SegmentedControl } from '../../components/SegmentedControl'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { recipeInputs, recipeLevels, recipesUsing } from '../../logic/graph'
 import { rarityColor, TREE_COLORS } from '../../theme/palette'
 import { amountText, chainOf, type MutationState, type TreeMode } from './graphModel'
 import { STATE_INFO } from './stateInfo'
 
-const MODES = [
-  { value: 'neighbors', label: 'Avant et après', description: "Ses ingrédients directs et les recettes qui l'utilisent." },
-  { value: 'chain', label: 'Tout le chemin', description: "Toutes les mutations à faire avant elle, jusqu'au départ." },
-] as const
+/** Les deux vues d'une mutation choisie. */
+const modes = () =>
+  [
+    {
+      value: 'neighbors',
+      label: tr('Avant et après', 'Before and after'),
+      description: tr("Ses ingrédients directs et les recettes qui l'utilisent.", 'Its direct ingredients and the recipes that use it.'),
+    },
+    {
+      value: 'chain',
+      label: tr('Tout le chemin', 'Whole path'),
+      description: tr("Toutes les mutations à faire avant elle, jusqu'au départ.", 'Every mutation to make before it, back to the start.'),
+    },
+  ] as const
 
 interface FocusBarProps {
   readonly selectedId: string | null
@@ -51,10 +62,17 @@ export function FocusBar({
     return (
       <div className="flex min-h-[5.75rem] items-center rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink-muted">
         <p>
-          Clique sur une mutation pour ne garder que ce qu&apos;il faut pour la faire : « Avant et après » (ses{' '}
-          <span style={{ color: TREE_COLORS.path }}>ingrédients</span> et{' '}
-          <span style={{ color: TREE_COLORS.use }}>ce qu&apos;elle permet de faire</span>) ou « Tout le chemin » (toutes les
-          mutations à faire avant elle). Au survol, son chemin s&apos;allume dans l&apos;arbre.
+          {tr(
+            "Clique sur une mutation pour ne garder que ce qu'il faut pour la faire : « Avant et après » (ses ",
+            'Click a mutation to keep only what it takes to make it: “Before and after” (its ',
+          )}
+          <span style={{ color: TREE_COLORS.path }}>{tr('ingrédients', 'ingredients')}</span>
+          {tr(' et ', ' and ')}
+          <span style={{ color: TREE_COLORS.use }}>{tr("ce qu'elle permet de faire", 'what it is used for')}</span>
+          {tr(
+            ") ou « Tout le chemin » (toutes les mutations à faire avant elle). Au survol, son chemin s'allume dans l'arbre.",
+            ') or “Whole path” (every mutation to make before it). On hover, its path lights up in the tree.',
+          )}
         </p>
       </div>
     )
@@ -80,53 +98,60 @@ export function FocusBar({
             </span>
           )}
           <span className="text-ink-muted">
-            · Étape {step} · {before === 0 ? 'aucune mutation avant elle' : `${before} mutation${before > 1 ? 's' : ''} avant elle`}
+            · {tr(`Étape ${step}`, `Step ${step}`)} ·{' '}
+            {before === 0
+              ? tr('aucune mutation avant elle', 'no mutation before it')
+              : tr(`${before} mutation${before > 1 ? 's' : ''} avant elle`, `${before} mutation${before !== 1 ? 's' : ''} before it`)}
           </span>
           {selectedId && showsTotals && before > 0 && (
             <span className="text-ink-muted">
-              · <span style={{ color: TREE_COLORS.path }}>×N</span> = total pour en faire 1, sans compter ton stock
+              · <span style={{ color: TREE_COLORS.path }}>×N</span>{' '}
+              {tr('= total pour en faire 1, sans compter ton stock', '= total to make 1, not counting your stock')}
             </span>
           )}
         </p>
         {selectedId && (
           <div className="flex flex-wrap items-center gap-2">
-            <SegmentedControl legend="Mutations gardées" name={modeName} options={MODES} value={mode} onChange={onModeChange} />
+            <SegmentedControl legend={tr('Mutations gardées', 'Mutations kept')} name={modeName} options={modes()} value={mode} onChange={onModeChange} />
             <button
               type="button"
               onClick={() => onCalculate(selectedId)}
               className="h-8 rounded-lg bg-accent px-3 text-sm font-medium text-canvas transition-colors hover:bg-accent-strong"
             >
-              Calculer<span className="sr-only"> {mutation.name}</span>
+              {tr('Calculer', 'Calculate')}
+              <span className="sr-only"> {mutation.name}</span>
             </button>
             <button
               type="button"
               onClick={() => onOpenSheet(selectedId)}
               className="h-8 rounded-lg border border-line px-3 text-sm text-ink transition-colors hover:bg-panel-raised"
             >
-              Fiche
+              {tr('Fiche', 'Sheet')}
             </button>
             <button
               type="button"
               onClick={onClear}
-              title="Échap"
+              title={tr('Échap', 'Esc')}
               className="h-8 rounded-lg border border-line px-3 text-sm text-ink-muted transition-colors hover:text-ink"
             >
-              Tout l&apos;arbre
+              {tr("Tout l'arbre", 'Whole tree')}
             </button>
           </div>
         )}
       </div>
       <p className="truncate" title={recipe.join(' · ') || mutation.specialCondition || undefined}>
         <span className="font-semibold" style={{ color: TREE_COLORS.path }}>
-          Recette
-        </span>{' '}
-        : {recipe.length > 0 ? recipe.join(' · ') : (mutation.specialCondition ?? 'condition spéciale, voir la fiche')}
+          {tr('Recette', 'Recipe')}
+        </span>
+        {tr(' : ', ': ')}
+        {recipe.length > 0 ? recipe.join(' · ') : (mutation.specialCondition ?? tr('condition spéciale, voir la fiche', 'special condition, see the sheet'))}
       </p>
       <p className="truncate">
         <span className="font-semibold" style={{ color: TREE_COLORS.use }}>
-          Sert à
-        </span>{' '}
-        : {uses.length > 0 ? uses.join(' · ') : 'aucune recette, dernière étape'}
+          {tr('Sert à', 'Used for')}
+        </span>
+        {tr(' : ', ': ')}
+        {uses.length > 0 ? uses.join(' · ') : tr('aucune recette, dernière étape', 'no recipe, last step')}
       </p>
     </div>
   )

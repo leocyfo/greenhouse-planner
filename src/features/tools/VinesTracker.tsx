@@ -5,6 +5,7 @@ import { NumberStepper } from '../../components/NumberStepper'
 import { Panel } from '../../components/Panel'
 import { ProgressBar } from '../../components/ProgressBar'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { vineProgress } from '../../logic/tools'
 import { useAppStore } from '../../store/appStore'
 
@@ -29,13 +30,13 @@ export function VinesTracker() {
       <div className="space-y-4">
         <div>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm">Greenhouse 1 : cases à débloquer</span>
+            <span className="text-sm">{tr('Greenhouse 1 : cases à débloquer', 'Greenhouse 1: cells to unlock')}</span>
             <div className="ml-auto flex items-center gap-2">
               <NumberStepper
                 value={first.spent}
                 onChange={(value) => setVines({ first: value })}
                 name="Greenhouse 1"
-                inputLabel="Greenhouse 1 : vines dépensées en cases"
+                inputLabel={tr('Greenhouse 1 : vines dépensées en cases', 'Greenhouse 1: vines spent on cells')}
                 min={firstLocked ? first.needed : 0}
                 max={first.needed}
               />
@@ -45,17 +46,20 @@ export function VinesTracker() {
           <ProgressBar
             value={first.spent}
             max={first.needed}
-            label={`Greenhouse 1 : ${first.spent} vines sur ${first.needed}`}
+            label={tr(`Greenhouse 1 : ${first.spent} vines sur ${first.needed}`, `Greenhouse 1: ${first.spent} vines out of ${first.needed}`)}
             className="mt-1.5"
           />
           <p className="mt-1.5 text-xs text-ink-muted">
-            Cases ouvertes : {progress.firstGreenhouseSpots} / {progress.firstGreenhouseCells}.{' '}
+            {tr(
+              `Cases ouvertes : ${progress.firstGreenhouseSpots} / ${progress.firstGreenhouseCells}.`,
+              `Open cells: ${progress.firstGreenhouseSpots} / ${progress.firstGreenhouseCells}.`,
+            )}{' '}
             {firstLocked ? (
-              `Bloqué à ${first.needed} : le Plot Limit est débloqué.`
+              tr(`Bloqué à ${first.needed} : le Plot Limit est débloqué.`, `Locked at ${first.needed}: the Plot Limit is unlocked.`)
             ) : (
               !allFirstOpen && (
                 <a href={tabHref('grille')} className="text-accent-strong underline-offset-2 hover:underline">
-                  Peindre les cases encore verrouillées dans la Grille
+                  {tr('Peindre les cases encore verrouillées dans la Grille', 'Paint the cells still locked in the Grid')}
                 </a>
               )
             )}
@@ -64,10 +68,10 @@ export function VinesTracker() {
 
         {/* Réglé par l'upgrade Plot Limit du menu Greenhouse Upgrades : simple rappel ici. */}
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
-          <span>Greenhouses 2 et 3 : Plot Limit</span>
+          <span>{tr('Greenhouses 2 et 3 : Plot Limit', 'Greenhouses 2 and 3: Plot Limit')}</span>
           <span className="tabular-nums text-ink-muted">
             tier {bought.length}/{progress.purchases.length} ({bought.reduce((sum, purchase) => sum + purchase.price, 0)} vines)
-            <span className="text-xs"> · réglé dans les Upgrades du Greenhouse</span>
+            <span className="text-xs">{tr(' · réglé dans les Upgrades du Greenhouse', ' · set in the Greenhouse Upgrades')}</span>
           </span>
         </div>
 
@@ -79,7 +83,7 @@ export function VinesTracker() {
             </span>
             <span className="text-sm tabular-nums text-ink-muted">{formatPercent(progress.spent, progress.total)}</span>
           </p>
-          <p className="mt-1 text-xs text-ink-muted">vines dépensées au total</p>
+          <p className="mt-1 text-xs text-ink-muted">{tr('vines dépensées au total', 'vines spent in total')}</p>
         </div>
         <p className="text-xs text-ink-muted">{etherealVines.description}</p>
         <p className="text-xs text-ink-muted">{etherealVines.avrgNotes}</p>

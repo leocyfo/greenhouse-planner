@@ -1,6 +1,7 @@
 import { FilterSelect } from '../../components/FilterSelect'
 import { formatRarity } from '../../components/labels'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { ALL, DEFAULT_FILTERS, hasActiveFilters, type InventoryFilters } from './inventoryFilters'
 
 interface InventoryFiltersBarProps {
@@ -24,52 +25,52 @@ export function InventoryFiltersBar({ filters, onChange, shown, total }: Invento
         className="grid grid-cols-2 items-end gap-3 rounded-xl border border-line bg-panel p-3 sm:grid-cols-3 lg:grid-cols-2"
       >
         <label className="col-span-2 flex flex-col gap-1 text-xs text-ink-muted sm:col-span-3 lg:col-span-2">
-          Recherche
+          {tr('Recherche', 'Search')}
           <input
             type="search"
             value={filters.search}
             onChange={(event) => set('search', event.target.value)}
-            placeholder="Nom de la mutation"
+            placeholder={tr('Nom de la mutation', 'Mutation name')}
             className="h-9 rounded-lg border border-line bg-canvas px-3 text-sm text-ink placeholder:text-ink-muted/70"
           />
         </label>
         <FilterSelect
-          label="Rareté"
+          label={tr('Rareté', 'Rarity')}
           value={filters.rarity}
           onChange={(value) => set('rarity', value)}
-          options={[{ value: ALL, label: 'Toutes' }, ...data.rarities.map((r) => ({ value: r, label: formatRarity(r) }))]}
+          options={[{ value: ALL, label: tr('Toutes', 'All') }, ...data.rarities.map((r) => ({ value: r, label: formatRarity(r) }))]}
         />
         <FilterSelect
-          label="Sol"
+          label={tr('Sol', 'Soil')}
           value={filters.surface}
           onChange={(value) => set('surface', value)}
-          options={[{ value: ALL, label: 'Tous' }, ...data.surfaces.map((s) => ({ value: s, label: s }))]}
+          options={[{ value: ALL, label: tr('Tous', 'All') }, ...data.surfaces.map((s) => ({ value: s, label: s }))]}
         />
         <FilterSelect
-          label="Taille"
+          label={tr('Taille', 'Size')}
           value={filters.size}
           onChange={(value) => set('size', value)}
-          options={[{ value: ALL, label: 'Toutes' }, ...sizes.map((s) => ({ value: s, label: s }))]}
+          options={[{ value: ALL, label: tr('Toutes', 'All') }, ...sizes.map((s) => ({ value: s, label: s }))]}
         />
         <FilterSelect
-          label="Besoin"
+          label={tr('Besoin', 'Need')}
           value={filters.need}
           onChange={(value) => set('need', value)}
           options={[
-            { value: ALL, label: 'Toutes' },
-            { value: 'missing', label: 'À obtenir' },
-            { value: 'complete', label: 'Complétées' },
-            { value: 'unrequested', label: 'Non demandées' },
+            { value: ALL, label: tr('Toutes', 'All') },
+            { value: 'missing', label: tr('À obtenir', 'To get') },
+            { value: 'complete', label: tr('Complétées', 'Completed') },
+            { value: 'unrequested', label: tr('Non demandées', 'Not requested') },
           ]}
         />
         <FilterSelect
-          label="Analyse"
+          label={tr('Analyse', 'Analysis')}
           value={filters.analysis}
           onChange={(value) => set('analysis', value)}
           options={[
-            { value: ALL, label: 'Toutes' },
-            { value: 'analyzed', label: 'Analysées' },
-            { value: 'notAnalyzed', label: 'Non analysées' },
+            { value: ALL, label: tr('Toutes', 'All') },
+            { value: 'analyzed', label: tr('Analysées', 'Analyzed') },
+            { value: 'notAnalyzed', label: tr('Non analysées', 'Not analyzed') },
           ]}
         />
         <button
@@ -78,11 +79,11 @@ export function InventoryFiltersBar({ filters, onChange, shown, total }: Invento
           onClick={() => onChange(DEFAULT_FILTERS)}
           className="h-9 rounded-lg border border-line px-3 text-sm text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Réinitialiser
+          {tr('Réinitialiser', 'Reset')}
         </button>
       </div>
       <p aria-live="polite" className="text-xs text-ink-muted">
-        {shown === total ? `${total} mutations` : `${shown} mutation${shown > 1 ? 's' : ''} sur ${total}`}
+        {shown === total ? `${total} mutations` : tr(`${shown} mutation${shown > 1 ? 's' : ''} sur ${total}`, `${shown} mutation${shown !== 1 ? 's' : ''} out of ${total}`)}
       </p>
     </div>
   )

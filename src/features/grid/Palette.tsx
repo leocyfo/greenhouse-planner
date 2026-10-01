@@ -4,6 +4,7 @@ import { formatRarity } from '../../components/labels'
 import { wikiImage } from '../../data/wikiImages'
 import { normalizeSearch } from '../inventory/inventoryFilters'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { BROKEN_GROUND, LOCKED_GROUND } from '../../logic/ground'
 import { cropKey } from '../../logic/neighborRule'
 import { rarityColor, soilBackground } from '../../theme/palette'
@@ -11,12 +12,13 @@ import type { CropRef } from '../../types/game'
 import { groundLabel } from './gridText'
 import { DRAG_TYPE, type GridTool } from './gridTypes'
 
-const TOOLS: readonly { readonly id: GridTool; readonly label: string; readonly hint: string }[] = [
-  { id: 'place', label: 'Poser', hint: 'Clic ou glisser depuis la liste' },
-  { id: 'erase', label: 'Gomme', hint: 'Clic droit : gomme aussi' },
-  { id: 'ground', label: 'Sol', hint: 'Peindre le sol en glissant' },
-  { id: 'inspect', label: 'Inspecter', hint: 'Voir le détail d’une case' },
-  { id: 'godseed', label: 'Godseed', hint: 'Vérifier une zone 3x3' },
+/** Outils de la palette (textes lus à l'affichage : ils suivent la langue). */
+const tools = (): readonly { readonly id: GridTool; readonly label: string; readonly hint: string }[] => [
+  { id: 'place', label: tr('Poser', 'Place'), hint: tr('Clic ou glisser depuis la liste', 'Click or drag from the list') },
+  { id: 'erase', label: tr('Gomme', 'Eraser'), hint: tr('Clic droit : gomme aussi', 'Right click erases too') },
+  { id: 'ground', label: tr('Sol', 'Soil'), hint: tr('Peindre le sol en glissant', 'Paint the soil by dragging') },
+  { id: 'inspect', label: tr('Inspecter', 'Inspect'), hint: tr('Voir le détail d’une case', 'See the details of a cell') },
+  { id: 'godseed', label: 'Godseed', hint: tr('Vérifier une zone 3x3', 'Check a 3x3 area') },
 ]
 
 interface PaletteProps {
@@ -44,7 +46,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
     const matches = (name: string) => !query || normalizeSearch(name).includes(query)
     return [
       {
-        title: 'Crops de base',
+        title: tr('Crops de base', 'Base crops'),
         crops: data.baseCrops
           .filter((c) => matches(c.name))
           .map((c) => ({
@@ -78,9 +80,9 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <fieldset>
-        <legend className="mb-1.5 text-xs font-medium text-ink-muted">Outil</legend>
+        <legend className="mb-1.5 text-xs font-medium text-ink-muted">{tr('Outil', 'Tool')}</legend>
         <div className="grid grid-cols-3 gap-1.5">
-          {TOOLS.map((option) => (
+          {tools().map((option) => (
             <label
               key={option.id}
               title={option.hint}
@@ -102,7 +104,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
 
       {tool === 'ground' ? (
         <fieldset>
-          <legend className="mb-1.5 text-xs font-medium text-ink-muted">Sol à peindre</legend>
+          <legend className="mb-1.5 text-xs font-medium text-ink-muted">{tr('Sol à peindre', 'Soil to paint')}</legend>
           <div className="space-y-1">
             {grounds.map((ground) => (
               <label
@@ -139,12 +141,12 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
           <label className="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-            Crop à poser
+            {tr('Crop à poser', 'Crop to place')}
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Rechercher"
+              placeholder={tr('Rechercher', 'Search')}
               className="h-9 rounded-lg border border-line bg-canvas px-3 text-sm font-normal text-ink placeholder:text-ink-muted/70"
             />
           </label>
@@ -157,7 +159,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
                   {group.crops.map((item) => {
                     const key = cropKey(item.ref)
                     const selected = key === selectedKey
-                    const details = [item.side > 1 ? `${item.side}x${item.side}` : null, item.surface ? `sol ${item.surface}` : null]
+                    const details = [item.side > 1 ? `${item.side}x${item.side}` : null, item.surface ? tr(`sol ${item.surface}`, `${item.surface} soil`) : null]
                     return (
                       <li key={key}>
                         <button

@@ -5,6 +5,7 @@ import { SizeBadge, SoilBadge, StagesBadge } from '../../components/game/Mutatio
 import { recipeLines } from '../../components/game/recipeText'
 import { Panel } from '../../components/Panel'
 import { getGameData } from '../../data'
+import { tr } from '../../i18n/locale'
 import { nextActions } from '../../logic/nextAction'
 import { useAppStore } from '../../store/appStore'
 import type { GoalStatus } from '../../store/useGoalStatuses'
@@ -30,11 +31,11 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
 
   if (!hasGoals) {
     return (
-      <Panel title="Prochaine action recommandée">
+      <Panel title={tr('Prochaine action recommandée', 'Recommended next action')}>
         <p className="text-sm text-ink-muted">
-          Coche au moins un objectif ci-dessous pour obtenir une recommandation.{' '}
+          {tr('Coche au moins un objectif ci-dessous pour obtenir une recommandation.', 'Tick at least one goal below to get a recommendation.')}{' '}
           <button type="button" onClick={onChooseGoals} className={LINK}>
-            Choisir mes objectifs <span aria-hidden="true">↓</span>
+            {tr('Choisir mes objectifs', 'Choose my goals')} <span aria-hidden="true">↓</span>
           </button>
         </p>
       </Panel>
@@ -49,17 +50,21 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
 
   if (!id || !mutation || !need) {
     return (
-      <Panel title="Prochaine action recommandée">
+      <Panel title={tr('Prochaine action recommandée', 'Recommended next action')}>
         <div className="space-y-2">
           {actions.manual.length > 0 && (
             <p className="text-sm text-ink-muted">
-              Il ne reste à faire pousser que des mutations à condition spéciale, à gérer à la main :{' '}
-              {actions.manual.map(name).join(', ')}. Leur condition est détaillée dans le Calculateur.
+              {tr(
+                `Il ne reste à faire pousser que des mutations à condition spéciale, à gérer à la main : ${actions.manual.map(name).join(', ')}. Leur condition est détaillée dans le Calculateur.`,
+                `Only mutations with a special condition are left to grow, to handle by hand: ${actions.manual.map(name).join(', ')}. Their condition is detailed in the Calculator.`,
+              )}
             </p>
           )}
-          {toBuy && <p className="text-sm text-ink-muted">À acheter au bazar : {toBuy}.</p>}
+          {toBuy && <p className="text-sm text-ink-muted">{tr(`À acheter au bazar : ${toBuy}.`, `To buy at the bazaar: ${toBuy}.`)}</p>}
           {actions.manual.length === 0 && !toBuy && (
-            <p className="text-sm text-accent-strong">✓ Tout ce que demandent tes objectifs est déjà en stock.</p>
+            <p className="text-sm text-accent-strong">
+              {tr('✓ Tout ce que demandent tes objectifs est déjà en stock.', '✓ Everything your goals need is already in stock.')}
+            </p>
           )}
         </div>
       </Panel>
@@ -74,7 +79,7 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
     .map((status) => status.goal.name)
 
   return (
-    <Panel title="Prochaine action recommandée" className="border-accent/40">
+    <Panel title={tr('Prochaine action recommandée', 'Recommended next action')} className="border-accent/40">
       {/* Nouvelle recommandation (objectif coché, stock modifié) : elle arrive en fondu. */}
       <div key={id} className="animate-fade-up">
         <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2">
@@ -82,7 +87,7 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
             <CropLabel crop={{ kind: 'mutation', id }} />
           </span>
           <span className="text-right text-sm">
-            <strong className="text-lg tabular-nums">{need.missing}</strong> à obtenir
+            <strong className="text-lg tabular-nums">{need.missing}</strong> {tr('à obtenir', 'to get')}
           </span>
           <div className="flex flex-wrap gap-1.5">
             <SoilBadge surface={mutation.surface} />
@@ -90,7 +95,7 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
             <StagesBadge stages={mutation.growthStages} />
           </div>
           <span className="text-right text-xs text-ink-muted">
-            besoin {need.required} · en stock {need.owned}
+            {tr(`besoin ${need.required} · en stock ${need.owned}`, `need ${need.required} · in stock ${need.owned}`)}
           </span>
         </div>
         <div className="mt-2 space-y-0.5">
@@ -101,8 +106,10 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
           ))}
         </div>
         <p className="mt-1 text-xs text-ink-muted">
-          Pourquoi elle : ses ingrédients sont en stock, et c&apos;est la mutation la plus basse de l&apos;arbre qui
-          manque{forGoals.length > 0 ? ` pour ${forGoals.join(', ')}` : ''}.
+          {tr(
+            `Pourquoi elle : ses ingrédients sont en stock, et c'est la mutation la plus basse de l'arbre qui manque${forGoals.length > 0 ? ` pour ${forGoals.join(', ')}` : ''}.`,
+            `Why this one: its ingredients are in stock, and it is the lowest mutation in the tree that is missing${forGoals.length > 0 ? ` for ${forGoals.join(', ')}` : ''}.`,
+          )}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
@@ -113,16 +120,16 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
             }}
             className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-canvas transition hover:bg-accent-strong motion-safe:active:scale-[0.97]"
           >
-            Voir dans le calculateur
+            {tr('Voir dans le calculateur', 'Open in the calculator')}
           </button>
           <a href={tabHref('inventaire')} className={LINK}>
-            Mettre à jour mon inventaire
+            {tr('Mettre à jour mon inventaire', 'Update my inventory')}
           </a>
         </div>
 
         {actions.alsoReady.length > 0 && (
           <div className="mt-3 border-t border-line pt-3">
-            <p className="mb-1.5 text-xs text-ink-muted">Aussi faisables maintenant (en parallèle) :</p>
+            <p className="mb-1.5 text-xs text-ink-muted">{tr('Aussi faisables maintenant (en parallèle) :', 'Also doable now (in parallel):')}</p>
             <ul className="flex flex-wrap gap-1.5">
               {actions.alsoReady.map((readyId) => (
                 <li key={readyId} className="rounded-lg border border-line bg-canvas/40 px-2 py-0.5 text-sm">
@@ -135,10 +142,13 @@ export function NextActionCard({ statuses, onChooseGoals }: NextActionCardProps)
         )}
         {actions.manual.length > 0 && (
           <p className="mt-3 text-xs text-ink-muted">
-            À gérer à part (condition spéciale) : {actions.manual.map(name).join(', ')}.
+            {tr(
+              `À gérer à part (condition spéciale) : ${actions.manual.map(name).join(', ')}.`,
+              `To handle separately (special condition): ${actions.manual.map(name).join(', ')}.`,
+            )}
           </p>
         )}
-        {toBuy && <p className="mt-3 text-xs text-ink-muted">À acheter au bazar : {toBuy}.</p>}
+        {toBuy && <p className="mt-3 text-xs text-ink-muted">{tr(`À acheter au bazar : ${toBuy}.`, `To buy at the bazaar: ${toBuy}.`)}</p>}
       </div>
     </Panel>
   )

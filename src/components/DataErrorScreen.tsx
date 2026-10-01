@@ -1,4 +1,5 @@
 import type { DataIssue } from '../types/game'
+import { tr } from '../i18n/locale'
 
 interface DataErrorScreenProps {
   readonly issues: readonly DataIssue[]
@@ -8,11 +9,14 @@ interface DataErrorScreenProps {
 export function DataErrorScreen({ issues }: DataErrorScreenProps) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-xl font-semibold text-danger">Les données du jeu sont invalides</h1>
+      <h1 className="text-xl font-semibold text-danger">{tr('Les données du jeu sont invalides', 'The game data is invalid')}</h1>
       <p className="mt-2 text-ink-muted">
-        Corrige <code className="rounded bg-panel-raised px-1.5 py-0.5 text-ink">src/data/mutations.json</code>{' '}
-        puis recharge la page. {issues.length} problème{issues.length > 1 ? 's' : ''} trouvé
-        {issues.length > 1 ? 's' : ''} :
+        {tr('Corrige ', 'Fix ')}
+        <code className="rounded bg-panel-raised px-1.5 py-0.5 text-ink">src/data/mutations.json</code>{' '}
+        {tr(
+          `puis recharge la page. ${issues.length} problème${issues.length > 1 ? 's' : ''} trouvé${issues.length > 1 ? 's' : ''} :`,
+          `then reload the page. ${issues.length} problem${issues.length !== 1 ? 's' : ''} found:`,
+        )}
       </p>
       <ul className="mt-6 space-y-2">
         {issues.map((issue, index) => (
