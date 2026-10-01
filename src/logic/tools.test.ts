@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { gridFrom } from '../test/grids'
 import { projectData } from '../test/projectData'
 import {
-  lonelilyCellsIn,
-  lonelilyEstimate,
   plotLimitTier,
   vineProgress,
   withGreenhousePurchase,
@@ -58,30 +55,5 @@ describe('outils : Ethereal Vines', () => {
     const all = { first: 88, second: 100, third: 150 }
     expect(withGreenhousePurchase(data, all, 'second', false)).toEqual({ first: 88, second: 0, third: 0 })
     expect(withGreenhousePurchase(data, all, 'third', false)).toEqual({ first: 88, second: 100, third: 0 })
-  })
-})
-
-describe('outils : estimation des Lonelily', () => {
-  it('un greenhouse vide donne environ 1 Lonelily tous les 2 stages', () => {
-    const estimate = lonelilyEstimate(data, 100, 10, 12)
-    expect(estimate.perStage.min).toBeCloseTo(0.4)
-    expect(estimate.perStage.max).toBeCloseTo(0.5)
-    expect(estimate.expected.min).toBeCloseTo(4)
-    expect(estimate.expected.max).toBeCloseTo(5)
-    expect(estimate.stagesFor).toEqual({ min: 24, max: 30 })
-  })
-
-  it('sans case disponible, impossible d’estimer le temps', () => {
-    expect(lonelilyEstimate(data, 0, 10, 5).stagesFor).toBeNull()
-    expect(lonelilyEstimate(data, 0, 10, 0).stagesFor).toEqual({ min: 0, max: 0 })
-  })
-
-  it('compte les cases de mes grilles où une Lonelily peut spawn', () => {
-    const empty = gridFrom(data, ['...', '...', '...'])
-    const withWheat = gridFrom(data, ['W..', '...', '...'], { W: 'Wheat' })
-    expect(lonelilyCellsIn(data, [empty])).toBe(9)
-    // Le Wheat occupe une case et en rend 3 autres non viables (ses voisines).
-    expect(lonelilyCellsIn(data, [withWheat])).toBe(5)
-    expect(lonelilyCellsIn(data, [empty, withWheat])).toBe(14)
   })
 })

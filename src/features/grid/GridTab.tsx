@@ -14,7 +14,6 @@ import { CellInspector } from './CellInspector'
 import { ConsumptionPanel } from './ConsumptionPanel'
 import { GodseedPanel } from './GodseedPanel'
 import { GridBoard } from './GridBoard'
-import { GridLegend } from './GridLegend'
 import { buildShortLabels } from './gridText'
 import { DEFAULT_OVERLAYS, type GridTool, type Overlays } from './gridTypes'
 import { LayoutToolbar } from './LayoutToolbar'
@@ -185,7 +184,6 @@ export function GridTab() {
               {message}
             </span>
           </p>
-          <GridLegend />
         </div>
 
         <div className="space-y-4">

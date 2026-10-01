@@ -13,7 +13,6 @@ import {
   chainTotals,
   focusOn,
   mutationState,
-  type MutationState,
   type TreeArrangement,
   type TreeMode,
 } from './graphModel'
@@ -21,7 +20,6 @@ import { searchMutations } from './searchMutations'
 import { MutationSearch } from './MutationSearch'
 import { RecipeTree } from './RecipeTree'
 import { MutationTreeCard } from './TreeCard'
-import { TreeLegend } from './TreeLegend'
 import { useContentWidth } from './useContentWidth'
 
 /** Rangements des colonnes de l'arbre. */
@@ -77,11 +75,6 @@ export function EncyclopediaTab() {
     () => new Map(data.mutations.map((m) => [m.id, mutationState(data, m, plan.needs.get(m.id), inventory)])),
     [data, plan, inventory],
   )
-  const counts = useMemo(() => {
-    const result = new Map<MutationState, number>()
-    for (const state of states.values()) result.set(state, (result.get(state) ?? 0) + 1)
-    return result
-  }, [states])
   // Une carte qui disparaît (vue filtrée) ne signale pas la sortie du pointeur : on l'ignore.
   const shown = useMemo(() => new Set(model?.nodes.map((node) => node.id)), [model])
   const activeId = [hoveredId, selectedId].find((id) => id !== null && shown.has(id)) ?? null
@@ -97,7 +90,11 @@ export function EncyclopediaTab() {
   /** Choisit une mutation ; déjà choisie (ou sans recette, hors de l'arbre), ouvre sa fiche. */
   const choose = (id: string) => {
     if (id === selectedId || specials.some((m) => m.id === id)) dialog.open(id)
-    else setSelectedId(id)
+    else {
+      setSelectedId(id)
+      // La recherche n'est affichée que sur tout l'arbre : on la vide en entrant dans une branche.
+      setQuery('')
+    }
   }
   /** Le Calculateur, avec cette seule mutation (autant que demandent les objectifs, au moins 1). */
   const calculate = (id: string) => {
@@ -123,6 +120,10 @@ export function EncyclopediaTab() {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [selectedId, hoveredId, dialogOpen])
 
+  const columnsControl = (
+    <SegmentedControl legend={tr('Colonnes', 'Columns')} name={arrangementName} options={arrangements()} value={arrangement} onChange={setArrangement} />
+  )
+
   const selectedName = selectedId ? data.mutationsById.get(selectedId)?.name : undefined
   const treeLabel = selectedName
     ? tr(
@@ -143,30 +144,22 @@ export function EncyclopediaTab() {
         </p>
       </header>
 
-      <div className="flex flex-wrap items-end gap-4">
-        <MutationSearch query={query} results={results} states={states} onQueryChange={setQuery} onChoose={choose} />
-        <div className="flex flex-col gap-1 text-xs text-ink-muted">
-          <span aria-hidden="true">{tr('Colonnes', 'Columns')}</span>
-          <SegmentedControl legend={tr('Colonnes', 'Columns')} name={arrangementName} options={arrangements()} value={arrangement} onChange={setArrangement} />
+      {/* Tout l'arbre : la recherche et le choix des colonnes ; une mutation choisie : les colonnes
+          passent dans la barre au-dessus de l'arbre, à côté de « Calculer ». */}
+      {!selectedId && (
+        <div className="flex flex-wrap items-end gap-4">
+          <MutationSearch query={query} results={results} states={states} onQueryChange={setQuery} onChoose={choose} />
+          <div className="flex flex-col gap-1 text-xs text-ink-muted">
+            <span aria-hidden="true">{tr('Colonnes', 'Columns')}</span>
+            {columnsControl}
+          </div>
         </div>
-        <label className="flex h-9 items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showBaseCrops}
-            onChange={(event) => setShowBaseCrops(event.target.checked)}
-            className="size-4 accent-accent"
-          />
-          {tr('Afficher les crops de base', 'Show base crops')}
-        </label>
-      </div>
+      )}
 
-      <TreeLegend counts={counts} />
       <FocusBar
         selectedId={selectedId}
-        hoveredId={activeId}
+        controls={columnsControl}
         states={states}
-        mode={mode}
-        onModeChange={setMode}
         showsTotals={totals !== null}
         onOpenSheet={dialog.open}
         onCalculate={calculate}
@@ -187,6 +180,28 @@ export function EncyclopediaTab() {
         triggerRef={dialog.triggerRef}
         onActivate={setHoveredId}
         onChoose={choose}
+        expander={
+          selectedId
+            ? {
+                expanded: mode === 'chain',
+                onToggle: () => setMode((current) => (current === 'chain' ? 'neighbors' : 'chain')),
+                label:
+                  mode === 'chain'
+                    ? tr(
+                        "Revenir à « Avant et après » : ses ingrédients et ce qu'elle permet de faire",
+                        'Back to “Before and after”: its ingredients and what it is used for',
+                      )
+                    : tr(
+                        "Voir tout le chemin : tout ce qu'il faut avant elle, jusqu'aux crops de base",
+                        'See the whole path: everything needed before it, down to the base crops',
+                      ),
+              }
+            : {
+                expanded: showBaseCrops,
+                onToggle: () => setShowBaseCrops((shown) => !shown),
+                label: showBaseCrops ? tr('Masquer les crops de base', 'Hide the base crops') : tr('Afficher les crops de base', 'Show the base crops'),
+              }
+        }
       />
 
       {specials.length > 0 && (

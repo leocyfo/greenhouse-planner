@@ -650,6 +650,35 @@ recrée tout »)
   (quantité ajoutée au calculateur, emplacements du plan automatique). Les sauvegardes existantes
   gardent leurs valeurs ; « Réinitialiser » (Outils) repart de ces valeurs.
 
+### Police des menus Minecraft (demande du joueur, 01/10/2026 : « change la police, pas lisible »)
+- Les fenêtres du jeu (Mutations Sack, Greenhouse Upgrades) et leurs infobulles utilisent la police
+  du site, en gras, au lieu d'une police pixel (« Pixelify Sans », jamais chargée : le navigateur
+  prenait une police à chasse fixe). Infobulles en 14 px avec une ombre fine ; le gris foncé (§8) et
+  le bleu (§9) du jeu y sont éclaircis pour rester lisibles sur le fond sombre.
+
+### Retraits et crafts (demande du joueur, 01/10/2026, captures à l'appui)
+- Retirés : l'estimation des Lonelily (Outils, avec sa logique `lonelilyEstimate` /
+  `lonelilyCellsIn` et ses tests ; le Calculateur garde son propre taux de spawn), la légende sous
+  la grille, le panneau « Conditions spéciales » du Calculateur, la légende de l'Encyclopédie
+  (états et traits) et son message d'aide. La barre au-dessus de l'arbre n'apparaît plus qu'une
+  fois une mutation choisie (le survol seul allume son chemin, sans faire bouger l'arbre).
+- « Usages à confirmer » (tableau de bord) devient « Crafts » : tous les crafts qui utilisent des
+  mutations (`usages` de chaque mutation, groupés par objet, avec la quantité quand elle est
+  connue, et `unmappedUsages`), sans mention « à confirmer » ni « quantité inconnue ».
+- Encyclopédie : la case « Afficher les crops de base » est remplacée par une bande à gauche de
+  l'arbre avec une flèche (▶ ouvre la colonne des crops de base, ◀ la referme). Une mutation
+  choisie, la même bande passe d'« Avant et après » (réduit) à « Tout le chemin » (▶) et retour
+  (◀) : le choix « Avant et après / Tout le chemin » de la barre au-dessus de l'arbre est retiré.
+- Mutation choisie (demande du joueur : « il manque les crops et le Gloomgourd quand c'est
+  agrandi ») : les deux vues montrent toujours les crops de base qu'elles demandent, et « Tout le
+  chemin » garde aussi les recettes qui l'utilisent : la vue agrandie contient toute la vue
+  « Avant et après » (Turtlellini : Pumpkin, Melon, Cocoa Beans → Gloomgourd, Choconut →
+  Soggybud → Turtlellini → Shellfruit). Cartes des crops de base élargies (152 px) : « Cocoa
+  Beans » et « Brown Mushroom » ne sont plus coupés.
+- Recherche et colonnes (demande du joueur) : la recherche ne s'affiche que sur tout l'arbre (elle
+  est vidée en choisissant une mutation). Une mutation choisie, le choix « Par rareté / Par
+  étape » passe dans la barre au-dessus de l'arbre, à côté de « Calculer ».
+
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,
   30/09/2026) : cartes, fiches, objectifs, sac, arbre, outils, infobulles Minecraft. Les marques

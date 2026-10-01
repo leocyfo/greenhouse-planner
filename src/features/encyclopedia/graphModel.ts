@@ -35,7 +35,7 @@ export function mutationState(
 export const CARD_WIDTH = 176
 export const CARD_HEIGHT = 48
 const CARD_GAP = 14
-export const BASE_WIDTH = 128
+export const BASE_WIDTH = 152
 export const BASE_HEIGHT = 28
 const BASE_GAP = 8
 /** Espace entre deux colonnes : la largeur disponible, dans ces bornes (au-delà, l'arbre défile). */
@@ -47,9 +47,10 @@ const DEFAULT_WIDTH = 1200
 export const HEADER_HEIGHT = 44
 
 /**
- * Mutation choisie : seules restent
+ * Mutation choisie : seules restent, avec les crops de base qu'elles demandent,
  * - neighbors : ses ingrédients directs et les recettes qui l'utilisent (avant et après) ;
- * - chain : toutes les mutations à faire avant elle, jusqu'au départ.
+ * - chain : tout ce qu'il faut faire avant elle, jusqu'aux crops de base, et les recettes qui
+ *   l'utilisent (la vue agrandie : elle contient toute la vue « avant et après »).
  */
 export type TreeMode = 'neighbors' | 'chain'
 
@@ -68,6 +69,7 @@ export interface TreeSelection {
 
 export interface TreeOptions {
   readonly arrangement: TreeArrangement
+  /** Colonne des crops de base pour tout l'arbre ; une mutation choisie montre toujours les siens. */
   readonly showBaseCrops: boolean
   readonly selection?: TreeSelection | null
   /** Largeur disponible en pixels : l'espace entre les colonnes s'y adapte. */
@@ -178,7 +180,7 @@ function visiblePart(
   const kept =
     selection.mode === 'neighbors'
       ? edges.filter((edge) => edge.source === id || edge.target === id)
-      : edges.filter((edge) => edge.target === id || chain.has(edge.target))
+      : edges.filter((edge) => edge.target === id || chain.has(edge.target) || edge.source === id)
   return { ids: new Set([id, ...kept.flatMap((edge) => [edge.source, edge.target])]), edges: kept }
 }
 
@@ -218,11 +220,13 @@ export function buildTree(data: GameData, options: TreeOptions): TreeModel {
   const levels = recipeLevels(data)
   const specials = data.mutations.filter((m) => isManualSpecial(data, m)).map((m) => m.id)
   const inTree = data.mutations.filter((m) => !specials.includes(m.id))
+  const selected = options.selection ? inTree.some((m) => m.id === options.selection?.id) : false
+  const showBaseCrops = options.showBaseCrops || selected
   const byRarityThenName = (a: Mutation, b: Mutation) => a.rarityRank - b.rarityRank || a.name.localeCompare(b.name, 'fr')
 
   const allEdges: RawEdge[] = inTree.flatMap((mutation) =>
     recipeInputs(data, mutation).flatMap((input) => {
-      if (input.crop.kind === 'base' && !options.showBaseCrops) return []
+      if (input.crop.kind === 'base' && !showBaseCrops) return []
       const source = input.crop.kind === 'mutation' ? input.crop.id : baseNodeId(input.crop.name)
       return [{ id: `${source}->${mutation.id}`, source, target: mutation.id, relation: input.relation, cells: input.cells, units: input.units }]
     }),

@@ -42,6 +42,11 @@ interface RecipeTreeProps {
   readonly onActivate: (mutationId: string | null) => void
   /** Clic sur une carte : la choisir, ou ouvrir sa fiche si elle l'est déjà. */
   readonly onChoose: (mutationId: string) => void
+  /**
+   * Bande à gauche de l'arbre, avec une flèche : ▶ agrandit (crops de base, ou tout le chemin de la
+   * mutation choisie), ◀ revient à la vue réduite.
+   */
+  readonly expander: { readonly expanded: boolean; readonly onToggle: () => void; readonly label: string }
 }
 
 export function RecipeTree({
@@ -59,6 +64,7 @@ export function RecipeTree({
   triggerRef,
   onActivate,
   onChoose,
+  expander,
 }: RecipeTreeProps) {
   const data = getGameData()
   const roleOf = (edge: TreeEdge) => (focus ? edgeRole(edge, focus) : 'none')
@@ -80,92 +86,106 @@ export function RecipeTree({
   const dimmedNode = (id: string) => (matches ? !matches.has(id) : isDimmed(id, focus))
 
   return (
-    <div ref={boxRef} className="overflow-x-auto rounded-xl border border-line bg-panel p-3">
-      {model && (
-        <div
-          role="group"
-          aria-label={label}
-          className="relative mx-auto transition-[height] duration-[240ms] ease-out"
-          style={{ width: model.width, height: model.height }}
-        >
-          <svg
-            key={viewKey}
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 animate-fade-in overflow-visible"
-            style={{ animationDelay: EDGES_DELAY, animationFillMode: 'both' }}
-            width={model.width}
-            height={model.height}
+    <div className="flex rounded-xl border border-line bg-panel">
+      <button
+        type="button"
+        aria-expanded={expander.expanded}
+        aria-label={expander.label}
+        title={expander.label}
+        onClick={expander.onToggle}
+        className="flex w-8 shrink-0 items-center justify-center rounded-l-xl border-r border-line bg-white/5 text-ink/80 transition-colors hover:bg-panel-raised hover:text-ink"
+      >
+        <svg aria-hidden="true" viewBox="0 0 10 12" className={`size-3.5 transition-transform duration-200 ${expander.expanded ? 'rotate-180' : ''}`}>
+          <path d="M1 0.5 9.5 6 1 11.5Z" fill="currentColor" />
+        </svg>
+      </button>
+      <div ref={boxRef} className="min-w-0 flex-1 overflow-x-auto p-3">
+        {model && (
+          <div
+            role="group"
+            aria-label={label}
+            className="relative mx-auto transition-[height] duration-[240ms] ease-out"
+            style={{ width: model.width, height: model.height }}
           >
-            {edges.map((edge) => (
-              <path
-                key={edge.id}
-                d={edge.path}
-                fill="none"
-                strokeDasharray={edge.relation === 'condition' ? undefined : '5 4'}
-                className="transition-[opacity,stroke] duration-150"
-                {...edgeStyle(roleOf(edge), focus !== null || matches !== null)}
-              />
-            ))}
-          </svg>
-
-          {model.headers.map((header) => (
-            <div
-              key={header.key}
+            <svg
+              key={viewKey}
               aria-hidden="true"
-              className="pointer-events-none absolute top-0 text-center transition-[left,width] duration-[240ms] ease-out"
-              style={{ left: header.x, width: header.width }}
+              className="pointer-events-none absolute inset-0 animate-fade-in overflow-visible"
+              style={{ animationDelay: EDGES_DELAY, animationFillMode: 'both' }}
+              width={model.width}
+              height={model.height}
             >
-              <p className="text-sm font-semibold" style={header.rarity ? { color: rarityColor(header.rarity) } : undefined}>
-                {header.title}
-              </p>
-              <p className="text-[11px] text-ink-muted">
-                {header.key === 'base' ? `${header.count} crops` : plural(header.count, 'mutation')}
-              </p>
-            </div>
-          ))}
+              {edges.map((edge) => (
+                <path
+                  key={edge.id}
+                  d={edge.path}
+                  fill="none"
+                  strokeDasharray={edge.relation === 'condition' ? undefined : '5 4'}
+                  className="transition-[opacity,stroke] duration-150"
+                  {...edgeStyle(roleOf(edge), focus !== null || matches !== null)}
+                />
+              ))}
+            </svg>
 
-          {model.nodes.map((node) => {
-            const mutation = node.kind === 'mutation' ? data.mutationsById.get(node.id) : undefined
-            const selected = node.id === selectedId
-            return (
+            {model.headers.map((header) => (
               <div
-                key={node.id}
-                className={`absolute animate-fade-in ${MOVE}`}
-                style={{ left: node.x, top: node.y, width: node.width, height: node.height }}
+                key={header.key}
+                aria-hidden="true"
+                className="pointer-events-none absolute top-0 text-center transition-[left,width] duration-[240ms] ease-out"
+                style={{ left: header.x, width: header.width }}
               >
-                {mutation ? (
-                  <MutationTreeCard
-                    mutation={mutation}
-                    state={states.get(node.id) ?? 'locked'}
-                    owned={inventory[node.id] ?? 0}
-                    required={plan.needs.get(node.id)?.required ?? 0}
-                    step={tr(`Étape ${node.step}`, `Step ${node.step}`)}
-                    selected={selected}
-                    active={focus?.id === node.id}
-                    dimmed={dimmedNode(node.id)}
-                    amount={amounts.get(node.id) ?? null}
-                    actionLabel={
-                      selected ? tr('Choisie. Ouvrir la fiche', 'Chosen. Open the sheet') : tr("Ne garder que ce qu'il faut pour la faire", 'Keep only what it takes to make it')
-                    }
-                    style={FILL}
-                    buttonRef={triggerRef(node.id)}
-                    onOpen={() => onChoose(node.id)}
-                    onActivate={() => onActivate(node.id)}
-                    onDeactivate={() => onActivate(null)}
-                  />
-                ) : node.kind === 'base' ? (
-                  <BaseCropChip
-                    name={node.id.slice('base:'.length)}
-                    dimmed={dimmedNode(node.id)}
-                    amount={amounts.get(node.id) ?? null}
-                    style={FILL}
-                  />
-                ) : null}
+                <p className="text-sm font-semibold" style={header.rarity ? { color: rarityColor(header.rarity) } : undefined}>
+                  {header.title}
+                </p>
+                <p className="text-[11px] text-ink-muted">
+                  {header.key === 'base' ? `${header.count} crops` : plural(header.count, 'mutation')}
+                </p>
               </div>
-            )
-          })}
-        </div>
-      )}
+            ))}
+
+            {model.nodes.map((node) => {
+              const mutation = node.kind === 'mutation' ? data.mutationsById.get(node.id) : undefined
+              const selected = node.id === selectedId
+              return (
+                <div
+                  key={node.id}
+                  className={`absolute animate-fade-in ${MOVE}`}
+                  style={{ left: node.x, top: node.y, width: node.width, height: node.height }}
+                >
+                  {mutation ? (
+                    <MutationTreeCard
+                      mutation={mutation}
+                      state={states.get(node.id) ?? 'locked'}
+                      owned={inventory[node.id] ?? 0}
+                      required={plan.needs.get(node.id)?.required ?? 0}
+                      step={tr(`Étape ${node.step}`, `Step ${node.step}`)}
+                      selected={selected}
+                      active={focus?.id === node.id}
+                      dimmed={dimmedNode(node.id)}
+                      amount={amounts.get(node.id) ?? null}
+                      actionLabel={
+                        selected ? tr('Choisie. Ouvrir la fiche', 'Chosen. Open the sheet') : tr("Ne garder que ce qu'il faut pour la faire", 'Keep only what it takes to make it')
+                      }
+                      style={FILL}
+                      buttonRef={triggerRef(node.id)}
+                      onOpen={() => onChoose(node.id)}
+                      onActivate={() => onActivate(node.id)}
+                      onDeactivate={() => onActivate(null)}
+                    />
+                  ) : node.kind === 'base' ? (
+                    <BaseCropChip
+                      name={node.id.slice('base:'.length)}
+                      dimmed={dimmedNode(node.id)}
+                      amount={amounts.get(node.id) ?? null}
+                      style={FILL}
+                    />
+                  ) : null}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,6 +1,5 @@
-/** Outils : suivi des Ethereal Vines et estimation des Lonelily (logique pure). */
+/** Outils : suivi des Ethereal Vines (logique pure). */
 import type { GameData } from '../types/game'
-import { buildOccupancy, spawnOptions, type GridInput } from './grid'
 
 export interface VineCounts {
   /** Vines dépensées case par case dans le 1er greenhouse. */
@@ -88,45 +87,4 @@ export function withPlotLimitTier(data: GameData, counts: VineCounts, tier: numb
   if (tier <= 0) return withGreenhousePurchase(data, counts, 'second', false)
   if (tier === 1) return withGreenhousePurchase(data, withGreenhousePurchase(data, counts, 'third', false), 'second', true)
   return withGreenhousePurchase(data, counts, 'third', true)
-}
-
-export interface LonelilyEstimate {
-  /** Lonelily attendues par growth stage (fourchette des données). */
-  readonly perStage: { readonly min: number; readonly max: number }
-  /** Lonelily attendues sur le nombre de stages demandé. */
-  readonly expected: { readonly min: number; readonly max: number }
-  /** Stages pour obtenir `wanted` Lonelily ; null si aucune case ne convient. */
-  readonly stagesFor: { readonly min: number; readonly max: number } | null
-}
-
-/**
- * Estimation des Lonelily : 0,004 à 0,005 par case de Dirt vide et sans voisin, par stage
- * (un greenhouse vide de 100 cases ≈ 1 Lonelily tous les 2 stages).
- */
-export function lonelilyEstimate(data: GameData, cells: number, stages: number, wanted: number): LonelilyEstimate {
-  const rate = data.mechanics.lonelilyRatePerCell
-  const safeCells = Math.max(0, cells)
-  const perStage = { min: safeCells * rate.min, max: safeCells * rate.max }
-  const stagesFor =
-    perStage.min > 0 && wanted > 0
-      ? { min: Math.ceil(wanted / perStage.max), max: Math.ceil(wanted / perStage.min) }
-      : wanted <= 0
-        ? { min: 0, max: 0 }
-        : null
-  return {
-    perStage,
-    expected: { min: perStage.min * Math.max(0, stages), max: perStage.max * Math.max(0, stages) },
-    stagesFor,
-  }
-}
-
-/** Cases où une Lonelily peut spawn dans les grilles données (Dirt vide, sans voisin). */
-export function lonelilyCellsIn(data: GameData, grids: readonly GridInput[]): number {
-  const lonelily = data.mutationsByName.get(data.mechanics.lonelilyRatePerCell.mutation)
-  if (!lonelily) return 0
-  let cells = 0
-  for (const grid of grids) {
-    cells += spawnOptions(data, grid, buildOccupancy(data, grid)).filter((o) => o.mutationId === lonelily.id).length
-  }
-  return cells
 }

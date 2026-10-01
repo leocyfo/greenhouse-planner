@@ -173,7 +173,9 @@
     --mc-px: 2px;
     --mc-slot: calc(var(--mc-px) * 18);
     --mc-shadow: var(--mc-px);
-    font-family: 'Pixelify Sans', ui-monospace, monospace;
+    /* Police du site, en gras : les titres et les nombres des cases restent nets à toute taille. */
+    font-family: var(--font-sans);
+    font-weight: 600;
   }
 
   @media (max-width: 420px) {
@@ -371,9 +373,12 @@
     pointer-events: none;
   }
 
-  /* Infobulle : fond sombre, cadre clair, coins crantés. */
+  /*
+   * Infobulle : fond sombre, cadre clair, coins crantés. Police du site (et non une police pixel)
+   * avec une ombre fine : les couleurs du jeu restent, le texte reste lisible (demande du joueur).
+   */
   .mc-tooltip {
-    --mc-shadow: 2px;
+    --mc-shadow: 1px;
     z-index: 50;
     max-width: min(22rem, calc(100vw - 16px));
     padding: 8px 10px;
@@ -390,8 +395,9 @@
       0 calc(100% - 2px),
       0 2px
     );
-    font-family: 'Pixelify Sans', ui-monospace, monospace;
-    font-size: 16px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
     line-height: 20px;
   }
 
@@ -411,6 +417,10 @@
   .mc-c-d { color: #f5f; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f153f; }
   .mc-c-e { color: #ff5; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f3f15; }
   .mc-c-f { color: #fff; text-shadow: var(--mc-shadow, 2px) var(--mc-shadow, 2px) 0 #3f3f3f; }
+
+  /* Le gris foncé (§8) et le bleu (§9) du jeu sont peu lisibles sur le fond de l'infobulle : plus clairs. */
+  .mc-tooltip .mc-c-8 { color: #8c8c8c; }
+  .mc-tooltip .mc-c-9 { color: #7878ff; }
 }
 
 /* « Réduire les animations » : plus de transitions ni d'animations (hors couche, pour primer). */

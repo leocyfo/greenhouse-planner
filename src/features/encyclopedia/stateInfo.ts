@@ -4,7 +4,7 @@ import { STATE_COLORS } from '../../theme/palette'
 import type { MutationState } from './graphModel'
 
 export const STATE_INFO: Readonly<
-  Record<MutationState, { readonly label: string; readonly icon: string; readonly color: string; readonly description: string }>
+  Record<MutationState, { readonly label: string; readonly icon: string; readonly color: string }>
 > = {
   // Textes lus à chaque affichage (accesseurs) : ils suivent la langue de l'interface.
   complete: {
@@ -13,12 +13,6 @@ export const STATE_INFO: Readonly<
     },
     icon: '✓',
     color: STATE_COLORS.complete,
-    get description() {
-      return tr(
-        'Au moins un exemplaire en stock, et tout ce que demandent tes objectifs suivis.',
-        'At least one copy in stock, and everything your followed goals need.',
-      )
-    },
   },
   available: {
     get label() {
@@ -26,9 +20,6 @@ export const STATE_INFO: Readonly<
     },
     icon: '▶',
     color: STATE_COLORS.available,
-    get description() {
-      return tr('Faisable maintenant : ses ingrédients sont en stock.', 'Doable now: its ingredients are in stock.')
-    },
   },
   locked: {
     get label() {
@@ -36,9 +27,6 @@ export const STATE_INFO: Readonly<
     },
     icon: '🔒',
     color: STATE_COLORS.locked,
-    get description() {
-      return tr('Il manque des ingrédients pour la lancer.', 'Ingredients are missing to start it.')
-    },
   },
   special: {
     get label() {
@@ -46,10 +34,5 @@ export const STATE_INFO: Readonly<
     },
     icon: '✦',
     color: STATE_COLORS.special,
-    get description() {
-      return tr('Condition spéciale, à gérer à la main (Godseed, Jerryflower).', 'Special condition, handled by hand (Godseed, Jerryflower).')
-    },
   },
 }
-
-export const STATE_ORDER: readonly MutationState[] = ['complete', 'available', 'locked', 'special']

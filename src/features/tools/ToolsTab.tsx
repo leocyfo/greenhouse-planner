@@ -2,11 +2,10 @@ import { DataPanel } from './DataPanel'
 import { tr } from '../../i18n/locale'
 import { GreenhouseUpgrades } from './GreenhouseUpgrades'
 import { GrowthCalculator } from './GrowthCalculator'
-import { LonelilyEstimator } from './LonelilyEstimator'
 import { MechanicsCheatSheet } from './MechanicsCheatSheet'
 import { VinesTracker } from './VinesTracker'
 
-/** Onglet Outils : upgrades, croissance, Ethereal Vines, Lonelily, aide-mémoire et sauvegarde. */
+/** Onglet Outils : upgrades, croissance, Ethereal Vines, aide-mémoire et sauvegarde. */
 export function ToolsTab() {
   return (
     <div className="space-y-6">
@@ -16,10 +15,7 @@ export function ToolsTab() {
           <GreenhouseUpgrades />
           <GrowthCalculator />
         </div>
-        <div className="space-y-4">
-          <VinesTracker />
-          <LonelilyEstimator />
-        </div>
+        <VinesTracker />
       </div>
       <MechanicsCheatSheet />
       <DataPanel />

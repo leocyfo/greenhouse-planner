@@ -16,6 +16,7 @@ import {
   MAX_COLUMN_GAP,
   MIN_COLUMN_GAP,
   mutationState,
+  type TreeMode,
   type TreeModel,
 } from './graphModel'
 
@@ -179,10 +180,11 @@ describe('arbre : mutation choisie', () => {
     expectNoEdgeUnderCards(model)
   })
 
-  it('« tout le chemin » : toutes les mutations à faire avant elle, et rien après', () => {
+  it('« tout le chemin » : toutes les mutations à faire avant elle, crops de base compris', () => {
     const model = buildTree(data, { arrangement: 'step', showBaseCrops: false, selection: { id: 'glasscorn', mode: 'chain' } })
-    expect(ids(model)).toEqual(['glasscorn', ...chainOf(data, 'glasscorn')].sort())
+    expect(ids(model).filter((id) => !id.startsWith('base:'))).toEqual(['glasscorn', ...chainOf(data, 'glasscorn')].sort())
     expect(columns(model)).toEqual([
+      ['Crops de base', 11],
       ['Étape 1', 5],
       ['Étape 2', 4],
       ['Étape 3', 3],
@@ -192,6 +194,15 @@ describe('arbre : mutation choisie', () => {
     const focus = focusOn(model.edges, 'glasscorn')
     expect(model.edges.every((e) => edgeRole(e, focus) === 'path')).toBe(true)
     expectNoEdgeUnderCards(model)
+  })
+
+  it('« tout le chemin » est la vue agrandie : il garde tout « avant et après »', () => {
+    const select = (mode: TreeMode) => buildTree(data, { arrangement: 'rarity', showBaseCrops: false, selection: { id: 'turtlellini', mode } })
+    const chain = ids(select('chain'))
+    expect(ids(select('neighbors')).every((id) => chain.includes(id))).toBe(true)
+    // Les 2 Melon et les Gloomgourd du Soggybud, et le Shellfruit qu'elle permet de faire.
+    expect(chain).toEqual(expect.arrayContaining([baseNodeId('Melon'), 'gloomgourd', 'soggybud', 'choconut', 'shellfruit']))
+    expectNoEdgeUnderCards(select('chain'))
   })
 
   it('garde les étapes sans mutation affichée hors de la vue, et les crops de base utilisés seulement', () => {

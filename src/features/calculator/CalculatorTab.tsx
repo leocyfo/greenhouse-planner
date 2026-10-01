@@ -7,7 +7,6 @@ import { BazaarList } from './BazaarList'
 import { FarmOrderList } from './FarmOrderList'
 import { PlanTreeView } from './PlanTreeView'
 import { ResultSummary } from './ResultSummary'
-import { SpecialList } from './SpecialList'
 import { TargetsPanel } from './TargetsPanel'
 import { TimeEstimatePanel } from './TimeEstimatePanel'
 import { useCalculatorResult } from './useCalculatorResult'
@@ -81,11 +80,6 @@ export function CalculatorTab() {
               <Panel title={tr('Crops de base à acheter', 'Base crops to buy')}>
                 <BaseCropList plan={plan} />
               </Panel>
-              {plan.special.length > 0 && (
-                <Panel title={tr('Conditions spéciales', 'Special conditions')}>
-                  <SpecialList plan={plan} />
-                </Panel>
-              )}
               <Panel title={tr('Temps estimé', 'Estimated time')}>
                 <TimeEstimatePanel result={result} />
               </Panel>
