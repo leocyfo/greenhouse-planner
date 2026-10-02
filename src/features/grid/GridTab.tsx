@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { tabElementId, tabPanelId } from '../../components/tabIds'
+import { SegmentedControl } from '../../components/SegmentedControl'
 import { Tabs } from '../../components/Tabs'
 import { getGameData } from '../../data'
 import { tr } from '../../i18n/locale'
@@ -9,19 +10,30 @@ import { stagesBeforeDry } from '../../logic/water'
 import { useAppStore } from '../../store/appStore'
 import { activeLayoutOf, toGridInput } from '../../store/grids'
 import type { CropRef } from '../../types/game'
+import { GuideFarmBanner } from '../guide/GuideFarmBanner'
 import { AutofillPanel } from './AutofillPanel'
 import { CellInspector } from './CellInspector'
 import { ConsumptionPanel } from './ConsumptionPanel'
 import { GodseedPanel } from './GodseedPanel'
 import { GridBoard } from './GridBoard'
-import { buildShortLabels } from './gridText'
+import { buildShortLabels, gridSummary, gridSummaryText } from './gridText'
 import { DEFAULT_OVERLAYS, type GridTool, type Overlays } from './gridTypes'
 import { LayoutToolbar } from './LayoutToolbar'
 import { LockedGreenhouse } from './LockedGreenhouse'
 import { OverlayToggles } from './OverlayToggles'
 import { Palette } from './Palette'
+import { PresetLoader } from './PresetLoader'
 
 const TABS_PREFIX = 'greenhouse'
+
+/** Onglets du panneau à droite de la grille. */
+type SideTab = 'cell' | 'use' | 'plan'
+const sideTabs = () =>
+  [
+    { value: 'cell', label: tr('Case', 'Cell') },
+    { value: 'use', label: tr('Consommation', 'Use') },
+    { value: 'plan', label: tr('Nouveau plan', 'New plan') },
+  ] as const
 
 /**
  * Onglet Grille : 3 greenhouses, plusieurs plans chacun, palette, plateau et analyse. Il utilise
@@ -47,7 +59,9 @@ export function GridTab() {
   const [hoverCell, setHoverCell] = useState<number | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [sideTab, setSideTab] = useState<SideTab>('cell')
   const paletteTitleId = useId()
+  const sideTabName = useId()
 
   const greenhouseIndex = grids.activeGreenhouse
   const greenhouse = grids.greenhouses[greenhouseIndex]
@@ -114,9 +128,11 @@ export function GridTab() {
       case 'godseed':
         setZoneAnchor({ layoutId: layout.id, cell })
         select(cell)
+        setSideTab('cell')
         break
       case 'inspect':
         select(cell)
+        setSideTab('cell')
         break
     }
   }
@@ -130,7 +146,10 @@ export function GridTab() {
   const palette = (
     <Palette
       tool={tool}
-      onToolChange={setTool}
+      onToolChange={(next) => {
+        setTool(next)
+        if (next === 'inspect' || next === 'godseed') setSideTab('cell')
+      }}
       crop={crop}
       onCropChange={setCrop}
       brush={brush}
@@ -140,72 +159,67 @@ export function GridTab() {
     />
   )
 
+  // Grille au centre ; à droite, un seul panneau à onglets : la case, la consommation, un nouveau plan.
   const editor = (
-    <>
-      <LayoutToolbar greenhouse={greenhouseIndex} layouts={greenhouse.layouts} active={layout} />
-
-      {/* Plateau au centre de la zone ; la case et la consommation à côté en grand écran. */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="min-w-0 space-y-3">
-          {/* En grand écran, les cases « Afficher » passent à côté de la grille : elle garde la hauteur. */}
-          <div className="flex flex-wrap items-center justify-between gap-3 xl:hidden">
-            <OverlayToggles value={overlays} onChange={setOverlays} />
-            <button
-              type="button"
-              onClick={() => setPaletteOpen(true)}
-              className="rounded-lg border border-line px-3 py-1.5 text-sm lg:hidden"
-            >
-              {tr('Palette', 'Palette')}
-            </button>
-          </div>
-          <GridBoard
-            grid={grid}
-            analysis={analysis}
-            overlays={overlays}
-            labels={labels}
-            selectedCell={selectedCell}
-            zone={zone}
-            paintMode={tool === 'ground' || tool === 'erase'}
-            waterStages={waterStages}
-            onCellAction={onCellAction}
-            onHover={setHoverCell}
-            onDropCrop={(cell, dropped) => {
-              setCrop(dropped)
-              setTool('place')
-              place(cell, dropped)
-            }}
-            label={tr(
-              `Greenhouse ${greenhouseIndex + 1}, plan « ${layout.name} », ${size.width} x ${size.height} cases`,
-              `Greenhouse ${greenhouseIndex + 1}, plan “${layout.name}”, ${size.width} x ${size.height} cells`,
-            )}
-          />
-          <p aria-live="polite" className="min-h-5 text-sm text-warning">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="min-w-0 space-y-2">
+        <GuideFarmBanner greenhouse={greenhouseIndex} />
+        <GridBoard
+          grid={grid}
+          analysis={analysis}
+          overlays={overlays}
+          labels={labels}
+          selectedCell={selectedCell}
+          zone={zone}
+          paintMode={tool === 'ground' || tool === 'erase'}
+          waterStages={waterStages}
+          onCellAction={onCellAction}
+          onHover={setHoverCell}
+          onDropCrop={(cell, dropped) => {
+            setCrop(dropped)
+            setTool('place')
+            place(cell, dropped)
+          }}
+          label={tr(
+            `Greenhouse ${greenhouseIndex + 1}, plan « ${layout.name} », ${size.width} x ${size.height} cases`,
+            `Greenhouse ${greenhouseIndex + 1}, plan “${layout.name}”, ${size.width} x ${size.height} cells`,
+          )}
+        />
+        <div className="flex min-h-5 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+          <p className="text-ink-muted">{gridSummaryText(gridSummary(data, grid, analysis))}</p>
+          <p aria-live="polite" className="text-warning">
             <span key={message} className="inline-block animate-fade-in">
               {message}
             </span>
           </p>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          <div className="hidden rounded-xl border border-line bg-panel p-3 xl:block">
-            <OverlayToggles value={overlays} onChange={setOverlays} />
-          </div>
-          {tool === 'godseed' ? (
-            <GodseedPanel grid={grid} analysis={analysis} anchor={anchor} />
-          ) : (
-            <CellInspector grid={grid} analysis={analysis} cell={inspected} waterStages={waterStages} />
+      <div className="space-y-3">
+        <SegmentedControl legend={tr('Panneau', 'Panel')} name={sideTabName} options={sideTabs()} value={sideTab} onChange={setSideTab} />
+        <div key={sideTab} className="animate-fade-in space-y-4">
+          {sideTab === 'cell' &&
+            (tool === 'godseed' ? (
+              <GodseedPanel grid={grid} analysis={analysis} anchor={anchor} />
+            ) : (
+              <CellInspector grid={grid} analysis={analysis} cell={inspected} waterStages={waterStages} />
+            ))}
+          {sideTab === 'use' && <ConsumptionPanel />}
+          {sideTab === 'plan' && (
+            <>
+              <PresetLoader greenhouse={greenhouseIndex} />
+              <AutofillPanel key={greenhouseIndex} greenhouse={greenhouseIndex} layout={layout} />
+            </>
           )}
-          <ConsumptionPanel />
-          <AutofillPanel key={greenhouseIndex} greenhouse={greenhouseIndex} layout={layout} />
         </div>
       </div>
-    </>
+    </div>
   )
 
   // Mise en page de SkyCrypt, sur toute la largeur : les crops et mutations à gauche, sur toute la
   // hauteur (la place du personnage), la grille à droite (la place des stats).
   return (
-    <div className="gap-5 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] xl:grid-cols-[minmax(22rem,28%)_minmax(0,1fr)]">
+    <div className="gap-5 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)]">
       <h2 className="sr-only">{tr('Grille', 'Grid')}</h2>
 
       <aside aria-labelledby={paletteTitleId} className="hidden lg:block">
@@ -218,17 +232,36 @@ export function GridTab() {
       </aside>
 
       <div className="min-w-0 space-y-4">
-        <Tabs
-          tabs={grids.greenhouses.map((_, index) => ({
-            id: String(index),
-            label: `Greenhouse ${index + 1}${unlocked.includes(index) ? '' : ' 🔒'}`,
-          }))}
-          selected={String(greenhouseIndex)}
-          onSelect={(id) => setActiveGreenhouse(Number(id))}
-          idPrefix={TABS_PREFIX}
-          label="Greenhouses"
-          className="border-b border-line"
-        />
+        {/* Une seule barre : le greenhouse, son plan (et le menu « ⋯ »), ce que la grille affiche. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-line bg-panel px-3 py-2">
+          <Tabs
+            tabs={grids.greenhouses.map((_, index) => ({
+              id: String(index),
+              label: `Greenhouse ${index + 1}${unlocked.includes(index) ? '' : ' 🔒'}`,
+            }))}
+            selected={String(greenhouseIndex)}
+            onSelect={(id) => setActiveGreenhouse(Number(id))}
+            idPrefix={TABS_PREFIX}
+            label="Greenhouses"
+            variant="pills"
+          />
+          {!locked && (
+            <>
+              <span aria-hidden="true" className="hidden h-6 w-px bg-line sm:block" />
+              <LayoutToolbar greenhouse={greenhouseIndex} layouts={greenhouse.layouts} active={layout} />
+              <div className="flex flex-wrap items-center gap-2 xl:ml-auto">
+                <OverlayToggles value={overlays} onChange={setOverlays} />
+                <button
+                  type="button"
+                  onClick={() => setPaletteOpen(true)}
+                  className="h-8 rounded-full border border-line px-3 text-xs lg:hidden"
+                >
+                  {tr('Palette', 'Palette')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
         <div
           role="tabpanel"

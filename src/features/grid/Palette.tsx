@@ -12,14 +12,26 @@ import type { CropRef } from '../../types/game'
 import { groundLabel } from './gridText'
 import { DRAG_TYPE, type GridTool } from './gridTypes'
 
-/** Outils de la palette (textes lus à l'affichage : ils suivent la langue). */
-const tools = (): readonly { readonly id: GridTool; readonly label: string; readonly hint: string }[] => [
-  { id: 'place', label: tr('Poser', 'Place'), hint: tr('Clic ou glisser depuis la liste', 'Click or drag from the list') },
-  { id: 'erase', label: tr('Gomme', 'Eraser'), hint: tr('Clic droit : gomme aussi', 'Right click erases too') },
-  { id: 'ground', label: tr('Sol', 'Soil'), hint: tr('Peindre le sol en glissant', 'Paint the soil by dragging') },
-  { id: 'inspect', label: tr('Inspecter', 'Inspect'), hint: tr('Voir le détail d’une case', 'See the details of a cell') },
-  { id: 'godseed', label: 'Godseed', hint: tr('Vérifier une zone 3x3', 'Check a 3x3 area') },
+/**
+ * Outils de la palette (textes lus à l'affichage : ils suivent la langue), chacun avec l'image
+ * d'un objet du jeu ; la gomme, qui n'en a pas, est dessinée.
+ */
+const tools = (): readonly { readonly id: GridTool; readonly label: string; readonly hint: string; readonly icon: string | null }[] => [
+  { id: 'place', label: tr('Poser', 'Place'), hint: tr('Clic ou glisser depuis la liste', 'Click or drag from the list'), icon: 'Seeds' },
+  { id: 'erase', label: tr('Gomme', 'Eraser'), hint: tr('Clic droit : gomme aussi', 'Right click erases too'), icon: null },
+  { id: 'ground', label: tr('Sol', 'Soil'), hint: tr('Peindre le sol en glissant', 'Paint the soil by dragging'), icon: 'Dirt' },
+  { id: 'inspect', label: tr('Inspecter', 'Inspect'), hint: tr('Voir le détail d’une case', 'See the details of a cell'), icon: 'Plant Diagnostics Tool' },
+  { id: 'godseed', label: 'Godseed', hint: tr('Vérifier une zone 3x3', 'Check a 3x3 area'), icon: 'Godseed' },
 ]
+
+function EraserIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round">
+      <path d="m14 4 6 6-9 9H6l-3-3 11-12Z" fill="#f07167" fillOpacity={0.35} />
+      <path d="M9 9l6 6M6 19h14" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 interface PaletteProps {
   readonly tool: GridTool
@@ -76,17 +88,26 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
 
   const grounds = [...data.surfaces, BROKEN_GROUND, ...(allowLocked ? [LOCKED_GROUND] : [])]
   const selectedKey = crop ? cropKey(crop) : null
+  const current =
+    crop === null
+      ? null
+      : crop.kind === 'base'
+        ? { name: crop.name, color: 'var(--color-ink)', side: 1, surface: null }
+        : (() => {
+            const mutation = data.mutationsById.get(crop.id)
+            return mutation ? { name: mutation.name, color: rarityColor(mutation.rarity), side: mutation.side, surface: mutation.surface } : null
+          })()
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <fieldset>
         <legend className="mb-1.5 text-xs font-medium text-ink-muted">{tr('Outil', 'Tool')}</legend>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-5 gap-1.5">
           {tools().map((option) => (
             <label
               key={option.id}
-              title={option.hint}
-              className="cursor-pointer rounded-lg border border-line px-2 py-1.5 text-center text-xs text-ink-muted transition-colors hover:text-ink has-checked:border-accent has-checked:bg-accent/15 has-checked:text-ink has-focus-visible:outline-2 has-focus-visible:outline-accent"
+              title={`${option.label} : ${option.hint}`}
+              className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-line px-1 py-1.5 text-[11px] text-ink-muted transition-colors hover:text-ink has-checked:border-accent has-checked:bg-accent/15 has-checked:text-ink has-focus-visible:outline-2 has-focus-visible:outline-accent"
             >
               <input
                 type="radio"
@@ -96,11 +117,34 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
                 onChange={() => onToolChange(option.id)}
                 className="sr-only"
               />
+              <span aria-hidden="true" className="flex h-7 items-center">
+                {option.icon ? <WikiIcon name={option.icon} size={26} /> : <EraserIcon />}
+              </span>
               {option.label}
             </label>
           ))}
         </div>
       </fieldset>
+
+      {/* Ce que l'outil posera : le crop choisi (ou le sol à peindre). */}
+      {tool !== 'ground' && (
+        <p className="flex min-h-11 items-center gap-2 rounded-lg border border-line bg-canvas/60 px-2.5 py-1.5 text-sm">
+          <span className="text-xs text-ink-muted">{tr('En main', 'In hand')}</span>
+          {current ? (
+            <>
+              <WikiIcon name={current.name} size={24} />
+              <span className="font-medium" style={{ color: current.color }}>
+                {current.name}
+              </span>
+              <span className="ml-auto text-xs text-ink-muted">
+                {[current.side > 1 ? `${current.side}x${current.side}` : null, current.surface].filter(Boolean).join(' · ')}
+              </span>
+            </>
+          ) : (
+            <span className="text-ink-muted">{tr('rien : choisis un crop ci-dessous', 'nothing: pick a crop below')}</span>
+          )}
+        </p>
+      )}
 
       {tool === 'ground' ? (
         <fieldset>
@@ -152,10 +196,17 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
           </label>
           <div className="mt-2 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
             {groups.map((group) => (
-              <div key={group.title}>
-                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-ink-muted">{group.title}</p>
+              // Chaque groupe se replie : la liste reste courte (« Crops de base » d'un clic).
+              <details key={group.title} open className="group/rarity">
+                <summary className="mb-1 flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-medium tracking-wide text-ink-muted uppercase hover:text-ink [&::-webkit-details-marker]:hidden">
+                  <span aria-hidden="true" className="inline-block transition-transform group-open/rarity:rotate-90">
+                    ▸
+                  </span>
+                  {group.title}
+                  <span className="font-normal normal-case">· {group.crops.length}</span>
+                </summary>
                 {/* Grille de cartes : image, nom, bordure de la rareté, pastille du sol. */}
-                <ul className="grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-1.5">
+                <ul className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-1.5">
                   {group.crops.map((item) => {
                     const key = cropKey(item.ref)
                     const selected = key === selectedKey
@@ -176,7 +227,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
                             onCropChange(item.ref)
                             if (tool !== 'place') onToolChange('place')
                           }}
-                          className={`relative flex h-full w-full flex-col items-center gap-1 rounded-md border bg-canvas/60 px-1 pt-2 pb-1.5 transition hover:bg-panel-raised motion-safe:active:scale-95 ${
+                          className={`relative flex h-full w-full flex-col items-center gap-0.5 rounded-md border bg-canvas/60 px-1 pt-1.5 pb-1 transition hover:bg-panel-raised motion-safe:active:scale-95 ${
                             selected ? 'bg-accent/15 ring-2 ring-accent' : ''
                           }`}
                           style={{ borderColor: item.border }}
@@ -193,9 +244,9 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
                               {item.side}x{item.side}
                             </span>
                           )}
-                          <span aria-hidden="true" className="flex h-8 items-center">
+                          <span aria-hidden="true" className="flex h-7 items-center">
                             {wikiImage(item.name) ? (
-                              <WikiIcon name={item.name} size={30} />
+                              <WikiIcon name={item.name} size={26} />
                             ) : (
                               <span className="rounded bg-canvas px-1 text-[10px] font-semibold" style={{ color: item.color }}>
                                 {labels.get(item.name)}
@@ -210,7 +261,7 @@ export function Palette({ tool, onToolChange, crop, onCropChange, brush, onBrush
                     )
                   })}
                 </ul>
-              </div>
+              </details>
             ))}
           </div>
         </div>

@@ -10,6 +10,7 @@
     ],
     "notes": "Farmland et Dirt sont le même sol dans le Greenhouse : seul Dirt est gardé (précision du joueur). verified=false signifie que la donnée doit être confirmée en jeu. roseDragonOptimum = quantité recommandée par le guide AVRG pour la route Rose Dragon.",
     "fieldDocs": {
+      "guide": "Guide du Rose Dragon (onglet Guide), d'après « The Greenhouse Guide » d'AVRG : sections et chapitres dans l'ordre du guide. layout = plan AVRG de la ferme (id de layouts), minimumLayout = sa version minimum, text = conseils d'AVRG pour ce chapitre. ownPlot = la ferme reste seule sur son greenhouse (Chorus Fruit : AVRG dit que tout le plot se couvre d'End Stone, qui bloque les autres emplacements) ; les autres peuvent partager un greenhouse quand elles tiennent.",
       "itemId": "Identifiant de l'objet chez Hypixel (API publique, catégorie MUTATION), pour reconnaître la mutation dans un profil importé.",
       "roseDragonOptimum": "Total recommandé par AVRG pour la route Rose Dragon (plans optimum). N'inclut pas l'exemplaire à analyser.",
       "roseDragonMinimum": "Total minimum donné par AVRG. null = AVRG ne donne pas de minimum explicite. Quand AVRG donne un seul nombre, il est repris ici et dans roseDragonOptimum.",
@@ -868,6 +869,170 @@
       "placements": [{ "crop": "PlantBoy Advance", "x": 6, "y": 6 }]
     }
   ],
+
+  "guide": {
+    "goal": "rose_dragon",
+    "sections": [
+      {
+        "id": "first_steps",
+        "title": "Premiers pas",
+        "text": "Il faut 11 Dustgrain et 12 Gloomgourd. Fais-en au moins un de chaque pour les analyser et les débloquer au bazar, puis achète le reste (peu cher) ou cultive-le.",
+        "chapters": [
+          {
+            "id": "first_steps_gloomgourd",
+            "title": "Gloomgourd",
+            "layout": "avrg_first_steps_gloomgourd",
+            "text": "Avant d'avoir 2 greenhouses, les Gloomgourd sont un bon moyen de farmer des Ethereal Vines (les acheter avec des coins va plus vite)."
+          },
+          {
+            "id": "first_steps_dustgrain",
+            "title": "Dustgrain",
+            "layout": "avrg_first_steps_dustgrain"
+          }
+        ]
+      },
+      {
+        "id": "whole_plot",
+        "title": "Fermes sur toute la parcelle",
+        "text": "Toutes les mutations Common et Uncommon dont tu as besoin se font dans ces trois fermes.",
+        "chapters": [
+          {
+            "id": "first_big_farm",
+            "title": "First Big Farm",
+            "layout": "avrg_first_big_farm",
+            "text": "Pendant que les Soggybud poussent (8 growth stages), tu devrais obtenir assez de tout le reste. Il te faudra surtout beaucoup d'Ashwreath et de Choconut. Si une ferme plus avancée tourne sur un autre plot, n'utilise pas de rosewater flask sur celui-ci."
+          },
+          {
+            "id": "merging_superfarm",
+            "title": "Merging Superfarm",
+            "layout": "avrg_merging_superfarm"
+          },
+          {
+            "id": "choconut_duskbloom_superfarm",
+            "title": "Choconut + Duskbloom Superfarm",
+            "layout": "avrg_choconut_duskbloom_superfarm",
+            "text": "Beaucoup de mutations viennent des Choconut, en quantités différentes : les réunir fait gagner beaucoup de place. Les Turtellini sont la seule mutation non commune sans growth stage : tu en obtiens beaucoup, vite. Il en faut 5 (jusqu'à 10, voir le Shellfruit)."
+          }
+        ]
+      },
+      {
+        "id": "rare",
+        "title": "Mutations rares",
+        "chapters": [
+          {
+            "id": "blastberry",
+            "title": "Blastberry et Shellfruit",
+            "layout": "avrg_blastberry_opt",
+            "minimumLayout": "avrg_blastberry_min",
+            "text": "Aie au moins 5 Turtellini avant de commencer. Attends que toutes les Blastberry aient spawn avant d'en casser une, et fais les Shellfruit en récoltant : il faut 2 explosions de Blastberry pour changer un Turtellini en Shellfruit. Casse les Chocoberry d'un 2x2, pose des Turtellini, récolte 2 Blastberry, récolte tout de suite les Shellfruit, puis pose le dernier Turtellini au centre et récolte les 2 dernières Blastberry."
+          },
+          {
+            "id": "cheesebite",
+            "title": "Cheesebite",
+            "layout": "avrg_cheesebite"
+          },
+          {
+            "id": "magic_jellybean",
+            "title": "Magic Jellybean",
+            "layout": "avrg_magic_jellybean",
+            "text": "Plus tu en poses, mieux c'est : récoltable tous les 12 stages jusqu'à 120, et attendre ne fait qu'augmenter les drops."
+          },
+          {
+            "id": "chloronite",
+            "title": "Chloronite",
+            "layout": "avrg_chloronite",
+            "text": "La Mining Fortune compte : 0-500 = 1 drop, 500-1000 = 2, 1000-1500 = 3, 1500+ = 4."
+          },
+          {
+            "id": "noctilume_fleshtrap",
+            "title": "Noctilume et Fleshtrap (Lonelily)",
+            "layout": "avrg_noctilume_fleshtrap",
+            "text": "Environ 1 Lonelily tous les 2 growth stages par plot vide (0,004 à 0,005 par case libre) ; les rosewater flasks peuvent en faire spawn. Nourris les Fleshtrap d'Enchanted Raw Meat pour en avoir plus par stage. En tout : 12 Lonelily, 7 Cindershade, 10 Duskbloom."
+          },
+          {
+            "id": "snoozling",
+            "title": "Snoozling",
+            "layout": "avrg_snoozling",
+            "text": "Gros et long à pousser : pose-le tôt, fais-en 3 et garde-les pour le Snoozling Complex. Tous les 5 stages, il s'endort et ne pousse plus : utilise bien tes rosewater flasks."
+          }
+        ]
+      },
+      {
+        "id": "epic",
+        "title": "Mutations épiques",
+        "chapters": [
+          {
+            "id": "chorus_fruit",
+            "title": "Chorus Fruit",
+            "layout": "avrg_chorus_fruit",
+            "ownPlot": true
+          },
+          {
+            "id": "startlevine",
+            "title": "Startlevine",
+            "layout": "avrg_startlevine",
+            "text": "L'optimum (4 plots : 7 Blastberry, 14 Cheesebite) économise les Blastberry, bien plus dures à obtenir."
+          },
+          {
+            "id": "zombud",
+            "title": "Zombud",
+            "layout": "avrg_zombud",
+            "text": "Le minimum et l'optimum coûtent presque pareil : prends l'optimum."
+          }
+        ]
+      },
+      {
+        "id": "snoozling_complex",
+        "title": "Snoozling Complex",
+        "text": "Puffercloud, Stoplight Petal, Thunderling et PlantBoy Advance se font dans ce complexe, la meilleure utilisation de la place. Utilise des rosewater flasks de haut niveau : 2 Snoozlings restent posés plus longtemps que toute autre mutation, ne les laisse pas atteindre la decay. Au moins 60 growth stages en tout.",
+        "chapters": [
+          {
+            "id": "snoozling_complex_1",
+            "title": "Étape 1",
+            "layout": "avrg_snoozling_complex_1",
+            "text": "Puffercloud : fait des dégâts autour de toi. Stoplight Petal : clique sans toucher le rouge. Thunderling : un clic droit pendant la pousse retire sa charge (dans une Thunder in a Bottle vide)."
+          },
+          {
+            "id": "snoozling_complex_2",
+            "title": "Étape 2",
+            "layout": "avrg_snoozling_complex_2",
+            "text": "Quand tu as 6 Thunderling (au moins 48 growth stages après les avoir posés) : ajoute le 3e Snoozling, retire une ferme de Puffercloud et pose les Thunderling. PlantBoy Advance : gagne le snake pour le récolter, perdre retire 3 growth stages."
+          }
+        ]
+      },
+      {
+        "id": "legendary",
+        "title": "Mutations légendaires",
+        "text": "Toutes les fermes légendaires tiennent sur un seul plot.",
+        "chapters": [
+          {
+            "id": "devourer",
+            "title": "Devourer",
+            "layout": "avrg_devourer",
+            "text": "Ses racines détruisent les mutations qui le font pousser : fais-le loin des autres cultures."
+          },
+          {
+            "id": "glasscorn",
+            "title": "Glasscorn",
+            "layout": "avrg_glasscorn",
+            "text": "Attention aux rosewater flasks : ne dépasse pas le stage 8."
+          },
+          {
+            "id": "timestalk_phantomleaf",
+            "title": "Timestalk et Phantomleaf",
+            "layout": "avrg_timestalk_phantomleaf",
+            "text": "Timestalk : sans armure pour le tuer plus facilement (ou vole). Phantomleaf : quand il se cache, casse le bloc au battement de cœur rapide."
+          },
+          {
+            "id": "all_in_aloe",
+            "title": "All-in Aloe",
+            "layout": "avrg_all_in_aloe",
+            "text": "Il faut 9 fragments pour un All-in Aloe."
+          }
+        ]
+      }
+    ]
+  },
 
   "bestiary": [
     {

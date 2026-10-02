@@ -236,6 +236,32 @@ const layoutSchema = z.strictObject({
   placements: z.array(z.strictObject({ crop: z.string().min(1), x: nonNegativeInt, y: nonNegativeInt })).optional(),
 })
 
+const guideIdSchema = z.string().regex(/^[a-z0-9_]+$/, 'id attendu en minuscules, chiffres et _')
+
+/** Guide du Rose Dragon : sections et chapitres du guide AVRG, chacun avec son plan de ferme. */
+const guideSchema = z.strictObject({
+  goal: z.string().min(1),
+  sections: z.array(
+    z.strictObject({
+      id: guideIdSchema,
+      title: z.string().min(1),
+      text: z.string().min(1).optional(),
+      chapters: z
+        .array(
+          z.strictObject({
+            id: guideIdSchema,
+            title: z.string().min(1),
+            layout: z.string().min(1),
+            minimumLayout: z.string().min(1).optional(),
+            text: z.string().min(1).optional(),
+            ownPlot: z.boolean().optional(),
+          }),
+        )
+        .min(1),
+    }),
+  ),
+})
+
 const bestiarySchema = z.strictObject({
   mob: z.string().min(1),
   source: z.string().min(1),
@@ -264,6 +290,7 @@ export const gameDataSchema = z.strictObject({
     items: z.array(z.string()),
   }),
   layouts: z.array(layoutSchema),
+  guide: guideSchema,
   bestiary: z.array(bestiarySchema),
   mutationsSack: z.strictObject({
     name: z.string().min(1),

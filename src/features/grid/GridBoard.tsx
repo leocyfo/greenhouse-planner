@@ -18,7 +18,7 @@ import { DRAG_TYPE, type Overlays } from './gridTypes'
  * 9 écarts de 3 px, marges et bordure) comme en hauteur (--board-height : de son haut au bas de
  * l'écran), entre 44 et 72 px. Les icônes suivent (tailles en %).
  */
-const CELL = 'clamp(2.75rem, min(calc((100cqw - 41px) / 10), calc((var(--board-height, 100dvh) - 41px) / 10)), 4.5rem)'
+const CELL = 'clamp(2.75rem, min(calc((100cqw - 41px) / 10), calc((var(--board-height, 100dvh) - 41px) / 10)), 5.25rem)'
 /** Marge laissée sous le plateau, en bas de l'écran. */
 const BOTTOM_MARGIN = 16
 

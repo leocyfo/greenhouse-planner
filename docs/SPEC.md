@@ -733,6 +733,91 @@ recrée tout »)
 - Retirés car répétés : la barre au-dessus de l'arbre (recette et « sert à » en texte, que l'arbre
   montre déjà) et les grandes cartes du calcul (le temps minimum y apparaissait deux fois).
 
+### Grille : refonte (demande du joueur : « fais une refonte là aussi », 01/10/2026)
+- Une seule barre en haut : les greenhouses en pastilles, le plan affiché avec ses actions dans un
+  menu « ⋯ » (nouveau, dupliquer, renommer, vider en gardant le sol, supprimer :
+  `components/ActionMenu.tsx`), et ce que la grille affiche en pastilles à bascule (spawns
+  possibles, conflits, effets reçus, niveau d'eau).
+- À droite de la grille, un seul panneau à onglets au lieu de quatre panneaux empilés : « Case »
+  (détail de la case, ou le vérificateur Godseed), « Consommation » (ce que la grille utilise) et
+  « Nouveau plan » (plan du guide AVRG, `PresetLoader.tsx`, et plan automatique). Choisir l'outil
+  Inspecter ou Godseed, ou inspecter une case, revient sur « Case ».
+- Plus loin (demande du joueur : « fais plus », Grille) : les 5 outils sur une ligne, chacun avec
+  l'image d'un objet du jeu (Seeds, Dirt, Plant Diagnostics Tool, Godseed ; la gomme est dessinée) ;
+  « En main » : le crop choisi, sa taille et son sol ; groupes de la palette repliables, avec leur
+  nombre de crops, et cartes plus denses ; palette moins large (21rem) et cases jusqu'à 5,25rem :
+  le plateau grandit ; sous la grille, un bilan (`gridSummary`, testé) : crops posés, emplacements
+  de spawn (sans les Lonelily) et mutations différentes, cases en conflit.
+
+### Guide du Rose Dragon (demande du joueur : « un guide complet », puis « améliore-le à fond : interactif, avec la grille et les greenhouses », PDF du guide AVRG à l'appui, 01/10/2026)
+- Onglet « Guide » (`features/guide`), entre l'Encyclopédie et la Grille. Il suit le guide AVRG
+  (« The Greenhouse Guide », changelog du 22/04/2026) : `data.guide` dans mutations.json donne ses
+  6 sections (Premiers pas, Fermes sur toute la parcelle, Rares, Épiques, Snoozling Complex,
+  Légendaires) et ses 20 chapitres, chacun avec sa ferme (un plan AVRG de `layouts`), sa version
+  minimum s'il y en a une (Blastberry) et les conseils d'AVRG (traduits ; l'anglais reprend le
+  guide). Validé au chargement (objectif et plans connus, chapitres uniques) ; tous les plans AVRG
+  servent à un chapitre (test).
+- En tête : avancement (mutations en stock sur le total AVRG, fermes finies, temps minimum restant),
+  « Suivre cet objectif », l'arbre entier dans l'Encyclopédie.
+- « Tes greenhouses » : pour chacun, la ferme du guide qui y tourne (reconnue dans la Grille : mêmes
+  crops aux mêmes cases, même chargée depuis la Grille) et ce qu'elle a déjà donné, ou « Vide » /
+  le plan en place ; s'il est libre (ou sa ferme finie), la ferme à y poser ensuite (« Poser ici ») ;
+  verrouillé : son prix en Ethereal Vines. Tant que les 3 ne sont pas débloqués : le conseil AVRG
+  sur la place, le Growth Speed et le suivi des Ethereal Vines (celui d'Outils), modifiable ici.
+- « Avant de commencer » : les conseils de la FAQ AVRG (ouvert tant que rien n'est fait).
+- Chaque chapitre (`ChapterCard`) : l'aperçu de la ferme (sol, crops, emplacements en vert,
+  `FarmPreview`), Optimum / Minimum s'il y a le choix, « Ça donne » (stock modifiable, besoin de la
+  route), « À poser » (mutations vérifiées dans le stock, crops de base), ce qui manque, les
+  conseils, et pour chaque greenhouse « Poser dans le N » (nouveau plan, sans quitter le Guide),
+  « Ouvrir le N » si la ferme y est, ou 🔒. États (`chapterView`, testés) : faite (tout ce qu'elle
+  donne est en stock), en cours (posée dans un greenhouse), prête (tout est en stock pour la poser),
+  il manque des mutations. S'ouvrent d'emblée : les fermes en cours et les fermes proposées.
+- Hors des fermes : le Shellfruit (condition spéciale, expliquée dans le chapitre Blastberry), avec
+  son stock. Fin : l'œuf chez Ludleth (5 légendaires cochés quand ils sont en stock, autres coûts).
+- Plusieurs fermes par greenhouse (demande du joueur : « certains trucs se combinent, donc
+  optimise ») : `farmPacking.ts` (testé). Une ferme n'occupe que ses cases utiles (crops, emplacements,
+  sols particuliers : le Devourer tient en 4 x 4 dans son plan de 10 x 10). Elle est posée à la
+  première place libre (sol utilisable, hors des cases des autres fermes), les plus grandes d'abord,
+  puis le plan est vérifié par la logique de la grille : chaque emplacement de chaque ferme doit faire
+  spawn exactement les mêmes mutations que la ferme seule, sinon la place est refusée. Exemples
+  testés : les quatre fermes légendaires dans un seul greenhouse (comme le « Full Legendary Plot »
+  d'AVRG), quatre fermes 5 x 5 ensemble ; une ferme sur toute la parcelle reste seule ; le Chorus
+  Fruit aussi (`ownPlot` dans les données : AVRG dit que tout le plot se couvre d'End Stone).
+- Les propositions (`suggestFarms`) rangent les fermes prêtes greenhouse par greenhouse : ajoutées
+  au plan affiché s'il n'a que des fermes du guide en cours (ou rien), sinon dans un nouveau plan ;
+  l'aperçu du plan obtenu est montré. « Poser » fait de même (`replaceLayoutContent` dans le store
+  pour compléter un plan, `addGeneratedLayout` pour un nouveau ; le plan prend le nom de ses fermes,
+  « Cheesebite + Chloronite + Zombud »). Les fermes d'un plan sont retrouvées même décalées
+  (`farmsIn`). Les chapitres ne dessinent leur contenu qu'une fois ouverts.
+- Dans la Grille, quand le plan affiché contient des fermes du guide : un bandeau, une ligne par
+  ferme (chapitre, ce qu'elle donne, « Voir dans le guide », qui ouvre ce chapitre).
+
+### Guide : une chose à la fois, avec les fermes AVRG (demande du joueur, 02/10/2026)
+- Le joueur a d'abord demandé un guide « dynamique, calculé en tâche de fond à partir de
+  l'inventaire, qui combine des étapes comme Gloomgourd et Dustgrain ». Un essai avec des plans
+  générés par le plan automatique a été refusé (« pas bon » : trop de choses, plans faux, garder les
+  fermes AVRG) et retiré.
+- Le Guide montre maintenant une chose à la fois, avec les fermes du guide AVRG telles quelles
+  (`guideNow`, testé) :
+  - « À faire maintenant » : les fermes prêtes (toutes les mutations à poser en stock), dans l'ordre
+    du guide, tant que le stock libre suffit (une ferme réserve ce qu'elle pose : deux fermes ne
+    comptent pas deux fois les mêmes Ashwreath), réunies dans le même greenhouse quand elles y
+    tiennent ensemble (au départ : Gloomgourd + Dustgrain dans le Greenhouse 1), à côté des fermes
+    en cours s'il reste de la place. Une carte par greenhouse : aperçu du plan, ce qu'il faut, ce que
+    ça donne (stock modifiable), conseils d'AVRG, « Poser dans le Greenhouse N ». Puis les fermes en
+    cours (stock à mettre à jour en récoltant, « Ouvrir dans la Grille »). Sans rien de prêt : la
+    prochaine ferme et ce qui manque.
+  - Mettre le stock à jour fait avancer le guide : quand tout ce qu'une ferme donne est en stock,
+    elle est finie et la suivante arrive (après Gloomgourd + Dustgrain : First Big Farm).
+  - « Ensuite » : les fermes suivantes dans l'ordre du guide (chapitre repliable avec tous ses
+    détails). En bas, repliés : débloquer des greenhouses, conseils d'AVRG, l'œuf chez Ludleth.
+  - Corrigé (capture du joueur) : une ferme ne compte « en cours » que si elle est dans le plan
+    affiché du greenhouse ; une ferme restée dans un ancien plan de la liste ne compte plus.
+    Plusieurs étapes dans le même greenhouse (demande du joueur) : pour chaque greenhouse, une ferme
+    est « ajoutée » à côté des fermes qui y poussent si elle tient (`placementFor`), posée dans un
+    nouveau plan si le greenhouse est libre (fermes finies, ou un autre plan), et « Plein » sinon :
+    rien n'est plus remplacé. « À faire maintenant » dit « Ajoute au Greenhouse N » dans ce cas.
+
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,
   30/09/2026) : cartes, fiches, objectifs, sac, arbre, outils, infobulles Minecraft. Les marques

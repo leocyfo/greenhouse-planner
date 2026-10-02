@@ -3,6 +3,7 @@ import { tabElementId, tabPanelId } from '../components/tabIds'
 import { Tabs } from '../components/Tabs'
 import { DashboardTab } from '../features/dashboard/DashboardTab'
 import { GridTab } from '../features/grid/GridTab'
+import { GuideTab } from '../features/guide/GuideTab'
 import { InventoryTab } from '../features/inventory/InventoryTab'
 import { ToolsTab } from '../features/tools/ToolsTab'
 import { PlayerButton } from '../features/profile/PlayerButton'
@@ -33,6 +34,8 @@ function TabContent({ tabId }: { readonly tabId: TabId }) {
           <EncyclopediaTab />
         </Suspense>
       )
+    case 'guide':
+      return <GuideTab />
     case 'grille':
       return <GridTab />
     case 'outils':

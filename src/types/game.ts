@@ -203,6 +203,30 @@ export interface LayoutPreset {
   readonly spots: readonly LayoutSpot[]
 }
 
+/** Chapitre du guide AVRG : une ferme (son plan), et sa version minimum s'il y en a une. */
+export interface GuideChapter {
+  readonly id: string
+  readonly title: string
+  readonly text: string | null
+  readonly layout: LayoutPreset
+  readonly minimumLayout: LayoutPreset | null
+  /** La ferme reste seule sur son greenhouse (Chorus Fruit) ; les autres peuvent en partager un. */
+  readonly ownPlot: boolean
+}
+
+export interface GuideSection {
+  readonly id: string
+  readonly title: string
+  readonly text: string | null
+  readonly chapters: readonly GuideChapter[]
+}
+
+/** Guide d'un objectif (le Rose Dragon), d'après le guide AVRG. */
+export interface Guide {
+  readonly goalId: string
+  readonly sections: readonly GuideSection[]
+}
+
 export interface GameData {
   readonly meta: {
     readonly description: string
@@ -222,6 +246,7 @@ export interface GameData {
   readonly goals: readonly Goal[]
   readonly unmappedUsages: { readonly description: string; readonly items: readonly string[] }
   readonly layouts: readonly LayoutPreset[]
+  readonly guide: Guide
   readonly bestiary: readonly BestiaryEntry[]
   readonly mutationsSack: MutationsSack
 }

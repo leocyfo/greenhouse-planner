@@ -35,6 +35,17 @@ describe('mutations.json du projet', () => {
     expect(new Set(data.mutations.map((m) => m.id)).size).toBe(40)
   })
 
+  it('charge le guide du Rose Dragon : 6 sections, chaque chapitre avec son plan AVRG', () => {
+    expect(data.guide.goalId).toBe('rose_dragon')
+    expect(data.guide.sections).toHaveLength(6)
+    const chapters = data.guide.sections.flatMap((section) => section.chapters)
+    expect(chapters).toHaveLength(20)
+    // Chaque plan AVRG sert à un chapitre, comme ferme ou comme version minimum.
+    const used = chapters.flatMap((chapter) => [chapter.layout.id, chapter.minimumLayout?.id].filter(Boolean))
+    expect([...used].sort()).toEqual(data.layouts.map((layout) => layout.id).sort())
+    expect(chapters.find((chapter) => chapter.id === 'blastberry')?.minimumLayout?.id).toBe('avrg_blastberry_min')
+  })
+
   it('résout les conditions en mutations (par id) ou en crops de base (par nom)', () => {
     expect(mutation(data, 'chocoberry').conditions).toEqual([
       { crop: { kind: 'mutation', id: 'choconut' }, count: 6 },
@@ -155,6 +166,14 @@ describe('validation de données invalides', () => {
         message: 'crop inconnu : « Whaet » (ni une mutation, ni un crop de base listé dans baseCrops)',
       },
     ])
+  })
+
+  it('signale un plan inconnu dans le guide', () => {
+    const issues = issuesAfter((data) => {
+      const chapter = data.guide.sections[0]?.chapters[0]
+      if (chapter) chapter.layout = 'avrg_inconnu'
+    })
+    expect(issues).toEqual([{ path: 'guide.sections[first_steps].chapters[first_steps_gloomgourd].layout', message: 'plan inconnu : « avrg_inconnu »' }])
   })
 
   it('signale un effet inconnu', () => {

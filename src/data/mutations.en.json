@@ -347,6 +347,120 @@
       "notes": "Four spots around a single PlantBoy Advance (2x2, counts for 2 cells each). Harvest at stage 6: 4 fragments."
     }
   },
+  "guide": {
+    "sections": {
+      "first_steps": {
+        "title": "First Steps",
+        "text": "You will need 11 Dustgrain and 12 Gloomgourd. Do one of each at least to analyze them and unlock them on bazaar, then buy the rest (relatively cheap) or grind them yourself.",
+        "chapters": {
+          "first_steps_gloomgourd": {
+            "title": "Gloomgourd",
+            "text": "Prior to unlocking 2 greenhouses, go for gloomgourds if you want to grind vines, or grind money and buy the vines (this is quicker)."
+          },
+          "first_steps_dustgrain": {
+            "title": "Dustgrain"
+          }
+        }
+      },
+      "whole_plot": {
+        "title": "The Whole-Plot Farms",
+        "text": "Every common or uncommon mutation that you need is made in these three farms.",
+        "chapters": {
+          "first_big_farm": {
+            "title": "First Big Farm",
+            "text": "While the Soggybud grows in its 8 growth stages, you should get enough of everything else. You will mainly need a lot of ashwreath and choconut. If you have another, later-stage farm design in another plot, do not use rosewater flasks on this plot."
+          },
+          "merging_superfarm": {
+            "title": "Merging Superfarm"
+          },
+          "choconut_duskbloom_superfarm": {
+            "title": "Choconut + Duskbloom Superfarm",
+            "text": "You need quite a few things that come from choconuts, but of varying amounts, so combining them saves you some serious space. Turtellini are the only non-common mutation that has 0 growth stages, so you get a lot of them quickly. You need 5 (up to 10, see Shellfruit)."
+          }
+        }
+      },
+      "rare": {
+        "title": "Rare Mutations",
+        "chapters": {
+          "blastberry": {
+            "title": "Blastberry and Shellfruit",
+            "text": "Get at least 5 Turtellini first. Wait for all the blastberrys to spawn before breaking any, and do shellfruit when harvesting: it takes 2 explosions from breaking active blastberrys to form a Turtellini into shellfruit. Break the Chocoberry of a 2x2, place down turtellini, harvest 2 blastberrys, harvest the shellfruit immediately, then place the final turtellini in the centre block and harvest the last 2 blastberrys."
+          },
+          "cheesebite": {
+            "title": "Cheesebite"
+          },
+          "magic_jellybean": {
+            "title": "Magic Jellybean",
+            "text": "The more you can place here, the better: harvestable at every 12th stage up to 120, and letting it grow only increases the number of drops."
+          },
+          "chloronite": {
+            "title": "Chloronite",
+            "text": "Mining fortune works on these: 0-500 fortune = 1 drop, 500-1000 = 2 drops, 1000-1500 = 3 drops, 1500+ = 4 drops."
+          },
+          "noctilume_fleshtrap": {
+            "title": "Noctilume and Fleshtrap (Lonelily)",
+            "text": "Per empty plot, you get around 1 lonelily every 2 growth stages (0.004-0.005 per viable block); rosewater flasks can spawn them. Feed the fleshtraps enchanted raw meat to get extra fleshtraps per growth. In total: 12x Lonelily, 7x Cindershade, 10x Duskbloom."
+          },
+          "snoozling": {
+            "title": "Snoozling",
+            "text": "Big and bulky: get it down early, get 3, and save them for the Snoozling Complex. At every 5th stage it falls asleep and stops growing, so use rosewaters effectively."
+          }
+        }
+      },
+      "epic": {
+        "title": "Epic Mutations",
+        "chapters": {
+          "chorus_fruit": {
+            "title": "Chorus Fruit"
+          },
+          "startlevine": {
+            "title": "Startlevine",
+            "text": "The optimum (4 plots: 7x blastberry, 14x cheesebite) saves blastberrys, which are much harder to get."
+          },
+          "zombud": {
+            "title": "Zombud",
+            "text": "The difference between the minimum and optimum designs in resource cost is very low, so the optimum farm is highly recommended."
+          }
+        }
+      },
+      "snoozling_complex": {
+        "title": "The Snoozling Complex",
+        "text": "Puffercloud, Stoplight Petal, Thunderling and PlantBoy Advance are made in this complex, the most efficient use of space. Use high level rosewater flasks: 2 snoozlings stay down longer than any other mutation, so don't let them reach decay. A minimum of 60 growth stages in total.",
+        "chapters": {
+          "snoozling_complex_1": {
+            "title": "Step 1",
+            "text": "Puffercloud deals damage in an area around you. Stoplight Petal: lots of clicking, don't hit when it's on red. Thunderling: right click it while it grows to remove the charge (into an empty thunder in a bottle)."
+          },
+          "snoozling_complex_2": {
+            "title": "Step 2",
+            "text": "Once you have 6 thunderlings (minimum 48 growth stages from placing), add the third snoozling, remove a puffercloud farm and place your thunderlings. PlantBoy Advance: win the game of snake to harvest it; losing reduces the growth stages by 3."
+          }
+        }
+      },
+      "legendary": {
+        "title": "Legendary Mutations",
+        "text": "All the legendary designs fit onto one plot.",
+        "chapters": {
+          "devourer": {
+            "title": "Devourer",
+            "text": "It destroys the mutations that are growing it by spawning vines: spawn it away from other crops growing."
+          },
+          "glasscorn": {
+            "title": "Glasscorn",
+            "text": "Be careful with rosewater flasks not to overshoot stage 8."
+          },
+          "timestalk_phantomleaf": {
+            "title": "Timestalk and Phantomleaf",
+            "text": "Timestalk: spawn it with no armour on to make it easier to kill (or fly). Phantomleaf: when it hides, break the block with the fast heartbeat."
+          },
+          "all_in_aloe": {
+            "title": "All-in Aloe",
+            "text": "You will need 9 fragments to craft an All-in Aloe mutation."
+          }
+        }
+      }
+    }
+  },
   "bestiary": {
     "Zombuddy": {
       "source": "Zombud (transformed Dead Plants)"

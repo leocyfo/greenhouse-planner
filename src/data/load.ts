@@ -297,6 +297,21 @@ function findReferenceIssues(data: RawGameData): DataIssue[] {
     for (const layoutIssue of parseLayout(layout, i, layoutContext).issues) add(layoutIssue.path, layoutIssue.message)
   })
 
+  // --- Guide : objectif et plans connus, chapitres uniques ---
+  if (!goalIds.has(data.guide.goal)) add(['guide', 'goal'], `objectif inconnu : « ${data.guide.goal} »`)
+  const chapterIds = new Set<string>()
+  data.guide.sections.forEach((section, s) => {
+    section.chapters.forEach((chapter, c) => {
+      const at = (...path: PropertyKey[]) => ['guide', 'sections', s, 'chapters', c, ...path]
+      if (chapterIds.has(chapter.id)) add(at('id'), `id de chapitre en double : « ${chapter.id} »`)
+      chapterIds.add(chapter.id)
+      if (!layoutIds.has(chapter.layout)) add(at('layout'), `plan inconnu : « ${chapter.layout} »`)
+      if (chapter.minimumLayout !== undefined && !layoutIds.has(chapter.minimumLayout)) {
+        add(at('minimumLayout'), `plan inconnu : « ${chapter.minimumLayout} »`)
+      }
+    })
+  })
+
   // --- Cycles : cherchés seulement si tous les noms sont résolus (sinon messages parasites) ---
   if (issues.length === 0) {
     const cycle = findRecipeCycle(data)
@@ -503,6 +518,12 @@ function normalize(data: RawGameData): GameData {
     }),
   )
 
+  const layouts = data.layouts.flatMap((layout, i) => {
+    const { preset } = parseLayout(layout, i, createLayoutContext(data))
+    return preset ? [preset] : []
+  })
+  const layoutsById = new Map(layouts.map((layout) => [layout.id, layout]))
+
   return {
     meta: {
       description: data._meta.description,
@@ -520,10 +541,29 @@ function normalize(data: RawGameData): GameData {
     mutationsByName: new Map(mutations.map((m) => [m.name, m])),
     goals,
     unmappedUsages: data.unmappedUsages,
-    layouts: data.layouts.flatMap((layout, i) => {
-      const { preset } = parseLayout(layout, i, createLayoutContext(data))
-      return preset ? [preset] : []
-    }),
+    layouts,
+    guide: {
+      goalId: data.guide.goal,
+      sections: data.guide.sections.map((section) => ({
+        id: section.id,
+        title: section.title,
+        text: section.text ?? null,
+        chapters: section.chapters.flatMap((chapter) => {
+          const layout = layoutsById.get(chapter.layout)
+          if (!layout) return []
+          return [
+            {
+              id: chapter.id,
+              title: chapter.title,
+              text: chapter.text ?? null,
+              layout,
+              minimumLayout: chapter.minimumLayout ? (layoutsById.get(chapter.minimumLayout) ?? null) : null,
+              ownPlot: chapter.ownPlot ?? false,
+            },
+          ]
+        }),
+      })),
+    },
     bestiary,
     mutationsSack: {
       name: data.mutationsSack.name,

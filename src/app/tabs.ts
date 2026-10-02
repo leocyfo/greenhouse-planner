@@ -7,6 +7,8 @@ export const TABS = [
   { id: 'inventaire' },
   // L'Encyclopédie contient le calcul de la mutation choisie (l'ancien onglet Calculateur).
   { id: 'encyclopedie' },
+  // Guide du Rose Dragon, de bout en bout (guide AVRG).
+  { id: 'guide' },
   { id: 'grille' },
   { id: 'outils' },
 ] as const
@@ -26,6 +28,8 @@ export function tabLabel(id: TabId): string {
       return tr('Inventaire', 'Inventory')
     case 'encyclopedie':
       return tr('Encyclopédie', 'Encyclopedia')
+    case 'guide':
+      return tr('Guide', 'Guide')
     case 'grille':
       return tr('Grille', 'Grid')
     case 'outils':

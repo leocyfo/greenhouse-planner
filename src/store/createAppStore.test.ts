@@ -3,7 +3,7 @@ import type { StateStorage } from 'zustand/middleware'
 import { projectData } from '../test/projectData'
 import { createAppStore } from './createAppStore'
 import { SCHEMA_VERSION, STORAGE_KEY } from './persistence'
-import { defaultPersistedState } from './state'
+import { defaultLayoutId, defaultPersistedState } from './state'
 
 const defaults = defaultPersistedState(projectData())
 
@@ -247,6 +247,16 @@ describe('store : grilles', () => {
     expect(active()).toMatchObject({ id: 'id-1', name: 'Blastberry : minimum' })
     expect(active()?.placements).toHaveLength(21) // 9 Chocoberry + 12 Ashwreath
     expect(active()?.ground[1 * 10 + 1]).toBe('Sand') // emplacement de spawn
+  })
+
+  it('remplace le contenu d’un plan (fermes du guide ajoutées), en gardant son id', () => {
+    const { state, active } = gridStore()
+    const ground = new Array<string>(100).fill('Sand')
+    state().replaceLayoutContent(0, defaultLayoutId(0), 'Cheesebite + Chloronite', ground, [{ crop: { kind: 'base', name: 'Wheat' }, x: 1, y: 1 }])
+    expect(active()).toMatchObject({ id: defaultLayoutId(0), name: 'Cheesebite + Chloronite', placements: [{ x: 1, y: 1 }] })
+    expect(active()?.ground[0]).toBe('Sand')
+    state().replaceLayoutContent(0, defaultLayoutId(0), 'trop court', ['Sand'], [])
+    expect(active()?.name).toBe('Cheesebite + Chloronite')
   })
 
   it('prend le nom du plan AVRG dans la langue du moment', () => {

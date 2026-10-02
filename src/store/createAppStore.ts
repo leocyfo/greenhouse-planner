@@ -77,6 +77,8 @@ export interface AppActions {
   loadPreset: (greenhouse: number, presetId: string) => void
   /** Ajoute un plan tout fait (remplissage automatique) et l'affiche ; ignoré si le sol n'a pas la taille de la grille. */
   addGeneratedLayout: (greenhouse: number, name: string, ground: readonly string[], placements: readonly Placement[]) => void
+  /** Remplace le contenu d'un plan (fermes du guide ajoutées à un plan existant). */
+  replaceLayoutContent: (greenhouse: number, layoutId: string, name: string, ground: readonly string[], placements: readonly Placement[]) => void
   /** Pose un crop ; renvoie la raison d'un refus, ou null. */
   placeCrop: (greenhouse: number, layoutId: string, crop: CropRef, x: number, y: number) => string | null
   removeCropAt: (greenhouse: number, layoutId: string, x: number, y: number) => void
@@ -210,6 +212,17 @@ export function createAppStore(defaults: PersistedState, storage?: StateStorage,
           if (ground.length !== size.width * size.height) return
           set((s) => ({
             grids: withLayoutAdded(s.grids, greenhouse, { id: makeId(), name, ground: [...ground], placements: [...placements] }),
+          }))
+        },
+        replaceLayoutContent: (greenhouse, layoutId, name, ground, placements) => {
+          if (ground.length !== size.width * size.height) return
+          set((s) => ({
+            grids: withLayoutChanged(s.grids, greenhouse, layoutId, (layout) => ({
+              ...layout,
+              name: name.trim().slice(0, 60) || layout.name,
+              ground: [...ground],
+              placements: [...placements],
+            })),
           }))
         },
         placeCrop: (greenhouse, layoutId, crop, x, y) => {
