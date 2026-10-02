@@ -68,13 +68,24 @@ describe('mutations.json du projet', () => {
   })
 
   it('marque les champs à vérifier : drapeaux, valeurs inconnues et conflits', () => {
-    expect(mutation(data, 'soggybud').unverified).toEqual(['growthStages'])
-    expect(mutation(data, 'turtlellini').unverified).toEqual(['name', 'rarity'])
+    expect(mutation(data, 'soggybud').unverified).toEqual(['growthStages', 'drops'])
+    expect(mutation(data, 'turtlellini').unverified).toEqual(['name', 'rarity', 'drops'])
     expect(mutation(data, 'jerryflower').unverified).toEqual(['growthStages'])
-    // growthStages: null = inconnu
-    expect(mutation(data, 'devourer').growthStages).toBeNull()
-    expect(mutation(data, 'devourer').unverified).toEqual(['growthStages'])
+    // Désaccord avec skyshards : noté, notre valeur reste utilisée.
+    expect(mutation(data, 'cheesebite').effects).toEqual(['Improved Water Retain'])
+    expect(mutation(data, 'cheesebite').unverified).toEqual(['drops', 'effects'])
     expect(mutation(data, 'dustgrain').unverified).toEqual([])
+  })
+
+  it('lit les growth stages des légendaires, la decay et l’arrosage (skyshards)', () => {
+    expect(['devourer', 'phantomleaf', 'timestalk'].map((id) => mutation(data, id).growthStages)).toEqual([16, 15, 14])
+    expect(data.mutations.filter((m) => m.growthStages === null).map((m) => m.id)).toEqual([])
+    expect(mutation(data, 'ashwreath')).toMatchObject({ decayDays: 3, needsWater: false })
+    expect(mutation(data, 'snoozling')).toMatchObject({ decayDays: 6, needsWater: true })
+    expect(mutation(data, 'godseed')).toMatchObject({ decayDays: 10, needsWater: true })
+    // Ces trois-là ne decay jamais.
+    expect(data.mutations.filter((m) => m.decayDays === null).map((m) => m.id)).toEqual(['fleshtrap', 'magic_jellybean', 'all_in_aloe'])
+    expect(data.mutations.every((m) => m.needsWater !== null)).toBe(true)
   })
 
   it('chiffre les effets : amount en %, négatif pour un malus, null sans valeur', () => {

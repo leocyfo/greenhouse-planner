@@ -1,12 +1,13 @@
 {
   "_meta": {
     "description": "Données complètes des mutations du Greenhouse - Hypixel SkyBlock",
-    "dataVersion": 5,
+    "dataVersion": 6,
     "sources": [
       "Hypixel SkyBlock Wiki (page Mutations et Greenhouse)",
       "The Greenhouse Guide by AVRG (quantités optimales Rose Dragon, plans des fermes, astuces ; changelog du 22/04/2026)",
       "Captures du menu Greenhouse Upgrades en jeu (29/09/2026)",
-      "API publique Hypixel, liste des objets (/v2/resources/skyblock/items) : identifiants des mutations (itemId)"
+      "API publique Hypixel, liste des objets (/v2/resources/skyblock/items) : identifiants des mutations (itemId)",
+      "greenhouse.skyshards.com (02/10/2026) : growth stages de Devourer, Phantomleaf et Timestalk, decay et arrosage des mutations"
     ],
     "notes": "Farmland et Dirt sont le même sol dans le Greenhouse : seul Dirt est gardé (précision du joueur). verified=false signifie que la donnée doit être confirmée en jeu. roseDragonOptimum = quantité recommandée par le guide AVRG pour la route Rose Dragon.",
     "fieldDocs": {
@@ -17,7 +18,9 @@
       "conditions": "Voisins requis autour de l'emplacement de spawn. count = nombre de CASES : une mutation 2x2 ou 3x3 compte une fois par case qu'elle occupe autour de l'emplacement.",
       "specialPrerequisites": "Mutations nécessaires en dehors des conditions de voisinage. role 'consumed' : count exemplaires consommés par mutation produite. role 'catalyst' : la mutation doit être disponible (au moins count), sans s'ajouter aux autres besoins.",
       "harvest": "Récolte avant la fin de la croissance : firstStage (premier stage récoltable), every (intervalle), lastStage, recommendedStage, resetsAfterStage (retour au stage 1), fragments.",
-      "conflicts": "Valeur différente trouvée dans une autre source : { field, value, source }. Le champ concerné s'affiche avec le badge 'à vérifier'.",
+      "conflicts": "Valeur différente trouvée dans une autre source : { field, value, source }. Notre valeur reste utilisée, le désaccord est seulement noté (ex. drops, rareté de Turtlellini et Harvest Loss de Cheesebite chez skyshards).",
+      "decayDays": "Jours avant que la mutation meure (decay), d'après skyshards. null = elle ne decay jamais (Fleshtrap, Magic Jellybean et All-in Aloe : 0 chez skyshards, confirmé par le joueur).",
+      "needsWater": "true = la mutation a besoin d'eau pendant sa croissance : à sec, elle peut ne pas passer son prochain growth stage (skyshards).",
       "<champ>Verified": "false = le champ <champ> est à confirmer en jeu (badge 'à vérifier').",
       "avrgNotes": "Conseils tirés du guide AVRG.",
       "goals.requires.mutations": "Quantités CONSOMMÉES par l'objectif (œuf, craft, shards). null = quantité inconnue : comptée 1, avec le badge 'à vérifier'.",
@@ -192,16 +195,17 @@
 
   "mutations": [
     {
-      "id": "ashwreath", "name": "Ashwreath", "itemId": "ASHWREATH", "rarity": "COMMON", "size": "1x1", "surface": "Soul Sand", "growthStages": 0,
+      "id": "ashwreath", "name": "Ashwreath", "itemId": "ASHWREATH", "rarity": "COMMON", "size": "1x1", "surface": "Soul Sand", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Nether Wart", "count": 2 }, { "crop": "Fire", "count": 2 }],
       "drops": { "Nether Wart": 360 },
       "effects": ["Improved Harvest Boost", "XP Loss"],
       "notes": "Fire = utiliser un Flint and Steel.",
       "avrgNotes": "Avec la Choconut, c'est la mutation commune dont il faut le plus.",
+      "conflicts": [{ "field": "drops", "value": "Nether Wart 180", "source": "skyshards" }],
       "roseDragonOptimum": 36, "roseDragonMinimum": 28, "usages": []
     },
     {
-      "id": "choconut", "name": "Choconut", "itemId": "CHOCONUT", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "choconut", "name": "Choconut", "itemId": "CHOCONUT", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Cocoa Beans", "count": 2 }],
       "drops": { "Cocoa Beans": 200 },
       "effects": ["Immunity"],
@@ -209,7 +213,7 @@
       "roseDragonOptimum": 29, "roseDragonMinimum": 29, "usages": []
     },
     {
-      "id": "dustgrain", "name": "Dustgrain", "itemId": "DUSTGRAIN", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "dustgrain", "name": "Dustgrain", "itemId": "DUSTGRAIN", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Wheat", "count": 2 }],
       "drops": { "Wheat": 100 },
       "effects": ["Harvest Boost"],
@@ -218,78 +222,88 @@
       "roseDragonOptimum": 11, "roseDragonMinimum": 11, "usages": []
     },
     {
-      "id": "gloomgourd", "name": "Gloomgourd", "itemId": "GLOOMGOURD", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "gloomgourd", "name": "Gloomgourd", "itemId": "GLOOMGOURD", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Pumpkin", "count": 1 }, { "crop": "Melon", "count": 1 }],
       "drops": { "Pumpkin": 30, "Melon Slice": 140 },
       "effects": ["Water Retain", "Bonus Drops"],
       "avrgNotes": "En faire au moins un pour l'analyser et débloquer l'achat au bazar. Bon moyen de farmer des Ethereal Vines avant d'avoir 2 greenhouses.",
+      "conflicts": [{ "field": "drops", "value": "Pumpkin 34, Melon Slice 160", "source": "skyshards" }],
       "roseDragonOptimum": 12, "roseDragonMinimum": 12, "usages": []
     },
     {
-      "id": "lonelily", "name": "Lonelily", "itemId": "LONELILY", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "lonelily", "name": "Lonelily", "itemId": "LONELILY", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [], "specialCondition": "0 crop adjacent (spawn sur plots vides)", "spawnRule": "noAdjacentCrops",
       "drops": { "Potato": 600, "Carrot": 700, "Pumpkin": 340 },
       "effects": ["Bonus Drops"],
       "notes": "Spawn weight plus bas que les autres commons. Les rosewater flasks peuvent en faire spawn.",
+      "conflicts": [{ "field": "drops", "value": "Potato 525, Carrot 613, Pumpkin 298", "source": "skyshards" }],
       "roseDragonOptimum": 12, "roseDragonMinimum": null, "usages": []
     },
     {
-      "id": "scourroot", "name": "Scourroot", "itemId": "SCOURROOT", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "scourroot", "name": "Scourroot", "itemId": "SCOURROOT", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Potato", "count": 1 }, { "crop": "Carrot", "count": 1 }],
       "drops": { "Potato": 105, "Carrot": 122 },
       "effects": ["Immunity", "XP Boost"],
+      "conflicts": [{ "field": "drops", "value": "Potato 102, Carrot 119", "source": "skyshards" }],
       "roseDragonOptimum": 11, "roseDragonMinimum": 11, "usages": []
     },
     {
-      "id": "shadevine", "name": "Shadevine", "itemId": "SHADEVINE", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "shadevine", "name": "Shadevine", "itemId": "SHADEVINE", "rarity": "COMMON", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Cactus", "count": 1 }, { "crop": "Sugar Cane", "count": 1 }],
       "drops": { "Cactus": 68, "Sugar Cane": 90 },
       "effects": ["Improved Water Retain", "Improved XP Boost", "Harvest Loss"],
+      "conflicts": [{ "field": "drops", "value": "Cactus 78, Sugar Cane 104", "source": "skyshards" }],
       "roseDragonOptimum": 8, "roseDragonMinimum": 8, "usages": []
     },
     {
-      "id": "veilshroom", "name": "Veilshroom", "itemId": "VEILSHROOM", "rarity": "COMMON", "size": "1x1", "surface": "Mycelium", "growthStages": 0,
+      "id": "veilshroom", "name": "Veilshroom", "itemId": "VEILSHROOM", "rarity": "COMMON", "size": "1x1", "surface": "Mycelium", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Red Mushroom", "count": 1 }, { "crop": "Brown Mushroom", "count": 1 }],
       "drops": { "Brown Mushroom": 33, "Red Mushroom": 33 },
       "effects": ["Improved Harvest Boost", "Water Drain"],
+      "conflicts": [{ "field": "drops", "value": "Brown Mushroom 28, Red Mushroom 28", "source": "skyshards" }],
       "roseDragonOptimum": 14, "roseDragonMinimum": 14, "usages": []
     },
     {
-      "id": "witherbloom", "name": "Witherbloom", "itemId": "WITHERBLOOM", "rarity": "COMMON", "size": "1x1", "surface": "Soul Sand", "growthStages": 0,
+      "id": "witherbloom", "name": "Witherbloom", "itemId": "WITHERBLOOM", "rarity": "COMMON", "size": "1x1", "surface": "Soul Sand", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Dead Plant", "count": 4 }],
       "drops": { "Wild Rose": 300 },
       "effects": ["Effect Spread"],
       "notes": "Dead Plant : acheter au bazaar ou ne pas arroser un crop.",
+      "conflicts": [{ "field": "drops", "value": "Wild Rose 184", "source": "skyshards" }],
       "roseDragonOptimum": 18, "roseDragonMinimum": 18, "usages": []
     },
 
     {
-      "id": "chocoberry", "name": "Chocoberry", "itemId": "CHOCOBERRY", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 6,
+      "id": "chocoberry", "name": "Chocoberry", "itemId": "CHOCOBERRY", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 6, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Choconut", "count": 6 }, { "crop": "Gloomgourd", "count": 2 }],
       "drops": { "Cocoa Beans": 400, "Pumpkin": 170, "Melon Slice": 1600 },
       "effects": ["Water Retain"],
+      "conflicts": [{ "field": "drops", "value": "Cocoa Beans 440, Pumpkin 187, Melon Slice 1760", "source": "skyshards" }],
       "roseDragonOptimum": 17, "roseDragonMinimum": 9, "usages": []
     },
     {
-      "id": "cindershade", "name": "Cindershade", "itemId": "CINDERSHADE", "rarity": "UNCOMMON", "size": "1x1", "surface": "Soul Sand", "growthStages": 8,
+      "id": "cindershade", "name": "Cindershade", "itemId": "CINDERSHADE", "rarity": "UNCOMMON", "size": "1x1", "surface": "Soul Sand", "growthStages": 8, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Ashwreath", "count": 4 }, { "crop": "Witherbloom", "count": 4 }],
       "drops": { "Nether Wart": 1200, "Wild Rose": 800 },
       "effects": ["Effect Spread", "Improved Harvest Boost", "XP Loss"],
+      "conflicts": [{ "field": "drops", "value": "Nether Wart 1020, Wild Rose 680", "source": "skyshards" }],
       "roseDragonOptimum": 11, "roseDragonMinimum": 6, "usages": []
     },
     {
-      "id": "coalroot", "name": "Coalroot", "itemId": "COALROOT", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 8,
+      "id": "coalroot", "name": "Coalroot", "itemId": "COALROOT", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 8, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Ashwreath", "count": 5 }, { "crop": "Scourroot", "count": 3 }],
       "drops": { "Potato": 600, "Carrot": 1400, "Nether Wart": 600 },
       "effects": ["XP Boost"],
+      "conflicts": [{ "field": "drops", "value": "Potato 510, Carrot 1190, Nether Wart 510", "source": "skyshards" }],
       "roseDragonOptimum": 13, "roseDragonMinimum": 6,
       "usages": [{ "target": "Machine Fuel (+5,000 Fuel)", "type": "fuel", "quantity": 1, "verified": true }]
     },
     {
-      "id": "creambloom", "name": "Creambloom", "itemId": "CREAMBLOOM", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 6,
+      "id": "creambloom", "name": "Creambloom", "itemId": "CREAMBLOOM", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 6, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Choconut", "count": 8 }],
       "drops": { "Cocoa Beans": 1600 },
       "effects": ["Immunity"],
+      "conflicts": [{ "field": "drops", "value": "Cocoa Beans 2240", "source": "skyshards" }],
       "roseDragonOptimum": 13, "roseDragonMinimum": 8,
       "usages": [
         { "target": "Medium Mutations Sack", "type": "craft", "quantity": null, "verified": false },
@@ -297,14 +311,15 @@
       ]
     },
     {
-      "id": "duskbloom", "name": "Duskbloom", "itemId": "DUSKBLOOM", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 8,
+      "id": "duskbloom", "name": "Duskbloom", "itemId": "DUSKBLOOM", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 8, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Moonflower", "count": 2 }, { "crop": "Shadevine", "count": 2 }, { "crop": "Sunflower", "count": 2 }, { "crop": "Dustgrain", "count": 2 }],
       "drops": { "Moonflower": 533, "Sunflower": 533, "Wheat": 267 },
       "effects": ["Bonus Drops"],
+      "conflicts": [{ "field": "drops", "value": "Moonflower 720, Sunflower 720, Wheat 360", "source": "skyshards" }],
       "roseDragonOptimum": 22, "roseDragonMinimum": 12, "usages": []
     },
     {
-      "id": "thornshade", "name": "Thornshade", "itemId": "THORNSHADE", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 8,
+      "id": "thornshade", "name": "Thornshade", "itemId": "THORNSHADE", "rarity": "UNCOMMON", "size": "1x1", "surface": "Dirt", "growthStages": 8, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Wild Rose", "count": 4 }, { "crop": "Veilshroom", "count": 4 }],
       "drops": { "Brown Mushroom": 190, "Red Mushroom": 190, "Wild Rose": 800 },
       "effects": ["Effect Spread"],
@@ -313,49 +328,54 @@
     },
 
     {
-      "id": "blastberry", "name": "Blastberry", "itemId": "BLASTBERRY", "rarity": "RARE", "size": "1x1", "surface": "Sand", "growthStages": 6,
+      "id": "blastberry", "name": "Blastberry", "itemId": "BLASTBERRY", "rarity": "RARE", "size": "1x1", "surface": "Sand", "growthStages": 6, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Chocoberry", "count": 5 }, { "crop": "Ashwreath", "count": 3 }],
       "drops": { "Cocoa Beans": 1200, "Nether Wart": 1800 },
       "effects": ["Immunity", "Improved Harvest Boost", "XP Loss"],
       "notes": "Explose tout le 3x3 à la récolte. Attendre que TOUTES les blastberries aient spawn avant d'en casser une. Sert à faire les Shellfruit.",
       "avrgNotes": "Lire la section Shellfruit avant et avoir au moins 5 Turtellini : faire les Shellfruit au moment de récolter les fermes de Blastberry. Le plan optimum a 8 emplacements : 7 Blastberry + 1 pour l'analyse.",
+      "conflicts": [{ "field": "drops", "value": "Cocoa Beans 800, Nether Wart 1200", "source": "skyshards" }],
       "roseDragonOptimum": 7, "roseDragonMinimum": 4, "usages": []
     },
     {
-      "id": "cheesebite", "name": "Cheesebite", "itemId": "CHEESEBITE", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 10,
+      "id": "cheesebite", "name": "Cheesebite", "itemId": "CHEESEBITE", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 10, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Creambloom", "count": 4 }, { "crop": "Fermento", "count": 4 }],
       "drops": { "Brown Mushroom": 190, "Cactus": 600, "Sugar Cane": 800, "Red Mushroom": 190 },
       "effects": ["Improved Water Retain"],
       "notes": "Des rats spawn et bloquent la croissance : les tuer avec un pest vacuum.",
       "avrgNotes": "Les rats apparaissent aux growth stages 4 et 8.",
+      "conflicts": [{ "field": "drops", "value": "Brown Mushroom 253, Red Mushroom 253, Cactus 800, Sugar Cane 1067", "source": "skyshards" }, { "field": "effects", "value": "Improved Water Retain, Harvest Loss", "source": "skyshards" }],
       "roseDragonOptimum": 14, "roseDragonMinimum": 4, "usages": []
     },
     {
-      "id": "chloronite", "name": "Chloronite", "itemId": "CHLORONITE", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 10,
+      "id": "chloronite", "name": "Chloronite", "itemId": "CHLORONITE", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 10, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Coalroot", "count": 6 }, { "crop": "Thornshade", "count": 2 }],
       "drops": { "Brown Mushroom": 95, "Potato": 600, "Carrot": 700, "Red Mushroom": 95, "Wild Rose": 400 },
       "effects": ["Immunity"],
       "notes": "Mining fortune augmente les drops : 0-500 = 1, 500-1000 = 2, 1000-1500 = 3, 1500+ = 4 (selon AVRG).",
+      "conflicts": [{ "field": "drops", "value": "Brown Mushroom 128, Red Mushroom 128, Wild Rose 540, Potato 810, Carrot 945", "source": "skyshards" }],
       "roseDragonOptimum": 22, "roseDragonMinimum": 11, "usages": []
     },
     {
-      "id": "do_not_eat_shroom", "name": "Do-not-eat-shroom", "itemId": "DO_NOT_EAT_SHROOM", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 8,
+      "id": "do_not_eat_shroom", "name": "Do-not-eat-shroom", "itemId": "DO_NOT_EAT_SHROOM", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 8, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Veilshroom", "count": 4 }, { "crop": "Scourroot", "count": 4 }],
       "drops": { "Brown Mushroom": 380, "Potato": 1200, "Carrot": 1400, "Red Mushroom": 380 },
       "effects": ["Improved Harvest Boost", "Water Drain"],
       "notes": "Water Drain : placer un Cocoa Bean proche pour l'immunité (astuce Snoozling Complex).",
+      "conflicts": [{ "field": "drops", "value": "Brown Mushroom 200, Red Mushroom 200, Potato 630, Carrot 735", "source": "skyshards" }],
       "roseDragonOptimum": 12, "roseDragonMinimum": 6, "usages": []
     },
     {
-      "id": "fleshtrap", "name": "Fleshtrap", "itemId": "FLESHTRAP", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 14,
+      "id": "fleshtrap", "name": "Fleshtrap", "itemId": "FLESHTRAP", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 14, "decayDays": null, "needsWater": true,
       "conditions": [{ "crop": "Cindershade", "count": 4 }, { "crop": "Lonelily", "count": 4 }],
       "drops": { "Potato": 1200, "Carrot": 1400, "Pumpkin": 680 },
       "effects": ["Bonus Drops"],
       "notes": "Nourrir avec de l'Enchanted Raw Meat pour plus de fleshtraps par growth.",
+      "conflicts": [{ "field": "drops", "value": "Pumpkin 289, Potato 510, Carrot 595", "source": "skyshards" }],
       "roseDragonOptimum": 3, "roseDragonMinimum": 2, "usages": []
     },
     {
-      "id": "magic_jellybean", "name": "Magic Jellybean", "itemId": "MAGIC_JELLYBEAN", "rarity": "RARE", "size": "1x1", "surface": "Sand", "growthStages": 120,
+      "id": "magic_jellybean", "name": "Magic Jellybean", "itemId": "MAGIC_JELLYBEAN", "rarity": "RARE", "size": "1x1", "surface": "Sand", "growthStages": 120, "decayDays": null, "needsWater": true,
       "conditions": [{ "crop": "Sugar Cane", "count": 5 }, { "crop": "Duskbloom", "count": 3 }],
       "drops": { "Moonflower": 600, "Sunflower": 600, "Sugar Cane": 1200 },
       "effects": ["Improved XP Boost", "Harvest Loss"],
@@ -364,61 +384,66 @@
       "roseDragonOptimum": 25, "roseDragonMinimum": 8, "usages": []
     },
     {
-      "id": "noctilume", "name": "Noctilume", "itemId": "NOCTILUME", "rarity": "RARE", "size": "2x2", "surface": "Dirt", "growthStages": 4,
+      "id": "noctilume", "name": "Noctilume", "itemId": "NOCTILUME", "rarity": "RARE", "size": "2x2", "surface": "Dirt", "growthStages": 4, "decayDays": 6, "needsWater": true,
       "conditions": [{ "crop": "Duskbloom", "count": 6 }, { "crop": "Lonelily", "count": 6 }],
       "drops": { "Cactus": 1200, "Wild Rose": 1600 },
       "effects": ["Effect Spread", "Improved Water Retain", "Harvest Loss"],
       "notes": "Alterner jour/nuit à chaque stage : bleu = mettre le garden en jour, jaune = en nuit.",
+      "conflicts": [{ "field": "drops", "value": "Cactus 1590, Wild Rose 2120", "source": "skyshards" }],
       "roseDragonOptimum": 3, "roseDragonMinimum": 3, "usages": []
     },
     {
-      "id": "snoozling", "name": "Snoozling", "itemId": "SNOOZLING", "rarity": "RARE", "size": "3x3", "surface": "Dirt", "growthStages": 20,
+      "id": "snoozling", "name": "Snoozling", "itemId": "SNOOZLING", "rarity": "RARE", "size": "3x3", "surface": "Dirt", "growthStages": 20, "decayDays": 6, "needsWater": true,
       "conditions": [{ "crop": "Creambloom", "count": 4 }, { "crop": "Dustgrain", "count": 3 }, { "crop": "Witherbloom", "count": 3 }, { "crop": "Duskbloom", "count": 3 }, { "crop": "Thornshade", "count": 3 }],
       "drops": { "Moonflower": 800, "Sunflower": 800, "Cactus": 600, "Sugar Cane": 800 },
       "effects": ["Bonus Drops"],
       "notes": "S'endort régulièrement (tous les 5 stages selon AVRG) : le frapper pour le réveiller.",
       "avrgNotes": "En poser 3 tôt et les garder pour le Snoozling Complex.",
+      "conflicts": [{ "field": "drops", "value": "Moonflower 4200, Sunflower 4200, Cactus 3150, Sugar Cane 4200", "source": "skyshards" }],
       "roseDragonOptimum": 3, "roseDragonMinimum": 3, "usages": []
     },
     {
-      "id": "soggybud", "name": "Soggybud", "itemId": "SOGGYBUD", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 10,
+      "id": "soggybud", "name": "Soggybud", "itemId": "SOGGYBUD", "rarity": "RARE", "size": "1x1", "surface": "Dirt", "growthStages": 10, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Melon", "count": 2 }, { "crop": "Gloomgourd", "count": 2 }],
       "drops": { "Melon Slice": 3200 },
       "effects": ["Water Retain"],
       "notes": "Prend l'eau des crops voisins : arroser les melons autour.",
       "growthStagesVerified": false,
-      "conflicts": [{ "field": "growthStages", "value": 8, "source": "AVRG ('grows in its 8 growth stages')" }],
+      "conflicts": [{ "field": "growthStages", "value": 8, "source": "AVRG ('grows in its 8 growth stages')" }, { "field": "drops", "value": "Melon Slice 1920", "source": "skyshards" }],
       "roseDragonOptimum": 14, "roseDragonMinimum": 9, "usages": []
     },
 
     {
-      "id": "chorus_fruit", "name": "Chorus Fruit", "itemId": "CHORUS_FRUIT", "rarity": "EPIC", "size": "1x1", "surface": "End Stone", "growthStages": 12,
+      "id": "chorus_fruit", "name": "Chorus Fruit", "itemId": "CHORUS_FRUIT", "rarity": "EPIC", "size": "1x1", "surface": "End Stone", "growthStages": 12, "decayDays": 5, "needsWater": false,
       "conditions": [{ "crop": "Chloronite", "count": 5 }, { "crop": "Magic Jellybean", "count": 3 }],
       "drops": { "Potato": 1500, "Carrot": 1700, "Sugar Cane": 2000 },
       "effects": ["Improved XP Boost", "Harvest Loss"],
       "notes": "Se téléporte. Couvre le plot d'End Stone, ce qui peut bloquer d'autres mutations.",
       "avrgNotes": "Peut faire apparaître de l'End Stone dans des emplacements de spawn encore vides, ce qui bloque ces spawns : surveiller.",
+      "conflicts": [{ "field": "drops", "value": "Potato 1050, Carrot 1225, Sugar Cane 1400", "source": "skyshards" }],
       "roseDragonOptimum": 4, "roseDragonMinimum": 4, "usages": []
     },
     {
-      "id": "plantboy_advance", "name": "PlantBoy Advance", "itemId": "PLANTBOY_ADVANCE", "rarity": "EPIC", "size": "2x2", "surface": "Dirt", "growthStages": 12,
+      "id": "plantboy_advance", "name": "PlantBoy Advance", "itemId": "PLANTBOY_ADVANCE", "rarity": "EPIC", "size": "2x2", "surface": "Dirt", "growthStages": 12, "decayDays": 5, "needsWater": false,
       "conditions": [{ "crop": "Snoozling", "count": 6 }, { "crop": "Thunderling", "count": 6 }],
       "drops": { "Moonflower": 1200, "Sunflower": 1200, "Wheat": 122 },
       "effects": ["Harvest Boost"],
       "notes": "Mini-jeu snake à la récolte (dépend du ping). Perdre = -3 growth stages. Un Snoozling 3x3 compte pour plusieurs cases adjacentes.",
       "avrgNotes": "La dernière mutation à obtenir avant d'avoir tous les légendaires.",
+      "conflicts": [{ "field": "drops", "value": "Moonflower 4600, Sunflower 4600, Wheat 4600", "source": "skyshards" }],
       "roseDragonOptimum": 1, "roseDragonMinimum": 1, "usages": []
     },
     {
-      "id": "puffercloud", "name": "Puffercloud", "itemId": "PUFFERCLOUD", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 14,
+      "id": "puffercloud", "name": "Puffercloud", "itemId": "PUFFERCLOUD", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 14, "decayDays": 5, "needsWater": true,
       "conditions": [{ "crop": "Snoozling", "count": 2 }, { "crop": "Do-not-eat-shroom", "count": 6 }],
       "drops": { "Brown Mushroom": 665, "Moonflower": 1400, "Sunflower": 1400, "Red Mushroom": 665 },
       "effects": ["Improved Harvest Boost", "Water Drain"],
       "notes": "Relâche un nuage toxique qui fait des dégâts autour.",
+      "conflicts": [{ "field": "drops", "value": "Brown Mushroom 570, Red Mushroom 570, Moonflower 1200, Sunflower 1200", "source": "skyshards" }],
       "roseDragonOptimum": 4, "roseDragonMinimum": 4, "usages": []
     },
     {
-      "id": "shellfruit", "name": "Shellfruit", "itemId": "SHELLFRUIT", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "shellfruit", "name": "Shellfruit", "itemId": "SHELLFRUIT", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [], "specialCondition": "Exploser un Turtlellini avec des Blastberry (2 explosions)", "spawnRule": "manual",
       "specialPrerequisites": [
         { "crop": "Turtlellini", "count": 1, "role": "consumed" },
@@ -427,36 +452,40 @@
       "drops": { "Cocoa Beans": 400, "Melon Slice": 800 },
       "effects": ["Water Retain", "Immunity"],
       "avrgNotes": "Faire pousser une ferme de Blastberry 2x2, casser les Chocoberry (elles sauteraient de toute façon) et poser 9 Turtellini à leur place. Récolter 2 Blastberry : quelques Turtellini deviennent des Shellfruit, à récolter tout de suite. Poser la dernière Turtellini au centre, puis récolter les 2 dernières Blastberry. La ferme optimum peut donner jusqu'à 24 Shellfruit.",
+      "conflicts": [{ "field": "drops", "value": "Cocoa Beans 400", "source": "skyshards" }],
       "roseDragonOptimum": 5, "roseDragonMinimum": 5, "usages": []
     },
     {
-      "id": "startlevine", "name": "Startlevine", "itemId": "STARTLEVINE", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 12,
+      "id": "startlevine", "name": "Startlevine", "itemId": "STARTLEVINE", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 12, "decayDays": 5, "needsWater": true,
       "conditions": [{ "crop": "Blastberry", "count": 4 }, { "crop": "Cheesebite", "count": 4 }],
       "drops": { "Cactus": 1500, "Sugar Cane": 2000 },
       "effects": ["Improved Water Retain", "Improved XP Boost", "Harvest Loss"],
       "notes": "Récolter avec Sorrow armor ou effet Invisibility.",
       "avrgNotes": "L'optimum (4 emplacements : 7 Blastberry + 14 Cheesebite) économise les Blastberry, plus dures à obtenir. Même logique pour tout plan '4 de chaque' où une mutation est bien plus dure que l'autre.",
+      "conflicts": [{ "field": "drops", "value": "Cactus 2250, Sugar Cane 3000", "source": "skyshards" }],
       "roseDragonOptimum": 6, "roseDragonMinimum": 6, "usages": []
     },
     {
-      "id": "stoplight_petal", "name": "Stoplight Petal", "itemId": "STOPLIGHT_PETAL", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 12,
+      "id": "stoplight_petal", "name": "Stoplight Petal", "itemId": "STOPLIGHT_PETAL", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 12, "decayDays": 5, "needsWater": true,
       "conditions": [{ "crop": "Snoozling", "count": 4 }, { "crop": "Noctilume", "count": 4 }],
       "drops": { "Cactus": 2400, "Wild Rose": 3200 },
       "effects": ["Effect Spread", "Improved Water Retain", "Harvest Loss"],
       "notes": "Ne casser que quand c'est vert, jamais sur rouge. Dépend du ping.",
+      "conflicts": [{ "field": "drops", "value": "Cactus 7500, Wild Rose 10000", "source": "skyshards" }],
       "roseDragonOptimum": 4, "roseDragonMinimum": 4, "usages": []
     },
     {
-      "id": "thunderling", "name": "Thunderling", "itemId": "THUNDERLING", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 16,
+      "id": "thunderling", "name": "Thunderling", "itemId": "THUNDERLING", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 16, "decayDays": 6, "needsWater": false,
       "conditions": [{ "crop": "Soggybud", "count": 5 }, { "crop": "Noctilume", "count": 3 }],
       "drops": { "Cactus": 900, "Melon Slice": 2400, "Wild Rose": 2400 },
       "effects": ["Effect Spread"],
       "notes": "+2000 charge par stage, s'autodétruit au max. Vider la charge avec un Empty Thunder Bottle (clic droit).",
       "avrgNotes": "Une charge proche du maximum représente environ 8k. Dans le Snoozling Complex, il faut au moins 48 growth stages après la pose pour en avoir 6.",
+      "conflicts": [{ "field": "drops", "value": "Cactus 1650, Melon Slice 4400, Wild Rose 4400", "source": "skyshards" }],
       "roseDragonOptimum": 6, "roseDragonMinimum": 6, "usages": []
     },
     {
-      "id": "turtlellini", "name": "Turtlellini", "itemId": "TURTLELLINI", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 0,
+      "id": "turtlellini", "name": "Turtlellini", "itemId": "TURTLELLINI", "rarity": "EPIC", "size": "1x1", "surface": "Dirt", "growthStages": 0, "decayDays": 3, "needsWater": false,
       "conditions": [{ "crop": "Soggybud", "count": 4 }, { "crop": "Choconut", "count": 4 }],
       "drops": {},
       "effects": ["Water Retain", "Immunity"],
@@ -466,36 +495,41 @@
       "rarityVerified": false,
       "conflicts": [
         { "field": "name", "value": "Turtellini", "source": "AVRG" },
-        { "field": "rarity", "value": "RARE", "source": "autre source (voir notes)" }
+        { "field": "rarity", "value": "RARE", "source": "autre source (voir notes)" },
+        { "field": "drops", "value": "Melon 800", "source": "skyshards" },
+        { "field": "rarity", "value": "RARE", "source": "skyshards" }
       ],
       "roseDragonOptimum": 5, "roseDragonMinimum": 5, "usages": []
     },
     {
-      "id": "zombud", "name": "Zombud", "itemId": "ZOMBUD", "rarity": "EPIC", "size": "1x1", "surface": "Soul Sand", "growthStages": 16,
+      "id": "zombud", "name": "Zombud", "itemId": "ZOMBUD", "rarity": "EPIC", "size": "1x1", "surface": "Soul Sand", "growthStages": 16, "decayDays": 5, "needsWater": false,
       "conditions": [{ "crop": "Dead Plant", "count": 4 }, { "crop": "Cindershade", "count": 2 }, { "crop": "Fleshtrap", "count": 2 }],
       "drops": { "Pumpkin": 1190, "Wild Rose": 2800 },
       "effects": ["Effect Spread", "Bonus Drops"],
       "notes": "Pas besoin d'eau. La récolte transforme les Dead Plants autour en mobs Zombuddy (bestiary).",
       "avrgNotes": "L'optimum coûte presque autant que le minimum : il est fortement recommandé.",
+      "conflicts": [{ "field": "drops", "value": "Pumpkin 765, Wild Rose 1800", "source": "skyshards" }],
       "roseDragonOptimum": 4, "roseDragonMinimum": 4, "usages": []
     },
 
     {
-      "id": "all_in_aloe", "name": "All-in Aloe", "itemId": "ALL_IN_ALOE", "rarity": "LEGENDARY", "size": "1x1", "surface": "Sand", "growthStages": 27,
+      "id": "all_in_aloe", "name": "All-in Aloe", "itemId": "ALL_IN_ALOE", "rarity": "LEGENDARY", "size": "1x1", "surface": "Sand", "growthStages": 27, "decayDays": null, "needsWater": false,
       "conditions": [{ "crop": "Magic Jellybean", "count": 6 }, { "crop": "PlantBoy Advance", "count": 2 }],
       "drops": { "Moonflower": 100, "Sunflower": 100, "Wheat": 100 },
       "effects": ["Harvest Boost"],
       "notes": "Donne des fragments : 9 All-in Aloe Fragments = 1 All-in Aloe. Récolter au stage 6-8 (AVRG : stage 6 = 4 fragments). Reset si on attend trop. Un PlantBoy 2x2 compte pour 2 cases.",
       "harvest": { "recommendedStage": 6, "fragments": { "atRecommendedStage": 4, "perMutation": 9 } },
+      "conflicts": [{ "field": "drops", "value": "Moonflower 140, Sunflower 140, Wheat 140", "source": "skyshards" }],
       "roseDragonOptimum": 1, "roseDragonMinimum": 1,
       "usages": [{ "target": "Rose Dragon Egg", "type": "pet", "quantity": 1, "verified": true }]
     },
     {
-      "id": "devourer", "name": "Devourer", "itemId": "DEVOURER", "rarity": "LEGENDARY", "size": "1x1", "surface": "Dirt", "growthStages": null,
+      "id": "devourer", "name": "Devourer", "itemId": "DEVOURER", "rarity": "LEGENDARY", "size": "1x1", "surface": "Dirt", "growthStages": 16, "decayDays": 5, "needsWater": true,
       "conditions": [{ "crop": "Puffercloud", "count": 4 }, { "crop": "Zombud", "count": 4 }],
       "drops": { "Pumpkin": 1700, "Brown Mushroom": 950, "Red Mushroom": 950 },
       "effects": ["Bonus Drops", "Improved Harvest Boost", "Water Drain"],
       "notes": "Fait pousser des racines qui détruisent les crops autour. Casser les racines au clic gauche ou faire une 'douve' autour.",
+      "conflicts": [{ "field": "drops", "value": "Brown Mushroom 1805, Red Mushroom 1805, Pumpkin 3230", "source": "skyshards" }],
       "roseDragonOptimum": 1, "roseDragonMinimum": 1,
       "usages": [
         { "target": "Rose Dragon Egg", "type": "pet", "quantity": 1, "verified": true },
@@ -503,17 +537,18 @@
       ]
     },
     {
-      "id": "glasscorn", "name": "Glasscorn", "itemId": "GLASSCORN", "rarity": "LEGENDARY", "size": "2x2", "surface": "Sand", "growthStages": 8,
+      "id": "glasscorn", "name": "Glasscorn", "itemId": "GLASSCORN", "rarity": "LEGENDARY", "size": "2x2", "surface": "Sand", "growthStages": 8, "decayDays": 3, "needsWater": true,
       "conditions": [{ "crop": "Startlevine", "count": 6 }, { "crop": "Chloronite", "count": 6 }],
       "drops": { "Cactus": 2400, "Potato": 4800 },
       "effects": ["Immunity", "Improved Water Retain", "Harvest Loss"],
       "notes": "Récoltable au stage 7 ou 8. Après le stage 8, retombe au stage 1 : attention avec les rosewater flasks.",
       "harvest": { "firstStage": 7, "lastStage": 8, "resetsAfterStage": 8 },
+      "conflicts": [{ "field": "drops", "value": "Potato 4800, Cactus 7200", "source": "skyshards" }],
       "roseDragonOptimum": 1, "roseDragonMinimum": 1,
       "usages": [{ "target": "Rose Dragon Egg", "type": "pet", "quantity": 1, "verified": true }]
     },
     {
-      "id": "godseed", "name": "Godseed", "itemId": "GODSEED", "rarity": "LEGENDARY", "size": "3x3", "surface": "Dirt", "growthStages": 40,
+      "id": "godseed", "name": "Godseed", "itemId": "GODSEED", "rarity": "LEGENDARY", "size": "3x3", "surface": "Dirt", "growthStages": 40, "decayDays": 10, "needsWater": true,
       "conditions": [], "spawnRule": "requiredEffectsAround", "spawnPriority": 1, "specialCondition": "Tous les effets positifs au niveau maximum autour (Yield +30%, XP +30%, Water Retain +100%, Immunity, Effect Spread, Bonus Drops). Au moins 1 crop non-Godseed requis.",
       "drops": { "Cactus": 369, "Carrot": 862, "Melon Slice": 985, "Cocoa Beans": 492, "Moonflower": 492, "Sunflower": 492, "Sugar Cane": 492, "Wild Rose": 492, "Nether Wart": 738, "Potato": 738, "Pumpkin": 209, "Brown Mushroom": 117, "Red Mushroom": 117, "Wheat": 246 },
       "effects": ["Improved Harvest Boost", "Improved Water Retain", "Improved XP Boost", "Immunity", "Bonus Drops", "Effect Spread"],
@@ -522,7 +557,7 @@
       "usages": [{ "target": "Sun's Grasp", "type": "craft", "quantity": null, "verified": false }]
     },
     {
-      "id": "jerryflower", "name": "Jerryflower", "itemId": "JERRYFLOWER", "rarity": "LEGENDARY", "size": "1x1", "surface": "Dirt", "growthStages": 10,
+      "id": "jerryflower", "name": "Jerryflower", "itemId": "JERRYFLOWER", "rarity": "LEGENDARY", "size": "1x1", "surface": "Dirt", "growthStages": 10, "decayDays": 10, "needsWater": false,
       "conditions": [], "spawnRule": "manual", "specialCondition": "Planter un Fertilized Jerryseed. Quête : Jerryseed d'un Jerry visitor → Xalx (Crystal Hollows) avec un Mysterious Crop → Unripe Jerryseed → reforge 'Dirty' → Dirt Guy (Dwarven Mines) → Fertilized Jerryseed → planter → au stage 5, donner 10x Move Jerry.",
       "drops": {},
       "effects": [],
@@ -531,20 +566,22 @@
       "roseDragonOptimum": 0, "roseDragonMinimum": 0, "usages": []
     },
     {
-      "id": "phantomleaf", "name": "Phantomleaf", "itemId": "PHANTOMLEAF", "rarity": "LEGENDARY", "size": "1x1", "surface": "Soul Sand", "growthStages": null,
+      "id": "phantomleaf", "name": "Phantomleaf", "itemId": "PHANTOMLEAF", "rarity": "LEGENDARY", "size": "1x1", "surface": "Soul Sand", "growthStages": 15, "decayDays": 5, "needsWater": false,
       "conditions": [{ "crop": "Chorus Fruit", "count": 4 }, { "crop": "Shellfruit", "count": 4 }],
       "drops": { "Potato": 4800, "Carrot": 5600 },
       "effects": ["XP Boost", "Immunity"],
       "notes": "Se cache dans un autre crop du greenhouse : trouver le bon bloc grâce au battement de cœur (3 parenthèses autour du cœur à l'écran).",
+      "conflicts": [{ "field": "drops", "value": "Potato 3000, Carrot 3500", "source": "skyshards" }],
       "roseDragonOptimum": 1, "roseDragonMinimum": 1,
       "usages": [{ "target": "Rose Dragon Egg", "type": "pet", "quantity": 1, "verified": true }]
     },
     {
-      "id": "timestalk", "name": "Timestalk", "itemId": "TIMESTALK", "rarity": "LEGENDARY", "size": "1x1", "surface": "End Stone", "growthStages": null,
+      "id": "timestalk", "name": "Timestalk", "itemId": "TIMESTALK", "rarity": "LEGENDARY", "size": "1x1", "surface": "End Stone", "growthStages": 14, "decayDays": 5, "needsWater": true,
       "conditions": [{ "crop": "Stoplight Petal", "count": 4 }, { "crop": "Chorus Fruit", "count": 2 }, { "crop": "Shellfruit", "count": 2 }],
       "drops": { "Cactus": 3000, "Sugar Cane": 4000 },
       "effects": ["Improved Water Retain", "Improved XP Boost", "Harvest Loss"],
       "notes": "Commence fully grown et vieillit à l'envers. Fait spawn un Timestalk Clone à tuer (bestiary max 10 kills). Y aller sans armure ou en vol.",
+      "conflicts": [{ "field": "drops", "value": "Cactus 2700, Sugar Cane 3600", "source": "skyshards" }],
       "roseDragonOptimum": 1, "roseDragonMinimum": 1,
       "usages": [{ "target": "Rose Dragon Egg", "type": "pet", "quantity": 1, "verified": true }]
     }

@@ -176,6 +176,10 @@ const mutationSchema = z.strictObject({
   size: z.enum(SIZES),
   surface: z.string().min(1),
   growthStages: nonNegativeInt.nullable(),
+  /** Jours avant la decay ; null = ne decay jamais. */
+  decayDays: positiveInt.nullable(),
+  /** true = a besoin d'eau pendant sa croissance. */
+  needsWater: z.boolean().optional(),
   conditions: z.array(conditionSchema),
   specialCondition: z.string().min(1).optional(),
   spawnRule: z.enum(SPAWN_RULES).optional(),

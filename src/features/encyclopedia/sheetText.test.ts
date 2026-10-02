@@ -31,6 +31,10 @@ describe('fiche « Garden Mutation » : textes', () => {
     expect(lines.some((line) => line.startsWith('§5Shellfruit'))).toBe(true)
     expect(lines.some((line) => line.includes('Optimum 7'))).toBe(true)
     expect(lines.some((line) => line.startsWith('§6Guide AVRG'))).toBe(true)
+    expect(lines).toContain('§7Decay §f3 jours§7 · §7Arrosage §bnécessaire')
+    // Le Magic Jellybean ne decay jamais.
+    const jellybean = infoLines(data, mutationById(data, 'magic_jellybean'), { stateLabel: '', usedIn: [], goals: [], bestiary: [] })
+    expect(jellybean).toContain('§7Decay §faucune§7 · §7Arrosage §bnécessaire')
   })
 
   it('ouvre la recherche du wiki sur le nom', () => {

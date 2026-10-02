@@ -67,6 +67,23 @@ describe('guide du Rose Dragon', () => {
     expect(chapterView(data, chapter('first_steps_gloomgourd'), context({ gloomgourd: 12 })).status).toBe('done')
   })
 
+  it('au départ, aucune ferme n’est finie', () => {
+    expect(guideChapters(data, context()).filter((view) => view.status === 'done')).toEqual([])
+  })
+
+  it('une ferme dont les mutations ne sont plus demandées disparaît (tout l’œuf est en stock)', () => {
+    const goal = data.goals.find((g) => g.id === data.guide.goalId)
+    const inventory = Object.fromEntries((goal?.mutations ?? []).map((r) => [r.mutationId, r.quantity ?? 1]))
+    const ctx = context(inventory)
+    const views = guideChapters(data, ctx)
+    expect(views.filter((view) => view.status !== 'done').map((view) => view.chapter.id)).toEqual([])
+    expect(guideNow(data, ctx, views, [0, 1, 2])).toEqual({ toPlace: [], running: [], next: [] })
+    // Les 7 Blastberry de la route en stock : la ferme Blastberry est finie, celles d'avant restent.
+    const blastberry = guideChapters(data, context({ blastberry: 7 }))
+    expect(blastberry.find((view) => view.chapter.id === 'blastberry')?.status).toBe('done')
+    expect(blastberry.find((view) => view.chapter.id === 'first_steps_gloomgourd')?.status).toBe('ready')
+  })
+
   it('la version minimum demande moins (Blastberry)', () => {
     const optimum = chapterView(data, chapter('blastberry'), context())
     const minimum = chapterView(data, chapter('blastberry'), context(), true)

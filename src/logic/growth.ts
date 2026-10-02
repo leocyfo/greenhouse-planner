@@ -206,26 +206,28 @@ export interface DecayWarning {
   readonly mutationId: string
   readonly productionSeconds: number
   readonly limitSeconds: number
+  /** Ingrédient posé autour qui meurt le premier. */
+  readonly ingredientId: string
 }
 
 /**
- * Recettes dont la production dure plus longtemps que la vie des ingrédients : les mutations
- * posées autour meurent environ `decayDays` jours après leur pose, il faudra les remplacer.
+ * Recettes dont la production dure plus longtemps que la vie des ingrédients : chaque mutation
+ * posée autour meurt après sa propre decay (`decayDays`), il faudra la remplacer. La limite est
+ * celle de l'ingrédient qui meurt le premier ; une mutation sans decay ne meurt jamais.
  */
-export function decayWarnings(
-  data: GameData,
-  estimate: PlanTimeEstimate,
-  stageSeconds: number,
-  decayDays: number,
-): DecayWarning[] {
-  const limitSeconds = decayDays * 86_400
+export function decayWarnings(data: GameData, estimate: PlanTimeEstimate, stageSeconds: number): DecayWarning[] {
   const warnings: DecayWarning[] = []
   for (const entry of estimate.schedule.values()) {
     const mutation = data.mutationsById.get(entry.mutationId)
-    const usesMutations = mutation?.conditions.some((c) => c.crop.kind === 'mutation') ?? false
+    let first: { readonly id: string; readonly days: number } | null = null
+    for (const condition of mutation?.conditions ?? []) {
+      if (condition.crop.kind !== 'mutation') continue
+      const days = data.mutationsById.get(condition.crop.id)?.decayDays ?? null
+      if (days !== null && (!first || days < first.days)) first = { id: condition.crop.id, days }
+    }
     const productionSeconds = entry.productionStages * stageSeconds
-    if (usesMutations && productionSeconds > limitSeconds) {
-      warnings.push({ mutationId: entry.mutationId, productionSeconds, limitSeconds })
+    if (first && productionSeconds > first.days * 86_400) {
+      warnings.push({ mutationId: entry.mutationId, productionSeconds, limitSeconds: first.days * 86_400, ingredientId: first.id })
     }
   }
   return warnings

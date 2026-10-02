@@ -817,6 +817,30 @@ recrée tout »)
     est « ajoutée » à côté des fermes qui y poussent si elle tient (`placementFor`), posée dans un
     nouveau plan si le greenhouse est libre (fermes finies, ou un autre plan), et « Plein » sinon :
     rien n'est plus remplacé. « À faire maintenant » dit « Ajoute au Greenhouse N » dans ce cas.
+  - Corrigé (demande du joueur, 02/10/2026 : « une fois toutes les mutations acquises, l'étape
+    disparaît ») : une ferme est finie quand chaque mutation qu'elle donne est en stock en quantité
+    suffisante ou n'est plus demandée, parce que ce qu'elle sert à faire est déjà en stock. Avant,
+    une ferme dont plus rien n'était demandé restait affichée pour toujours ; avec l'œuf complet en
+    stock, il ne reste plus aucune étape.
+
+### Données reprises de skyshards (demande du joueur : « compare avec greenhouse.skyshards.com et prends le meilleur », 02/10/2026)
+- Comparaison des données : recettes, tailles, sols et growth stages identiques. Seuls des faits de
+  jeu sont repris, pas de code (aucune licence) ; la source est citée dans `_meta.sources`.
+- Ajouté : growth stages du Devourer (16), du Phantomleaf (15) et du Timestalk (14). Plus aucune
+  mutation n'a de durée inconnue : le temps du Rose Dragon est complet.
+- `decayDays` par mutation (3, 5, 6 ou 10 jours). `null` = elle ne decay jamais : Fleshtrap,
+  Magic Jellybean et All-in Aloe (0 chez skyshards, confirmé par le joueur).
+- `needsWater` par mutation : besoin d'eau pendant la croissance (à sec, elle peut ne pas passer
+  son prochain stage).
+- Fiche, onglet Infos : « Decay N jours · Arrosage nécessaire / inutile » (« Decay aucune » pour
+  celles qui ne meurent jamais).
+- Alertes de decay du calcul : la limite est la decay de la mutation posée autour qui meurt la
+  première (PlantBoy Advance : Snoozling et Thunderling tiennent 6 jours, plus 3). Une mutation
+  sans decay ne compte pas (All-in Aloe : le Magic Jellybean reste, le PlantBoy Advance meurt après
+  5 jours). La ligne nomme cette mutation.
+- Désaccords : nos valeurs sont gardées (choix du joueur), le désaccord est noté dans `conflicts`
+  avec la source `skyshards`, sans affichage. Ce sont les drops de 34 mutations, la rareté du
+  Turtlellini (RARE pour eux) et un Harvest Loss en plus sur le Cheesebite.
 
 ### Données à vérifier
 - Badges « à vérifier » et marques ⚠ d'incertitude retirés de toute l'interface (demande du joueur,

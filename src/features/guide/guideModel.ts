@@ -28,7 +28,7 @@ export interface FarmOutput {
 }
 
 /**
- * - done : tout ce que la ferme donne est en stock, en quantité suffisante ;
+ * - done : plus rien à obtenir de la ferme (tout ce qu'elle donne est en stock, ou plus demandé) ;
  * - placed : la ferme est posée dans un greenhouse ;
  * - ready : toutes les mutations à poser sont en stock ;
  * - missing : il en manque.
@@ -107,10 +107,16 @@ export function guideContext(data: GameData, plan: Plan, inventory: Inventory, g
   return { plan, inventory, grids, greenhouses }
 }
 
-/** Tout ce que la ferme donne pour la route est en stock. */
+/**
+ * Plus rien à obtenir de la ferme : chaque mutation qu'elle donne est en stock en quantité
+ * suffisante, ou n'est plus demandée (ce qu'elle sert à faire est déjà en stock).
+ */
+function outputsDone(outputs: readonly FarmOutput[]): boolean {
+  return outputs.every((output) => output.need === null || output.need.missing === 0)
+}
+
 function chapterDone(data: GameData, chapter: GuideChapter, plan: Plan, inventory: Inventory): boolean {
-  const needed = farmOutputs(data, chapter.layout, plan, inventory).filter((output) => output.need !== null)
-  return needed.length > 0 && needed.every((output) => output.need?.missing === 0)
+  return outputsDone(farmOutputs(data, chapter.layout, plan, inventory))
 }
 
 /** Où en est un chapitre, avec le plan choisi (optimum par défaut). */
@@ -125,8 +131,7 @@ export function chapterView(data: GameData, chapter: GuideChapter, context: Chap
     if (greenhouse.active.some((farm) => farm.chapter.id === chapter.id)) activeIn.push(index)
   })
   const placedIn = activeIn
-  const needed = outputs.filter((output) => output.need !== null)
-  const done = needed.length > 0 && needed.every((output) => output.need?.missing === 0)
+  const done = outputsDone(outputs)
   const ready = ingredients.every((item) => item.owned === null || item.owned >= item.count)
   const status: ChapterStatus = done ? 'done' : placedIn.length > 0 ? 'placed' : ready ? 'ready' : 'missing'
   return { chapter, layout, ingredients, outputs, placedIn, activeIn, status }

@@ -69,7 +69,7 @@ export function computeCalculatorResult(
     tree: buildPlanTree(data, plan),
     estimate,
     stageSeconds,
-    decay: decayWarnings(data, estimate, stageSeconds, data.mechanics.decayDays),
+    decay: decayWarnings(data, estimate, stageSeconds),
     randomSpawn,
     unknownQuantities: goals.unknownQuantities,
   }

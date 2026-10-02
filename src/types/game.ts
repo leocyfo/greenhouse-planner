@@ -97,6 +97,10 @@ export interface Mutation {
   readonly surface: string
   /** null = inconnu (à vérifier). */
   readonly growthStages: number | null
+  /** Jours avant que la mutation meure (decay). null = elle ne decay jamais. */
+  readonly decayDays: number | null
+  /** true = a besoin d'eau pendant sa croissance ; null = inconnu. */
+  readonly needsWater: boolean | null
   readonly conditions: readonly Condition[]
   readonly specialCondition: string | null
   readonly specialPrerequisites: readonly SpecialPrerequisite[]

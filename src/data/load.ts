@@ -449,6 +449,8 @@ function normalize(data: RawGameData): GameData {
       side: sideOf(m.size),
       surface: m.surface,
       growthStages: m.growthStages,
+      decayDays: m.decayDays,
+      needsWater: m.needsWater ?? null,
       conditions: m.conditions.map((c) => ({ crop: toCropRef(c.crop), count: c.count })),
       specialCondition: m.specialCondition ?? null,
       specialPrerequisites: (m.specialPrerequisites ?? []).map((p) => ({

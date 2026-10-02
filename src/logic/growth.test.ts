@@ -57,12 +57,13 @@ describe('stages de production', () => {
     expect(harvestStage(mutationById(data, 'glasscorn'))).toBe(7)
     expect(harvestStage(mutationById(data, 'all_in_aloe'))).toBe(6)
     expect(harvestStage(mutationById(data, 'chocoberry'))).toBe(6)
-    expect(harvestStage(mutationById(data, 'devourer'))).toBeNull() // inconnu
+    expect(harvestStage(mutationById(data, 'devourer'))).toBe(16)
+    expect(harvestStage({ ...mutationById(data, 'devourer'), growthStages: null })).toBeNull() // inconnu
   })
 
   it('compte un tour par groupe d\'emplacements : 6 Thunderlings sur 2 emplacements = 48 stages', () => {
     expect(productionStages(mutationById(data, 'thunderling'), 6, 2)).toBe(48)
-    expect(productionStages(mutationById(data, 'devourer'), 1, 1)).toBeNull()
+    expect(productionStages({ ...mutationById(data, 'devourer'), growthStages: null }, 1, 1)).toBeNull()
   })
 })
 
@@ -88,8 +89,13 @@ describe("estimation du temps d'un plan", () => {
       quantity: 1,
     }))
     const p = computePlan(data, { targets, inventory: {}, mode: 'minimum' })
-    const estimate = estimatePlanTime(data, p, { spots: 1, stageSeconds: 3600 })
-    expect([...estimate.unknown].sort()).toEqual(['devourer', 'phantomleaf', 'timestalk'])
+    // Toutes les durées sont connues (growth stages des légendaires repris de skyshards).
+    expect(estimatePlanTime(data, p, { spots: 1, stageSeconds: 3600 }).unknown).toEqual([])
+    // Sans growth stages, la durée est signalée inconnue et comptée 0.
+    const devourer = { ...mutationById(data, 'devourer'), growthStages: null }
+    const unknownData = { ...data, mutationsById: new Map([...data.mutationsById, ['devourer', devourer]]) }
+    const estimate = estimatePlanTime(unknownData, p, { spots: 1, stageSeconds: 3600 })
+    expect(estimate.unknown).toEqual(['devourer'])
     expect(estimate.criticalPathStages).toBeGreaterThan(0)
     expect(estimate.totalStages).toBeGreaterThanOrEqual(estimate.criticalPathStages)
   })
@@ -122,14 +128,38 @@ describe("estimation du temps d'un plan", () => {
       mode: 'minimum',
     })
     const stageSeconds = stageDurationSeconds(MAXED, formula)
-    const decayDays = data.mechanics.decayDays
     // Un seul emplacement : 9 × 36 stages ≈ 23 jours, les Duskbloom autour meurent avant.
     const oneSpot = estimatePlanTime(data, p, { spots: 1, stageSeconds })
-    expect(decayWarnings(data, oneSpot, stageSeconds, decayDays).map((w) => w.mutationId)).toEqual([
-      'magic_jellybean',
+    expect(decayWarnings(data, oneSpot, stageSeconds).map((w) => [w.mutationId, w.ingredientId])).toEqual([
+      ['magic_jellybean', 'duskbloom'],
     ])
     // Neuf emplacements : 36 stages ≈ 2,6 jours, ça passe.
     const nineSpots = estimatePlanTime(data, p, { spots: 9, stageSeconds })
-    expect(decayWarnings(data, nineSpots, stageSeconds, decayDays)).toEqual([])
+    expect(decayWarnings(data, nineSpots, stageSeconds)).toEqual([])
+  })
+
+  it('compte la decay propre à chaque ingrédient (Snoozling et Thunderling : 6 jours)', () => {
+    const stageSeconds = stageDurationSeconds(MAXED, formula)
+    const plantBoy = (quantity: number) => {
+      const p = computePlan(data, { targets: [{ mutationId: 'plantboy_advance', quantity }], inventory: {}, mode: 'minimum' })
+      const estimate = estimatePlanTime(data, p, { spots: 1, stageSeconds })
+      return decayWarnings(data, estimate, stageSeconds).find((w) => w.mutationId === 'plantboy_advance')
+    }
+    // 5 × 12 stages ≈ 4,3 jours : plus que 3 jours, mais Snoozling et Thunderling tiennent 6 jours.
+    expect(plantBoy(5)).toBeUndefined()
+    // 9 × 12 stages ≈ 7,8 jours : le Snoozling meurt avant la fin.
+    expect(plantBoy(9)).toMatchObject({ ingredientId: 'snoozling', limitSeconds: 6 * 86_400 })
+  })
+
+  it('ne compte pas les mutations sans decay (Magic Jellybean ne meurt jamais)', () => {
+    const stageSeconds = stageDurationSeconds(MAXED, formula)
+    // 12 All-in Aloe × 6 stages ≈ 5,2 jours : le PlantBoy Advance (5 jours) meurt, pas le Magic Jellybean.
+    const p = computePlan(data, { targets: [{ mutationId: 'all_in_aloe', quantity: 12 }], inventory: {}, mode: 'minimum' })
+    const estimate = estimatePlanTime(data, p, { spots: 1, stageSeconds })
+    const aloe = (d: typeof data) => decayWarnings(d, estimate, stageSeconds).find((w) => w.mutationId === 'all_in_aloe')
+    expect(aloe(data)).toMatchObject({ ingredientId: 'plantboy_advance', limitSeconds: 5 * 86_400 })
+    // Si le PlantBoy Advance ne mourait pas non plus, rien à replanter.
+    const plantBoy = { ...mutationById(data, 'plantboy_advance'), decayDays: null }
+    expect(aloe({ ...data, mutationsById: new Map([...data.mutationsById, ['plantboy_advance', plantBoy]]) })).toBeUndefined()
   })
 })

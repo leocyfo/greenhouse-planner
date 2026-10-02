@@ -79,6 +79,13 @@ export function infoLines(data: GameData, mutation: Mutation, context: InfoConte
     '',
     `§7${tr('Taille ', 'Size ')}§f${mutation.size}§7 · ${tr('Sol ', 'Soil ')}§f${mutation.surface}§7 · Stages §f${mutation.growthStages ?? '?'}`,
   ]
+  const care = [
+    `§7Decay §f${mutation.decayDays !== null ? tr(`${mutation.decayDays} jours`, `${mutation.decayDays} days`) : tr('aucune', 'none')}`,
+    mutation.needsWater !== null
+      ? `§7${tr('Arrosage ', 'Watering ')}${mutation.needsWater ? `§b${tr('nécessaire', 'needed')}` : `§f${tr('inutile', 'not needed')}`}`
+      : null,
+  ].filter((part) => part !== null)
+  if (care.length > 0) lines.push(care.join('§7 · '))
   // Récolte avant la fin de la croissance (Magic Jellybean, Glasscorn, All-in Aloe).
   const harvest = harvestHint(mutation)
   if (harvest) lines.push(`§e${harvest}`)

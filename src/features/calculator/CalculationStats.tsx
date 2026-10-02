@@ -87,8 +87,8 @@ export function CalculationStats({ result }: { readonly result: CalculatorResult
         <details className="group rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
           <summary className="cursor-pointer list-none font-medium text-warning [&::-webkit-details-marker]:hidden">
             {tr(
-              `⚠ Decay (~${data.mechanics.decayDays} jours) : ${plural(decay.length, 'mutation')} à replanter`,
-              `⚠ Decay (~${data.mechanics.decayDays} days): ${plural(decay.length, 'mutation')} to replant`,
+              `⚠ Decay : ${plural(decay.length, 'mutation')} à replanter`,
+              `⚠ Decay: ${plural(decay.length, 'mutation')} to replant`,
             )}
             <span aria-hidden="true" className="ml-1 inline-block transition-transform group-open:rotate-180">
               ▾
@@ -96,15 +96,21 @@ export function CalculationStats({ result }: { readonly result: CalculatorResult
           </summary>
           <p className="mt-1.5 text-ink-muted">
             {tr(
-              'Leur production dure plus longtemps que la decay : les mutations posées autour mourront avant la fin.',
-              'Their production lasts longer than the decay: the mutations placed around will die before the end.',
+              'Leur production dure plus longtemps que la decay des mutations posées autour : elles mourront avant la fin.',
+              'Their production lasts longer than the decay of the mutations placed around: they will die before the end.',
             )}
           </p>
           <ul className="mt-1 space-y-0.5 text-ink">
             {decay.map((warning) => (
-              <li key={warning.mutationId} className="flex justify-between gap-3">
+              <li key={warning.mutationId} className="flex flex-wrap justify-between gap-x-3">
                 <span>{name(warning.mutationId)}</span>
-                <span className="tabular-nums text-ink-muted">{formatDuration(warning.productionSeconds)}</span>
+                <span className="tabular-nums text-ink-muted">
+                  {formatDuration(warning.productionSeconds)}
+                  {tr(
+                    ` · ${name(warning.ingredientId)} meurt après ${warning.limitSeconds / 86_400} j`,
+                    ` · ${name(warning.ingredientId)} dies after ${warning.limitSeconds / 86_400} d`,
+                  )}
+                </span>
               </li>
             ))}
           </ul>
