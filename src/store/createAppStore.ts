@@ -49,6 +49,8 @@ export interface AppActions {
   setPlayer: (player: Partial<PlayerSettings>) => void
   /** Langue de l'interface (null : celle du navigateur). */
   setLocale: (locale: SettingsState['locale']) => void
+  /** Guide affiché (id d'un objectif, ou « all »). */
+  setGuide: (guide: string) => void
   /** Stock importé d'un profil Hypixel, en une seule mise à jour (voir withImportedInventory). */
   importInventory: (counts: Readonly<Record<string, number>>, keepMissing: boolean) => void
 
@@ -148,6 +150,7 @@ export function createAppStore(defaults: PersistedState, storage?: StateStorage,
         setAnalyzedBuyable: (analyzedBuyable) => set((s) => ({ settings: { ...s.settings, analyzedBuyable } })),
         setPlayer: (player) => set((s) => ({ settings: { ...s.settings, player: { ...s.settings.player, ...player } } })),
         setLocale: (locale) => set((s) => ({ settings: { ...s.settings, locale } })),
+        setGuide: (guide) => set((s) => ({ settings: { ...s.settings, guide } })),
         importInventory: (counts, keepMissing) =>
           set((s) => ({ progress: withImportedInventory(s.progress, counts, keepMissing) })),
 

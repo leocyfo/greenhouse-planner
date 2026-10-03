@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeGrid } from '../../logic/grid'
 import { LOCKED_GROUND } from '../../logic/ground'
+import { cropKey } from '../../logic/neighborRule'
 import { projectData } from '../../test/projectData'
-import type { LayoutPreset } from '../../types/game'
-import { emptyGrid, farmMask, farmsIn, farmsName, fitFarm, isGuideOnly, ownPlotOf, packFarms, withFarm } from './farmPacking'
+import type { LayoutPreset, Placement } from '../../types/game'
+import { alignStages, emptyGrid, farmMask, farmsIn, farmsName, fitFarm, isGuideOnly, ownPlotOf, packFarms, swapFarm, withFarm } from './farmPacking'
 
 const data = projectData()
 const preset = (id: string): LayoutPreset => {
@@ -56,6 +57,43 @@ describe('plusieurs fermes dans un greenhouse', () => {
     expect(second.rest).toEqual([])
     expect(farmsIn(data, second.grid).map((farm) => farm.preset.id).sort()).toEqual(['avrg_blastberry_opt', 'avrg_magic_jellybean'])
     expect(isGuideOnly(data, second.grid)).toBe(true)
+  })
+
+  it('pose l’étape 1 du Snoozling Complex là où l’étape 2 tiendra : rien ne bouge en passant à l’étape 2', () => {
+    const step1 = pack(['avrg_snoozling_complex_1'])
+    const [farm] = step1.added
+    expect(farm).toBeDefined()
+    if (!farm) return
+    const step2 = swapFarm(data, step1.grid, step1.farms, farm, preset('avrg_snoozling_complex_2'))
+    expect(step2?.added.map((f) => [f.dx, f.dy])).toEqual([[farm.dx, farm.dy]])
+    const key = (p: Placement) => `${cropKey(p.crop)}@${p.x},${p.y}`
+    const after = new Set(step2?.grid.placements.map(key))
+    const kept = step1.grid.placements.filter((p) => after.has(key(p)))
+    // Seule la ferme de Puffercloud de gauche est retirée (6 Do-not-eat-shrooms).
+    expect(step1.grid.placements.length - kept.length).toBe(6)
+  })
+
+  it('recale une étape 1 posée contre le bord (avant la v1.14), et laisse en place celle qui est bien posée', () => {
+    const step1 = preset('avrg_snoozling_complex_1')
+    const old = withFarm(data, emptyGrid(data), { preset: step1, dx: -1, dy: -1 })
+    const aligned = alignStages(data, old, farmsIn(data, old))
+    expect(aligned?.farms.map((farm) => [farm.preset.id, farm.dx, farm.dy])).toEqual([['avrg_snoozling_complex_1', 0, -1]])
+    if (!aligned) return
+    expect(alignStages(data, aligned.grid, farmsIn(data, aligned.grid))).toBeNull()
+    const [farm] = farmsIn(data, aligned.grid)
+    if (!farm) throw new Error('étape 1 introuvable')
+    expect(swapFarm(data, aligned.grid, [farm], farm, preset('avrg_snoozling_complex_2'))?.added.map((f) => [f.dx, f.dy])).toEqual([[0, -1]])
+  })
+
+  it('ne pose rien sur la place gardée pour l’étape 2 du Snoozling Complex', () => {
+    const step1 = pack(['avrg_snoozling_complex_1'])
+    const [farm] = step1.added
+    if (!farm) throw new Error('étape 1 non posée')
+    const next = farmMask(data, preset('avrg_snoozling_complex_2')).map(({ x, y }) => (y + farm.dy) * step1.grid.width + x + farm.dx)
+    const result = pack(['avrg_cheesebite', 'avrg_chloronite', 'avrg_zombud'], step1.grid)
+    for (const added of result.added) {
+      for (const { x, y } of farmMask(data, added.preset)) expect(next).not.toContain((y + added.dy) * step1.grid.width + x + added.dx)
+    }
   })
 
   it('évite les cases verrouillées du greenhouse', () => {

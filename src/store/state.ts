@@ -32,6 +32,8 @@ export interface SettingsState {
   readonly player: PlayerSettings
   /** Langue de l'interface ; null : pas encore choisie, le site est en anglais (DEFAULT_LOCALE). */
   readonly locale: Locale | null
+  /** Guide affiché : id d'un objectif, ou « all » (tous les objectifs réunis). */
+  readonly guide: string
 }
 
 export interface PlayerSettings {
@@ -125,6 +127,7 @@ export function defaultPersistedState(data: GameData | null): PersistedState {
       analyzedBuyable: false,
       player: { name: '', profileId: null },
       locale: null,
+      guide: data?.guide.goalId ?? '',
     },
     calculator: {
       targets: [],

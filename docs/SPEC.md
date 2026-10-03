@@ -822,6 +822,104 @@ recrée tout »)
     suffisante ou n'est plus demandée, parce que ce qu'elle sert à faire est déjà en stock. Avant,
     une ferme dont plus rien n'était demandé restait affichée pour toujours ; avec l'œuf complet en
     stock, il ne reste plus aucune étape.
+  - Snoozling Complex en deux étapes réunies (demande du joueur, 02/10/2026 : « combine les
+    étapes 1 et 2, sinon les gens ne verront pas l'étape 2 ») : dans les données, l'étape 2 a
+    `upgrades: "snoozling_complex_1"` (elle se construit sur l'étape 1, dans le même greenhouse), et
+    les titres disent « Snoozling Complex : étape 1 / 2 ».
+    - « Ensuite » : une seule carte « Snoozling Complex · 2 étapes » (numéro 15–16) avec un choix
+      Étape 1 / Étape 2. L'étape 2 « attend l'étape précédente » tant que l'étape 1 n'est pas posée.
+    - Étape 1 en cours : sa carte montre « Ensuite, dans ce greenhouse : étape 2 » avec ce qu'il
+      faut y ajouter (1 Snoozling, 6 Thunderlings, stock / besoin) et le conseil d'AVRG.
+    - Dès que c'est en stock : « Greenhouse N : passe à l'étape 2 », avec l'aperçu du plan
+      transformé (l'étape 1 retirée, l'étape 2 posée à la même place, les autres fermes gardées),
+      « À ajouter » et « Passer à l'étape suivante ». Seul ce qui manque est demandé, pas ce qui est
+      déjà posé.
+    - Étape 2 posée : l'étape 1 compte comme finie.
+    - L'étape 1 est posée là où l'étape 2 tiendra, et aucune autre ferme ne prend les cases de
+      l'étape 2 (`reservedMask`) : en passant à l'étape 2, rien ne bouge (capture du joueur,
+      03/10/2026 : l'étape 1 était décalée d'une colonne). Une étape 1 posée avant la v1.14 à une
+      place où l'étape 2 ne tient pas est recalée dans le plan affiché, à la place la plus proche
+      (`alignStages`).
+    - Sur l'étape 1 (carte de « Ensuite », pose et ferme en cours), le conseil d'AVRG de l'étape 2 et
+      la note de son plan s'affichent en rouge (capture du joueur : « pour que le joueur le voie »).
+  - Durée et decay de chaque ferme (demande du joueur, 02/10/2026) : sur chaque carte (à poser, en
+    cours, passage à l'étape suivante, « Ensuite »), « ⏱ Durée : X au moins (N growth stages) ».
+    Pour chaque mutation que la ferme donne : ce qui manque, divisé par ses emplacements (arrondi
+    au-dessus), fois les stages jusqu'à la récolte, avec au moins 1 stage par tour (un spawn par
+    stage et par emplacement, même sans growth stage) ; la ferme prend la plus longue. La durée d'un
+    stage est celle des réglages (Growth Speed). Dessous, la decay de chaque mutation posée, la plus
+    courte d'abord (« jamais » pour celles qui ne decay pas), et en rouge quand la ferme dure plus
+    longtemps que la première decay (Snoozling Complex étape 1 : 48 stages, plus que les 3 jours
+    des Soggybuds et Do-not-eat-shrooms sans upgrade). Pas de decay connue pour les crops de base :
+    ils n'y figurent pas.
+  - Pratique (demande du joueur, 02/10/2026) :
+    - « ↻ Mettre à jour mon stock (Hypixel) » dans l'en-tête du guide et sur le Tableau de bord :
+      relit le profil lié (même fenêtre que l'en-tête), ou ouvre l'import si aucun profil n'est lié.
+    - Tableau de bord : une carte « Guide : Rose Dragon Pet » en premier (fermes finies x / 20, à
+      poser, passage à l'étape suivante, en cours avec la durée restante au moins, ou la prochaine
+      ferme et ce qui manque), avec « Ouvrir le guide ».
+    - « Fermes finies (N) », repliées en bas du guide : chaque ferme finie, pour la revoir, ou la
+      remettre en baissant le stock de ce qu'elle donne.
+    - Le calcul du guide est partagé par l'onglet et le Tableau de bord (`useGuide`).
+  - Cartes « À faire maintenant » refaites (capture du joueur : « refais l'affichage », 02/10/2026),
+    même présentation pour poser, passer à l'étape suivante et en cours :
+    - en-tête : l'état et le greenhouse en petit (« En cours · Greenhouse 2 »), le nom de la ferme,
+      et à droite la pastille de durée (« ⏱ 22 h 13 au moins », stages en infobulle) et le bouton
+      principal (Poser, Passer à l'étape suivante, Ouvrir dans la Grille) ; sur mobile, ils passent
+      sous le titre ;
+    - à gauche l'aperçu du plan du greenhouse, aussi pour une ferme en cours ;
+    - « Ça donne » : barre d'avancement de toute la ferme (0 / 130), puis une tuile par mutation
+      (stock / besoin, barre, compteur), sur 3 colonnes en grand écran ;
+    - la decay sur une ligne discrète, l'alerte en rouge ; les conseils d'AVRG repliables (ouverts
+      pour une ferme à poser), sans répéter le nom de la ferme quand il n'y en a qu'une.
+
+### Un guide par objectif, ou tous réunis (demande du joueur : « fais-le pour ce que tu as dit, et pour tout combiner », 02/10/2026)
+- En haut du guide, un choix « Guide » : Rose Dragon Pet (par défaut), Analyser les 40 mutations,
+  Sun's Grasp, Cocoa Leech Shards, Mutations Sacks, Trunk Polish (les objectifs des données), et
+  « Tout combiné ». Le choix est gardé dans les réglages (`settings.guide`, sauvegarde v11) ; le
+  Tableau de bord suit le même guide.
+- Toujours les fermes AVRG seulement (`guideScope`), dans l'ordre d'AVRG :
+  1. besoins : ce que consomment les objectifs, une mutation par effet demandé autour d'un Godseed
+     (la plus commune qui le donne, quand aucun crop de base ne le donne : Ashwreath, Shadevine,
+     Gloomgourd, Witherbloom ; Immunity vient des Cocoa Beans), ce que posent les fermes retenues,
+     et leurs recettes ;
+  2. fermes : celles qui apportent une mutation utile qu'aucune ferme retenue avant ne fait ;
+  3. on recommence jusqu'à ce que rien ne change (une ferme retenue demande ses ingrédients, qui
+     amènent leurs fermes : le Superfarm des Mutations Sacks amène Dustgrain et Gloomgourd).
+- Quantités : chaque guide a sa route, comme les totaux d'AVRG : pour chaque mutation, ce que posent
+  ses fermes (une étape suivante : seulement ce qu'elle ajoute) plus ce que consomment ses objectifs.
+  Les mutations que font ses fermes sont membres de la route (`OptimumRoute.members`) : leur recette
+  est déjà comptée dans ce que posent les fermes. Sur les 20 fermes, ce sont exactement les totaux
+  d'AVRG (test : le plan du guide Rose Dragon est celui de la route AVRG, 388 mutations).
+- Résultat : Rose Dragon 20 fermes ; Analyser les 40 et Tout combiné 20 fermes ; Cocoa Leech Shards
+  10 fermes (sans l'étape 2 du Snoozling Complex, le PlantBoy Advance n'y sert pas : sa note rouge
+  ne s'affiche pas) ; Mutations Sacks et Trunk Polish 4 fermes ; Sun's Grasp 2 fermes.
+- « À la main » : ce qu'aucune ferme AVRG ne fait (Shellfruit, Godseed, Jerryflower), avec la
+  condition des données, le stock, « Voir la fiche » ; pour le Godseed, chaque effet demandé et qui
+  le donne (✓ quand un crop de base le donne ou qu'une de ces mutations est en stock).
+- En-tête : nom du guide, « Suivre ces objectifs », icône de l'objectif (ou de la mutation qu'il
+  demande, ou aucune) ; en bas, un repli par objectif (l'œuf pour le Rose Dragon).
+
+### Fermes en même temps (demande du joueur : « combine le 7, 8 et 9, le 10 et 11, le 13 et 14 », 02/10/2026)
+- `farmGroups` découpe les fermes du guide affiché en groupes de chapitres qui se suivent et se
+  font en même temps : aucune n'a besoin de ce qu'une ferme d'avant dans le groupe fait (ce qui
+  vient d'une ferme d'après est attendu d'ailleurs, comme les Lonelily qui spawnent au hasard),
+  elles tiennent toutes dans un greenhouse vide (même vérification que pour poser), et ni Chorus
+  Fruit (seul sur son plot) ni les étapes du Snoozling Complex n'en font partie. Parmi les
+  découpages possibles : le moins de groupes, puis les plus gros (7+8+9 plutôt que 6+7 et 8+9).
+- Rose Dragon : 1+2, 7+8+9, 10+11, 13+14 et 17+18+19+20 (« All the legendary designs fit onto one
+  plot », AVRG) ; les autres seules. Calculé une fois par guide (mis en cache).
+- « Ensuite » : une carte par groupe (« 7–9. Cheesebite + Magic Jellybean + Chloronite · 3 fermes en
+  même temps »), avec des onglets : « Ensemble » (plan qui les réunit, ce qu'elles donnent, durée et
+  decay, ce qu'il faut poser en tout, « Poser ensemble dans le N ») et un par ferme (sa carte
+  habituelle). Quand une partie du groupe est faite ou en cours, la carte ne garde que le reste.
+
+### Mise en garde du Chorus Fruit (demande du joueur, 02/10/2026)
+- Chapitre `chorus_fruit` : `warning` dans les données (texte du joueur) : « Le Chorus Fruit se
+  téléporte : il peut atterrir sur les crops et les mutations déjà posés et les détruire. Le
+  greenhouse où il pousse ne doit contenir que lui. » Affiché en rouge en haut de la ferme, partout où
+  elle apparaît (Ensuite, à poser, en cours). La ferme était déjà `ownPlot` : le guide ne pose rien à
+  côté, et le bouton « Plein » explique qu'elle doit être seule tant que d'autres fermes y poussent.
 
 ### Données reprises de skyshards (demande du joueur : « compare avec greenhouse.skyshards.com et prends le meilleur », 02/10/2026)
 - Comparaison des données : recettes, tailles, sols et growth stages identiques. Seuls des faits de

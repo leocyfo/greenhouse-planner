@@ -5,7 +5,8 @@ import { layoutFromPreset } from '../../store/grids'
 import type { GridState } from '../../store/state'
 import { projectData } from '../../test/projectData'
 import type { GuideChapter } from '../../types/game'
-import { chapterView, farmIngredients, guideChapters, guideContext, guideNow, placementFor } from './guideModel'
+import { farmsIn } from './farmPacking'
+import { addedIngredients, chapterView, farmIngredients, farmOutputs, farmTiming, guideChapters, guideContext, guideNow, placementFor } from './guideModel'
 
 const data = projectData()
 const size = { width: data.mechanics.greenhouse.width, height: data.mechanics.greenhouse.height }
@@ -77,7 +78,7 @@ describe('guide du Rose Dragon', () => {
     const ctx = context(inventory)
     const views = guideChapters(data, ctx)
     expect(views.filter((view) => view.status !== 'done').map((view) => view.chapter.id)).toEqual([])
-    expect(guideNow(data, ctx, views, [0, 1, 2])).toEqual({ toPlace: [], running: [], next: [] })
+    expect(guideNow(data, ctx, views, [0, 1, 2])).toEqual({ toPlace: [], upgrades: [], running: [], next: [] })
     // Les 7 Blastberry de la route en stock : la ferme Blastberry est finie, celles d'avant restent.
     const blastberry = guideChapters(data, context({ blastberry: 7 }))
     expect(blastberry.find((view) => view.chapter.id === 'blastberry')?.status).toBe('done')
@@ -135,6 +136,89 @@ describe('guide du Rose Dragon', () => {
     expect(placementFor(data, ctx, 0, [chapter('first_big_farm').layout]).mode).toBe('add')
     const doneCtx = context({ gloomgourd: 12 }, withFarm('first_steps_gloomgourd'))
     expect(placementFor(data, doneCtx, 1, [chapter('first_big_farm').layout]).mode).toBe('new')
+  })
+
+  describe('Snoozling Complex : l’étape 2 se construit sur l’étape 1', () => {
+    const step = (id: string, ctx: ReturnType<typeof context>) => guideChapters(data, ctx).find((view) => view.chapter.id === id)
+
+    it('relie les deux étapes et ne demande que ce qu’il faut ajouter', () => {
+      expect(chapter('snoozling_complex_2').upgrades?.id).toBe('snoozling_complex_1')
+      const added = addedIngredients(chapter('snoozling_complex_1').layout, chapter('snoozling_complex_2').layout, {})
+      expect(added.map((item) => [item.crop.kind === 'mutation' ? item.crop.id : item.crop.name, item.count])).toEqual([
+        ['snoozling', 1],
+        ['thunderling', 6],
+      ])
+    })
+
+    it('au départ, l’étape 2 attend l’étape 1', () => {
+      const ctx = context()
+      expect(step('snoozling_complex_2', ctx)?.status).toBe('waiting')
+      expect(step('snoozling_complex_1', ctx)?.nextStage?.id).toBe('snoozling_complex_2')
+    })
+
+    it('étape 1 en cours : la carte montre ce qu’il manque pour l’étape 2', () => {
+      const ctx = context({}, withFarm('snoozling_complex_1'))
+      const view = step('snoozling_complex_2', ctx)
+      expect(view?.upgradeIn).toEqual([1])
+      expect(view?.status).toBe('missing')
+      const now = guideNow(data, ctx, guideChapters(data, ctx), [0, 1, 2])
+      const running = now.running.find((group) => group.greenhouse === 1)
+      expect(running?.chapters.map((v) => v.chapter.id)).toEqual(['snoozling_complex_1'])
+      expect(running?.nextStages.map((v) => v.chapter.id)).toEqual(['snoozling_complex_2'])
+      expect(now.next.some((v) => v.chapter.id === 'snoozling_complex_2')).toBe(false)
+    })
+
+    it('avec 1 Snoozling et 6 Thunderlings : passer à l’étape 2 dans le même greenhouse', () => {
+      const ctx = context({ snoozling: 1, thunderling: 6 }, withFarm('snoozling_complex_1'))
+      const now = guideNow(data, ctx, guideChapters(data, ctx), [0, 1, 2])
+      expect(now.upgrades.map((upgrade) => [upgrade.greenhouse, upgrade.view.chapter.id])).toEqual([[1, 'snoozling_complex_2']])
+      // L'étape 1 est remplacée, à la même place : le plan obtenu contient l'étape 2 seule.
+      const result = now.upgrades[0]?.result
+      expect(result && farmsIn(data, result.grid).map((farm) => [farm.chapter.id, farm.dx, farm.dy])).toEqual([['snoozling_complex_2', 0, 0]])
+      expect(now.running.some((group) => group.chapters.some((v) => v.chapter.id === 'snoozling_complex_1'))).toBe(false)
+      expect(now.toPlace.some((group) => group.greenhouse === 1)).toBe(false)
+    })
+
+    it('étape 2 posée : l’étape 1 est finie, l’étape 2 en cours', () => {
+      const ctx = context({}, withFarm('snoozling_complex_2'))
+      expect(step('snoozling_complex_1', ctx)?.status).toBe('done')
+      expect(step('snoozling_complex_2', ctx)?.status).toBe('placed')
+    })
+  })
+
+  describe('durée d’une ferme et decay de ce qu’on y pose', () => {
+    const timing = (id: string, stageSeconds: number, inventory: Inventory = {}) => {
+      const layout = chapter(id).layout
+      const ctx = context(inventory)
+      return farmTiming(data, layout, farmOutputs(data, layout, ctx.plan, inventory), stageSeconds)
+    }
+
+    it('Snoozling Complex, étape 1 : 48 stages (6 Thunderlings sur 2 emplacements, 4 Stoplight Petals sur 1)', () => {
+      const t = timing('snoozling_complex_1', 3600)
+      expect(t.stages).toBe(48)
+      expect(t.seconds).toBe(48 * 3600)
+      // Soggybud et Do-not-eat-shroom meurent après 3 jours, Noctilume et Snoozling après 6.
+      expect(t.decays.map((d) => d.days)).toEqual([3, 3, 6, 6])
+      expect(t.firstDecay?.days).toBe(3)
+      expect(t.tooLong).toBe(false) // 48 h
+      expect(timing('snoozling_complex_1', 7200).tooLong).toBe(true) // 96 h > 3 jours
+    })
+
+    it('une mutation sans growth stage spawn au plus une fois par stage et par emplacement', () => {
+      const layout = chapter('first_steps_gloomgourd').layout
+      const spots = layout.spots.filter((spot) => spot.expect.includes('gloomgourd')).length
+      const t = timing('first_steps_gloomgourd', 3600)
+      expect(t.stages).toBe(Math.ceil(12 / spots))
+      expect(t.decays).toEqual([]) // seulement des crops de base
+      expect(t.tooLong).toBe(false)
+    })
+
+    it('plus rien à obtenir : 0 ; une mutation qui ne decay jamais passe en dernier', () => {
+      expect(timing('first_steps_gloomgourd', 3600, { gloomgourd: 12 }).stages).toBe(0)
+      const aloe = timing('all_in_aloe', 3600)
+      expect(aloe.decays.at(-1)).toEqual({ mutationId: 'magic_jellybean', days: null })
+      expect(aloe.firstDecay).toEqual({ mutationId: 'plantboy_advance', days: 5 })
+    })
   })
 
   it('deux fermes ne comptent pas deux fois le même stock', () => {

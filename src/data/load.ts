@@ -16,6 +16,7 @@ import type {
   GameData,
   GameDataLoadResult,
   Goal,
+  GuideChapter,
   HarvestInfo,
   Mutation,
   MutationField,
@@ -309,6 +310,10 @@ function findReferenceIssues(data: RawGameData): DataIssue[] {
       if (chapter.minimumLayout !== undefined && !layoutIds.has(chapter.minimumLayout)) {
         add(at('minimumLayout'), `plan inconnu : « ${chapter.minimumLayout} »`)
       }
+      // La ferme transformée vient avant (chapterIds ne contient que les chapitres déjà lus, et celui-ci).
+      if (chapter.upgrades !== undefined && (chapter.upgrades === chapter.id || !chapterIds.has(chapter.upgrades))) {
+        add(at('upgrades'), `chapitre précédent inconnu : « ${chapter.upgrades} »`)
+      }
     })
   })
 
@@ -525,6 +530,7 @@ function normalize(data: RawGameData): GameData {
     return preset ? [preset] : []
   })
   const layoutsById = new Map(layouts.map((layout) => [layout.id, layout]))
+  const chaptersById = new Map<string, GuideChapter>()
 
   return {
     meta: {
@@ -546,6 +552,7 @@ function normalize(data: RawGameData): GameData {
     layouts,
     guide: {
       goalId: data.guide.goal,
+      // Dans l'ordre : le chapitre transformé (upgrades) est toujours déjà construit.
       sections: data.guide.sections.map((section) => ({
         id: section.id,
         title: section.title,
@@ -553,16 +560,18 @@ function normalize(data: RawGameData): GameData {
         chapters: section.chapters.flatMap((chapter) => {
           const layout = layoutsById.get(chapter.layout)
           if (!layout) return []
-          return [
-            {
-              id: chapter.id,
-              title: chapter.title,
-              text: chapter.text ?? null,
-              layout,
-              minimumLayout: chapter.minimumLayout ? (layoutsById.get(chapter.minimumLayout) ?? null) : null,
-              ownPlot: chapter.ownPlot ?? false,
-            },
-          ]
+          const built: GuideChapter = {
+            id: chapter.id,
+            title: chapter.title,
+            text: chapter.text ?? null,
+            layout,
+            minimumLayout: chapter.minimumLayout ? (layoutsById.get(chapter.minimumLayout) ?? null) : null,
+            ownPlot: chapter.ownPlot ?? false,
+            upgrades: chapter.upgrades ? (chaptersById.get(chapter.upgrades) ?? null) : null,
+            warning: chapter.warning ?? null,
+          }
+          chaptersById.set(chapter.id, built)
+          return [built]
         }),
       })),
     },

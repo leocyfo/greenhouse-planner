@@ -259,6 +259,10 @@ const guideSchema = z.strictObject({
             minimumLayout: z.string().min(1).optional(),
             text: z.string().min(1).optional(),
             ownPlot: z.boolean().optional(),
+            /** Chapitre précédent dont la ferme se transforme en celle-ci, dans le même greenhouse. */
+            upgrades: guideIdSchema.optional(),
+            /** Mise en garde affichée en rouge sur la ferme (Chorus Fruit). */
+            warning: z.string().min(1).optional(),
           }),
         )
         .min(1),

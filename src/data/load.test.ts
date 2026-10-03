@@ -35,6 +35,13 @@ describe('mutations.json du projet', () => {
     expect(new Set(data.mutations.map((m) => m.id)).size).toBe(40)
   })
 
+  it('lit la mise en garde du Chorus Fruit, seul sur son greenhouse', () => {
+    const chorus = data.guide.sections.flatMap((section) => section.chapters).find((chapter) => chapter.id === 'chorus_fruit')
+    expect(chorus?.ownPlot).toBe(true)
+    expect(chorus?.warning).toMatch(/téléporte/)
+    expect(data.guide.sections.flatMap((section) => section.chapters).filter((chapter) => chapter.warning).map((chapter) => chapter.id)).toEqual(['chorus_fruit'])
+  })
+
   it('charge le guide du Rose Dragon : 6 sections, chaque chapitre avec son plan AVRG', () => {
     expect(data.guide.goalId).toBe('rose_dragon')
     expect(data.guide.sections).toHaveLength(6)
@@ -176,6 +183,16 @@ describe('validation de données invalides', () => {
         path: 'mutations[dustgrain].conditions[Whaet].crop',
         message: 'crop inconnu : « Whaet » (ni une mutation, ni un crop de base listé dans baseCrops)',
       },
+    ])
+  })
+
+  it('signale une étape précédente inconnue dans le guide (upgrades)', () => {
+    const issues = issuesAfter((data) => {
+      const chapter = data.guide.sections[0]?.chapters[0]
+      if (chapter) chapter.upgrades = 'first_steps_dustgrain' // vient après : refusé
+    })
+    expect(issues).toEqual([
+      { path: 'guide.sections[first_steps].chapters[first_steps_gloomgourd].upgrades', message: 'chapitre précédent inconnu : « first_steps_dustgrain »' },
     ])
   })
 

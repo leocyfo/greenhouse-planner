@@ -4,7 +4,7 @@ import { vineProgress } from '../../logic/tools'
 import { useAppStore } from '../../store/appStore'
 import { activeLayoutOf, toGridInput } from '../../store/grids'
 import type { LayoutPreset } from '../../types/game'
-import { emptyGrid, farmsIn, farmsName, largestFirst, ownPlotOf, packFarms } from './farmPacking'
+import { emptyGrid, farmsIn, farmsName, largestFirst, ownPlotOf, packFarms, type PackResult } from './farmPacking'
 
 /** Poser des fermes du guide dans un greenhouse (ensemble quand elles tiennent), ou l'ouvrir dans la Grille. */
 export function useFarmActions() {
@@ -48,6 +48,12 @@ export function useFarmActions() {
         addGeneratedLayout(greenhouse, farmsName(result.added), result.grid.ground, result.grid.placements)
         rest = [...result.rest]
       }
+    },
+    /** Passe une ferme à son étape suivante : le plan affiché du greenhouse devient `result` (voir upgradeFor). */
+    upgrade: (greenhouse: number, result: PackResult) => {
+      const state = grids.greenhouses[greenhouse]
+      const active = state ? activeLayoutOf(state) : undefined
+      if (active) replaceLayoutContent(greenhouse, active.id, farmsName(result.farms), result.grid.ground, result.grid.placements)
     },
     /** Affiche ce greenhouse dans la Grille, sur le plan qui contient la ferme s'il y en a un. */
     open: (greenhouse: number, chapterId?: string) => {

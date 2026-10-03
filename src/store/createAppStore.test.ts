@@ -113,6 +113,7 @@ describe('store : actions', () => {
       analyzedBuyable: true,
       player: defaults.settings.player,
       locale: null,
+      guide: 'rose_dragon',
     })
   })
 

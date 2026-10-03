@@ -23,7 +23,7 @@ export const STORAGE_KEY = 'greenhouse-planner'
 export const PLAYER_NAME = /^[A-Za-z0-9_]{0,16}$/
 
 /** À incrémenter à chaque changement de forme de PersistedState, avec une migration. */
-export const SCHEMA_VERSION = 10
+export const SCHEMA_VERSION = 11
 
 /**
  * Migrations successives : MIGRATIONS[n] transforme un état de version n en version n + 1.
@@ -51,6 +51,8 @@ const MIGRATIONS: Readonly<Record<number, (state: unknown) => unknown>> = {
   8: (state) => state,
   // v10 ajoute `settings.locale` (langue de l'interface) : null, celle du navigateur.
   9: (state) => state,
+  // v11 ajoute `settings.guide` (guide affiché) : celui du Rose Dragon par défaut.
+  10: (state) => state,
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -254,6 +256,7 @@ export function sanitizePersistedState(raw: unknown, defaults: PersistedState): 
             })
             .catch(() => ({ ...defaultSettings.player })),
           locale: z.enum(['fr', 'en']).nullable().catch(null),
+          guide: z.string().min(1).catch(defaultSettings.guide),
         })
         .catch(() => ({ ...defaultSettings, growth: { ...defaultSettings.growth }, player: { ...defaultSettings.player } })),
     })

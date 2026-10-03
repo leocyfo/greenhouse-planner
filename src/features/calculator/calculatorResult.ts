@@ -16,8 +16,10 @@ import {
   computePlan,
   mergeTargets,
   type Inventory,
+  type OptimumRoute,
   type Plan,
   type PlanTreeNode,
+  type Target,
 } from '../../logic/recipes'
 import type { CalculatorState } from '../../store/state'
 import type { GameData } from '../../types/game'
@@ -42,14 +44,16 @@ export function computeCalculatorResult(
   growth: GrowthSettings,
   /** Option « les mutations analysées s'achètent au bazar » (réglage commun). */
   analyzedBuyable = false,
+  /** Cibles et route données toutes prêtes (guide : ce que posent ses fermes), à la place de celles des objectifs. */
+  given?: { readonly targets: readonly Target[]; readonly route: OptimumRoute | null },
 ): CalculatorResult {
   // Cibles à la main + cibles des objectifs ajoutés ; la route AVRG vient des objectifs.
   const goals = mergeGoalTargets(data, new Set(calculator.goalIds), analyzed)
   const plan = computePlan(data, {
-    targets: mergeTargets([...calculator.targets, ...goals.targets]),
+    targets: mergeTargets([...calculator.targets, ...(given?.targets ?? goals.targets)]),
     inventory: calculator.ignoreInventory ? {} : inventory,
     mode: calculator.mode,
-    route: goals.route,
+    route: given ? given.route : goals.route,
     buyable: bazaarBuyable(analyzed, analyzedBuyable),
   })
 

@@ -412,7 +412,8 @@
         "title": "Epic Mutations",
         "chapters": {
           "chorus_fruit": {
-            "title": "Chorus Fruit"
+            "title": "Chorus Fruit",
+            "warning": "Chorus Fruit teleports: it can land on crops and mutations already placed and destroy them. The greenhouse where it grows must hold nothing else."
           },
           "startlevine": {
             "title": "Startlevine",
@@ -429,11 +430,11 @@
         "text": "Puffercloud, Stoplight Petal, Thunderling and PlantBoy Advance are made in this complex, the most efficient use of space. Use high level rosewater flasks: 2 snoozlings stay down longer than any other mutation, so don't let them reach decay. A minimum of 60 growth stages in total.",
         "chapters": {
           "snoozling_complex_1": {
-            "title": "Step 1",
+            "title": "Snoozling Complex: step 1",
             "text": "Puffercloud deals damage in an area around you. Stoplight Petal: lots of clicking, don't hit when it's on red. Thunderling: right click it while it grows to remove the charge (into an empty thunder in a bottle)."
           },
           "snoozling_complex_2": {
-            "title": "Step 2",
+            "title": "Snoozling Complex: step 2",
             "text": "Once you have 6 thunderlings (minimum 48 growth stages from placing), add the third snoozling, remove a puffercloud farm and place your thunderlings. PlantBoy Advance: win the game of snake to harvest it; losing reduces the growth stages by 3."
           }
         }

@@ -11,7 +11,7 @@
     ],
     "notes": "Farmland et Dirt sont le même sol dans le Greenhouse : seul Dirt est gardé (précision du joueur). verified=false signifie que la donnée doit être confirmée en jeu. roseDragonOptimum = quantité recommandée par le guide AVRG pour la route Rose Dragon.",
     "fieldDocs": {
-      "guide": "Guide du Rose Dragon (onglet Guide), d'après « The Greenhouse Guide » d'AVRG : sections et chapitres dans l'ordre du guide. layout = plan AVRG de la ferme (id de layouts), minimumLayout = sa version minimum, text = conseils d'AVRG pour ce chapitre. ownPlot = la ferme reste seule sur son greenhouse (Chorus Fruit : AVRG dit que tout le plot se couvre d'End Stone, qui bloque les autres emplacements) ; les autres peuvent partager un greenhouse quand elles tiennent.",
+      "guide": "Guide du Rose Dragon (onglet Guide), d'après « The Greenhouse Guide » d'AVRG : sections et chapitres dans l'ordre du guide. layout = plan AVRG de la ferme (id de layouts), minimumLayout = sa version minimum, text = conseils d'AVRG pour ce chapitre. ownPlot = la ferme reste seule sur son greenhouse (Chorus Fruit : AVRG dit que tout le plot se couvre d'End Stone, qui bloque les autres emplacements, et il se téléporte sur ce qui est posé et le détruit, d'après le joueur) ; warning = mise en garde affichée en rouge sur la ferme ; les autres peuvent partager un greenhouse quand elles tiennent. upgrades = id d'un chapitre précédent dont la ferme se transforme en celle-ci, dans le même greenhouse (Snoozling Complex : l'étape 2 se construit sur l'étape 1) : on n'y ajoute que ce qui manque. goal = guide par défaut ; les autres objectifs ont aussi leur guide, fait des chapitres qui leur servent (voir guideScope).",
       "itemId": "Identifiant de l'objet chez Hypixel (API publique, catégorie MUTATION), pour reconnaître la mutation dans un profil importé.",
       "roseDragonOptimum": "Total recommandé par AVRG pour la route Rose Dragon (plans optimum). N'inclut pas l'exemplaire à analyser.",
       "roseDragonMinimum": "Total minimum donné par AVRG. null = AVRG ne donne pas de minimum explicite. Quand AVRG donne un seul nombre, il est repris ici et dans roseDragonOptimum.",
@@ -1002,7 +1002,8 @@
             "id": "chorus_fruit",
             "title": "Chorus Fruit",
             "layout": "avrg_chorus_fruit",
-            "ownPlot": true
+            "ownPlot": true,
+            "warning": "Le Chorus Fruit se téléporte : il peut atterrir sur les crops et les mutations déjà posés et les détruire. Le greenhouse où il pousse ne doit contenir que lui."
           },
           {
             "id": "startlevine",
@@ -1025,14 +1026,15 @@
         "chapters": [
           {
             "id": "snoozling_complex_1",
-            "title": "Étape 1",
+            "title": "Snoozling Complex : étape 1",
             "layout": "avrg_snoozling_complex_1",
             "text": "Puffercloud : fait des dégâts autour de toi. Stoplight Petal : clique sans toucher le rouge. Thunderling : un clic droit pendant la pousse retire sa charge (dans une Thunder in a Bottle vide)."
           },
           {
             "id": "snoozling_complex_2",
-            "title": "Étape 2",
+            "title": "Snoozling Complex : étape 2",
             "layout": "avrg_snoozling_complex_2",
+            "upgrades": "snoozling_complex_1",
             "text": "Quand tu as 6 Thunderling (au moins 48 growth stages après les avoir posés) : ajoute le 3e Snoozling, retire une ferme de Puffercloud et pose les Thunderling. PlantBoy Advance : gagne le snake pour le récolter, perdre retire 3 growth stages."
           }
         ]

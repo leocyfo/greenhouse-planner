@@ -42,6 +42,32 @@ export function farmMask(data: GameData, preset: LayoutPreset): Cell[] {
   return [...cells].map((cell) => ({ x: cell % preset.width, y: Math.floor(cell / preset.width) }))
 }
 
+/** Fermes des étapes suivantes d'une ferme, dans l'ordre (Snoozling Complex : l'étape 2 pour l'étape 1). */
+function laterStages(data: GameData, preset: LayoutPreset): LayoutPreset[] {
+  const chapters = data.guide.sections.flatMap((section) => section.chapters)
+  const stages: LayoutPreset[] = []
+  const seen = new Set<string>()
+  let current = chapters.find((chapter) => chapter.layout.id === preset.id || chapter.minimumLayout?.id === preset.id)
+  while (current && !seen.has(current.id)) {
+    seen.add(current.id)
+    const from: string = current.id
+    current = chapters.find((chapter) => chapter.upgrades?.id === from)
+    if (current) stages.push(current.layout)
+  }
+  return stages
+}
+
+/**
+ * Cases que la ferme garde dans le plan : les siennes et celles de ses étapes suivantes, à la même
+ * place. L'étape 2 du Snoozling Complex se construit sur l'étape 1 : l'étape 1 est posée là où
+ * l'étape 2 tiendra sans rien déplacer, et aucune autre ferme ne vient s'y mettre.
+ */
+export function reservedMask(data: GameData, preset: LayoutPreset): Cell[] {
+  const cells = new Map<string, Cell>()
+  for (const stage of [preset, ...laterStages(data, preset)]) for (const cell of farmMask(data, stage)) cells.set(`${cell.x},${cell.y}`, cell)
+  return [...cells.values()]
+}
+
 const shifted = (preset: LayoutPreset, dx: number, dy: number): Placement[] =>
   preset.placements.map((placement) => ({ crop: placement.crop, x: placement.x + dx, y: placement.y + dy }))
 
@@ -54,21 +80,29 @@ export function withFarm(data: GameData, grid: GridInput, farm: FarmAt): GridInp
   return { ...grid, ground, placements: [...grid.placements, ...shifted(farm.preset, farm.dx, farm.dy)] }
 }
 
+/** Le plan sans une de ses fermes : ses crops retirés, ses sols remis au sol par défaut. */
+export function withoutFarm(data: GameData, grid: GridInput, farm: FarmAt): GridInput {
+  const ground = [...grid.ground]
+  for (const { x, y } of farmMask(data, farm.preset)) ground[(y + farm.dy) * grid.width + x + farm.dx] = defaultSurface(data)
+  const removed = new Set(shifted(farm.preset, farm.dx, farm.dy).map(placementKey))
+  return { ...grid, ground, placements: grid.placements.filter((placement) => !removed.has(placementKey(placement))) }
+}
+
 /** Un greenhouse vide, au sol par défaut. */
 export function emptyGrid(data: GameData): GridInput {
   const { width, height } = data.mechanics.greenhouse
   return { width, height, ground: new Array<string>(width * height).fill(defaultSurface(data)), placements: [] }
 }
 
-/** Décalages possibles d'une ferme : toutes ses cases restent dans la grille. */
-function offsets(data: GameData, grid: GridInput, preset: LayoutPreset): Cell[] {
-  const mask = farmMask(data, preset)
+/** Décalages possibles d'une ferme : toutes ses cases (`mask`) restent dans la grille. */
+function offsets(grid: GridInput, mask: readonly Cell[]): Cell[] {
   if (mask.length === 0) return []
   const xs = mask.map((c) => c.x)
   const ys = mask.map((c) => c.y)
   const result: Cell[] = []
-  for (let dy = -Math.min(...ys); dy + Math.max(...ys) < grid.height; dy += 1) {
-    for (let dx = -Math.min(...xs); dx + Math.max(...xs) < grid.width; dx += 1) result.push({ x: dx, y: dy })
+  // 0 - min plutôt que -min : un décalage nul vaut 0, pas -0.
+  for (let dy = 0 - Math.min(...ys); dy + Math.max(...ys) < grid.height; dy += 1) {
+    for (let dx = 0 - Math.min(...xs); dx + Math.max(...xs) < grid.width; dx += 1) result.push({ x: dx, y: dy })
   }
   return result
 }
@@ -83,7 +117,7 @@ export function farmsIn(data: GameData, grid: GridInput): FoundFarm[] {
   for (const chapter of data.guide.sections.flatMap((section) => section.chapters)) {
     for (const preset of [chapter.layout, chapter.minimumLayout]) {
       if (!preset || preset.placements.length === 0) continue
-      for (const { x: dx, y: dy } of offsets(data, grid, preset)) {
+      for (const { x: dx, y: dy } of offsets(grid, farmMask(data, preset))) {
         if (!shifted(preset, dx, dy).every((placement) => present.has(placementKey(placement)))) continue
         // Ses emplacements sont vides (ou ont déjà fait spawn ce qu'ils doivent).
         const spotsFree = preset.spots.every((spot) => {
@@ -135,17 +169,27 @@ function aloneSpawns(data: GameData, farm: FarmAt): string[] {
 }
 
 /**
- * Première place (de haut en bas, de gauche à droite) où la ferme tient dans le plan sans rien
- * gêner, ou null : ses cases sont libres, sur un sol utilisable, hors des cases des autres fermes,
- * et toutes les fermes du plan font encore spawn exactement les mêmes mutations.
+ * Première place (de haut en bas, de gauche à droite ; avec `prefer`, la plus proche de cette place)
+ * où la ferme tient dans le plan sans rien gêner, ou null : ses cases et celles de ses étapes
+ * suivantes (reservedMask) sont libres, sur un sol utilisable, hors des cases gardées par les autres
+ * fermes, et toutes les fermes du plan font encore spawn exactement les mêmes mutations.
  */
-export function fitFarm(data: GameData, grid: GridInput, preset: LayoutPreset, farms: readonly FarmAt[]): FarmAt | null {
+export function fitFarm(data: GameData, grid: GridInput, preset: LayoutPreset, farms: readonly FarmAt[], prefer?: FarmAt): FarmAt | null {
   const occupancy = buildOccupancy(data, grid)
   const taken = new Set<number>()
-  for (const farm of farms) for (const { x, y } of farmMask(data, farm.preset)) taken.add((y + farm.dy) * grid.width + x + farm.dx)
-  const mask = farmMask(data, preset)
+  for (const farm of farms) {
+    for (const { x, y } of reservedMask(data, farm.preset)) {
+      const [cx, cy] = [x + farm.dx, y + farm.dy]
+      if (cx >= 0 && cx < grid.width && cy >= 0 && cy < grid.height) taken.add(cy * grid.width + cx)
+    }
+  }
+  const mask = reservedMask(data, preset)
+  const valid = offsets(grid, mask)
+  // La place demandée d'abord (celle de la ferme remplacée), puis les plus proches : on déplace le moins possible.
+  const distance = (o: Cell) => (prefer ? Math.abs(o.x - prefer.dx) + Math.abs(o.y - prefer.dy) : 0)
+  const order = prefer ? [...valid].sort((a, b) => distance(a) - distance(b)) : valid
 
-  for (const { x: dx, y: dy } of offsets(data, grid, preset)) {
+  for (const { x: dx, y: dy } of order) {
     const free = mask.every(({ x, y }) => {
       const cell = (y + dy) * grid.width + x + dx
       return occupancy[cell] === null && !taken.has(cell) && isUsableGround(grid.ground[cell] ?? '')
@@ -158,6 +202,37 @@ export function fitFarm(data: GameData, grid: GridInput, preset: LayoutPreset, f
     if (unchanged) return farm
   }
   return null
+}
+
+/**
+ * Transforme une ferme du plan en une autre (l'étape 1 du Snoozling Complex en l'étape 2) : l'ancienne
+ * est retirée, la nouvelle posée à sa place si elle y tient, sinon à la place libre la plus proche.
+ * null si elle ne tient nulle part à côté des autres fermes.
+ */
+export function swapFarm(data: GameData, grid: GridInput, farms: readonly FarmAt[], from: FarmAt, preset: LayoutPreset): PackResult | null {
+  const others = farms.filter((farm) => farm !== from)
+  const base = withoutFarm(data, grid, from)
+  const farm = fitFarm(data, base, preset, others, { preset, dx: from.dx, dy: from.dy })
+  if (!farm) return null
+  return { grid: withFarm(data, base, farm), farms: [...others, farm], added: [farm], rest: [] }
+}
+
+/**
+ * Recale les fermes posées là où leur étape suivante ne pourra pas se construire à la même place
+ * (l'étape 1 du Snoozling Complex posée contre le bord, avant la v1.14 : l'étape 2 aurait tout
+ * décalé d'une colonne) : chacune va à la place valable la plus proche. null si rien n'est à recaler
+ * (ou si une ferme ne tient nulle part ailleurs).
+ */
+export function alignStages(data: GameData, grid: GridInput, farms: readonly FarmAt[]): PackResult | null {
+  let current: PackResult | null = null
+  for (const farm of farms) {
+    const plan = current ?? { grid, farms }
+    const inPlace = offsets(plan.grid, reservedMask(data, farm.preset)).some((o) => o.x === farm.dx && o.y === farm.dy)
+    if (inPlace) continue
+    const moved = swapFarm(data, plan.grid, plan.farms, farm, farm.preset)
+    if (moved) current = moved
+  }
+  return current
 }
 
 export interface PackResult {
@@ -226,10 +301,10 @@ export function planPreview(grid: GridInput, farms: readonly FarmAt[], name: str
 }
 
 /**
- * Les plus grandes fermes d'abord (à taille égale, l'ordre donné) : posées en premier, elles laissent
- * aux petites des places d'un seul tenant.
+ * Les plus grandes fermes d'abord (à taille égale, l'ordre donné ; une ferme compte la place gardée
+ * pour ses étapes suivantes) : posées en premier, elles laissent aux petites des places d'un seul tenant.
  */
 export function largestFirst(data: GameData, presets: readonly LayoutPreset[]): LayoutPreset[] {
-  const size = new Map(presets.map((preset) => [preset.id, farmMask(data, preset).length]))
+  const size = new Map(presets.map((preset) => [preset.id, reservedMask(data, preset).length]))
   return [...presets].sort((a, b) => (size.get(b.id) ?? 0) - (size.get(a.id) ?? 0))
 }

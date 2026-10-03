@@ -48,6 +48,11 @@ export interface OptimumRoute {
   readonly targets: readonly Target[]
   /** Totaux AVRG par id de mutation (roseDragonOptimum > 0). */
   readonly totals: ReadonlyMap<string, number>
+  /**
+   * Mutations faites par les fermes de la route : leurs recettes sont déjà comptées dans les totaux
+   * (Turtlellini, fait dans le Superfarm dont les Choconut sont posés). Absent : celles qui ont un total.
+   */
+  readonly members?: ReadonlySet<string>
 }
 
 export interface PlanRequest {
@@ -145,7 +150,8 @@ export function computePlan(data: GameData, request: PlanRequest): Plan {
   const targets = mergeTargets(request.targets).filter((t) => data.mutationsById.has(t.mutationId))
   const targetQuantity = sumByMutation(targets)
   const routeTargetQuantity = sumByMutation(route?.targets ?? [])
-  const inRoute = (id: string | null) => id !== null && (route?.totals.get(id) ?? 0) > 0
+  const inRoute = (id: string | null) =>
+    id !== null && (route?.members ? route.members.has(id) : (route?.totals.get(id) ?? 0) > 0)
   const buyable = request.buyable ?? NOTHING_BUYABLE
 
   // Parcours des recettes avant leurs ingrédients (niveau décroissant) : quand on arrive à une

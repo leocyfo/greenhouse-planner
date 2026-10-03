@@ -216,6 +216,13 @@ export interface GuideChapter {
   readonly minimumLayout: LayoutPreset | null
   /** La ferme reste seule sur son greenhouse (Chorus Fruit) ; les autres peuvent en partager un. */
   readonly ownPlot: boolean
+  /**
+   * Chapitre précédent dont la ferme se transforme en celle-ci, dans le même greenhouse (Snoozling
+   * Complex : l'étape 2 se construit sur l'étape 1) ; null pour une ferme posée telle quelle.
+   */
+  readonly upgrades: GuideChapter | null
+  /** Mise en garde affichée en rouge sur la ferme (Chorus Fruit : il se téléporte et détruit ce qui est posé). */
+  readonly warning: string | null
 }
 
 export interface GuideSection {
